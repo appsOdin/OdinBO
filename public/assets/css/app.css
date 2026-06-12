@@ -1,0 +1,106 @@
+:root {
+    --bg-soft: #f3f6fb;
+    --bg-strong: #0f172a;
+    --accent: #0ea5e9;
+    --accent-dark: #0369a1;
+    --text-main: #1e293b;
+}
+
+body {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--text-main);
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    min-height: 100vh;
+}
+
+.auth-body {
+    overflow: hidden;
+}
+
+.auth-gradient {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle at 10% 10%, #38bdf8 0%, transparent 35%),
+    radial-gradient(circle at 80% 20%, #bae6fd 0%, transparent 35%),
+    radial-gradient(circle at 60% 80%, #0ea5e9 0%, transparent 40%);
+    opacity: 0.3;
+    z-index: 0;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 440px;
+    border-radius: 18px;
+    z-index: 1;
+}
+
+.app-shell {
+    display: flex;
+    min-height: 100vh;
+}
+
+.sidebar {
+    width: 260px;
+    background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+    color: #fff;
+    transition: transform 0.3s ease;
+}
+
+.sidebar-brand small {
+    color: #cbd5e1;
+}
+
+.sidebar .nav-link {
+    color: #cbd5e1;
+    border-radius: 10px;
+    padding: 0.65rem 0.85rem;
+}
+
+.sidebar .nav-link.active,
+.sidebar .nav-link:hover {
+    background: rgba(14, 165, 233, 0.2);
+    color: #fff;
+}
+
+.content-shell {
+    flex: 1;
+    min-width: 0;
+}
+
+.topbar {
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(6px);
+}
+
+.stat-card {
+    border-radius: 16px;
+}
+
+.table thead th {
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.global-loader {
+    position: fixed;
+    inset: 0;
+    background: rgba(2, 6, 23, 0.72);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+@media (max-width: 991.98px) {
+    .sidebar {
+        position: fixed;
+        z-index: 1040;
+        top: 0;
+        bottom: 0;
+        transform: translateX(-100%);
+    }
+
+    .sidebar.show {
+        transform: translateX(0);
+    }
+}

@@ -1,0 +1,9 @@
+[2026-06-10 19:40:22] ERROR: Invalid JSON response {"method":"POST","url":"http://localhost/api/api/User/Login","body":"","http_code":404}
+[2026-06-10 19:49:36] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost/api/User/GetAllUsers","body":"","http_code":401}
+[2026-06-10 19:49:49] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost/api/User/GetAllUsers","body":"","http_code":401}
+[2026-06-10 19:49:50] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost/api/User/GetAllUsers","body":"","http_code":401}
+[2026-06-10 19:51:01] ERROR: API error response {"method":"PUT","url":"http://localhost/api/User/UpdateUser","http_code":400,"response":{"type":"https://tools.ietf.org/html/rfc9110#section-15.5.1","title":"One or more validation errors occurred.","status":400,"errors":{"Password":["The Password field is required."]},"traceId":"00-ceac405572c9b70636fc9849a04b64c3-5b762108329957db-00"}}
+[2026-06-10 19:53:13] ERROR: API error response {"method":"PUT","url":"http://localhost/api/User/UpdateUser","http_code":400,"response":{"type":"https://tools.ietf.org/html/rfc9110#section-15.5.1","title":"One or more validation errors occurred.","status":400,"errors":{"Password":["The Password field is required."]},"traceId":"00-c7e64c171ee957383b0c772d1af427c5-eebc0b751c72c669-00"}}
+[2026-06-11 13:25:09] ERROR: Invalid JSON response {"method":"PUT","url":"http://localhost/api/User/UpdateUser","body":"","http_code":401}
+[2026-06-11 13:25:23] ERROR: Invalid JSON response {"method":"PUT","url":"http://localhost/api/User/UpdateUser","body":"","http_code":401}
+[2026-06-11 13:28:02] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost/api/User/GetAllUsers","body":"","http_code":401}
