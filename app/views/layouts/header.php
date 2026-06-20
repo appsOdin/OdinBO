@@ -6,6 +6,12 @@ $authUser = $authUser ?? null;
     <div class="container-fluid">
         <button class="btn btn-outline-secondary d-lg-none" id="btnToggleSidebar" type="button">Menu</button>
         <div class="ms-auto d-flex align-items-center gap-3">
+            <label for="themeSelect" class="text-muted small m-0">Tema</label>
+            <select id="themeSelect" class="form-select form-select-sm theme-select" aria-label="Seleccion de tema">
+                <option value="default">Default</option>
+                <option value="flat">Flat</option>
+                <option value="dark">Dark</option>
+            </select>
             <span class="text-muted small">Usuario autenticado</span>
             <span class="badge text-bg-primary"><?= htmlspecialchars((string) ($authUser['username'] ?? 'Invitado'), ENT_QUOTES, 'UTF-8') ?></span>
             <form method="POST" action="<?= base_url('logout') ?>" class="m-0">

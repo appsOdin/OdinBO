@@ -39,6 +39,11 @@ final class AuthService
         $token = (string) ($data['token'] ?? ($data['Token'] ?? ''));
         $id = (string) ($data['id'] ?? ($data['Id'] ?? ''));
         $user = (string) ($data['username'] ?? ($data['userName'] ?? ($data['Username'] ?? '')));
+        $rolename = strtoupper(trim($this->extractRoleNameFromToken($token)));
+
+        if ($rolename === '') {
+            $rolename = 'USER';
+        }
 
         if ($token === '' || $id === '' || $user === '') {
             return ['code' => '500', 'message' => 'Missing authentication data', 'data' => null];
@@ -48,6 +53,7 @@ final class AuthService
             'id' => $id,
             'username' => $user,
             'token' => $token,
+            'rolename' => $rolename,
         ]);
 
         return $response;
@@ -63,6 +69,37 @@ final class AuthService
         $code = trim((string) $rawCode);
 
         return $httpCode === 200 && $code === '200';
+    }
+
+    private function extractRoleNameFromToken(string $token): string
+    {
+        if ($token === '') {
+            return '';
+        }
+
+        $parts = explode('.', $token);
+        if (count($parts) < 2) {
+            return '';
+        }
+
+        $payload = strtr($parts[1], '-_', '+/');
+        $padding = strlen($payload) % 4;
+        if ($padding > 0) {
+            $payload .= str_repeat('=', 4 - $padding);
+        }
+
+        $decoded = base64_decode($payload, true);
+        if ($decoded === false) {
+            return '';
+        }
+
+        $claims = json_decode($decoded, true);
+        if (!is_array($claims)) {
+            return '';
+        }
+
+        $role = $claims['rolename'] ?? ($claims['roleName'] ?? ($claims['RoleName'] ?? ''));
+        return is_string($role) ? $role : '';
     }
 
     public function logout(): void

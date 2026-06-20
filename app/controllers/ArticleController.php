@@ -18,12 +18,21 @@ final class ArticleController extends Controller
     public function index(Request $request): void
     {
         $response = ServiceFactory::articleService()->getAllArticles('');
-        $rows = is_array($response['data'] ?? null) ? $response['data'] : [];
+        $apiHttpCode = (int) ($response['http_code'] ?? 200);
+
+        if ($apiHttpCode === 401) {
+            ServiceFactory::authService()->logout();
+            $this->redirect('login');
+            return;
+        }
+
+        $rows = $apiHttpCode === 200 && is_array($response['data'] ?? null) ? $response['data'] : [];
         $articles = array_map(static fn (array $row): Article => Article::fromArray($row), $rows);
 
         $this->view('articles/index', [
             'title' => 'Articulos',
             'articles' => $articles,
+            'apiHttpCode' => $apiHttpCode,
             'authUser' => ServiceFactory::sessionManager()->getUser(),
             'csrfToken' => get_csrf_token(),
             'flashMessages' => consume_flash(),

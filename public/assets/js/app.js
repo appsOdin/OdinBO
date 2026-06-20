@@ -29,17 +29,68 @@
         wrapper.addEventListener('hidden.bs.toast', () => wrapper.remove());
     };
 
-    const isUnauthorizedPayload = (payload) => {
-        if (!payload || typeof payload !== 'object') {
-            return false;
+    const getHttpCode = (response, payload) => {
+        // Check payload first: controllers may forward API error codes inside a 200 HTTP envelope.
+        if (payload && typeof payload === 'object') {
+            const fromHttpCode = Number(payload.http_code ?? 0);
+            if (fromHttpCode === 401 || fromHttpCode === 403) {
+                return fromHttpCode;
+            }
+            const fromCode = Number(payload.code ?? 0);
+            if (fromCode === 401 || fromCode === 403) {
+                return fromCode;
+            }
         }
-
-        const code = String(payload.code ?? '');
-        const httpCode = String(payload.http_code ?? '');
-        return code === '401' || httpCode === '401';
+        // Fall back to the actual HTTP response status.
+        if (response && response.status) {
+            return response.status;
+        }
+        return 0;
     };
 
-    const handleSessionExpired = async (message = 'La sesion ha vencido. Redirigiendo a login...') => {
+    const showForbiddenMessage = () => {
+        const main = document.querySelector('main');
+        if (!main) {
+            return;
+        }
+        const dashboardUrl = window.APP?.dashboardUrl || '/dashboard';
+        main.innerHTML = `
+            <div style="
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                min-height: 60vh;
+                gap: 16px;
+                text-align: center;
+                padding: 32px;
+            ">
+                <div style="
+                    width: 72px;
+                    height: 72px;
+                    border-radius: 50%;
+                    background: #fff3cd;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                ">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" fill="#e6a817" viewBox="0 0 16 16">
+                        <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5m.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2"/>
+                    </svg>
+                </div>
+                <div>
+                    <p style="margin: 0 0 6px; font-size: 1.25rem; font-weight: 600; color: #212529; letter-spacing: -0.01em;">Acceso denegado</p>
+                    <p style="margin: 0 0 16px; font-size: 0.9rem; color: #6c757d;">No tiene permisos para realizar esta accion.</p>
+                    <a href="${dashboardUrl}"
+                       style="display:inline-block;padding:8px 24px;background:#212529;color:#fff;border-radius:6px;text-decoration:none;font-size:0.9rem;font-weight:500;">
+                        Aceptar
+                    </a>
+                </div>
+            </div>
+        `;
+    };
+
+    const handleUnauthorized = async (message = 'Sesion expirada. Redirigiendo a login...') => {
         if (isSessionExpiredHandled) {
             return;
         }
@@ -74,15 +125,6 @@
         }, 1200);
     };
 
-    const shouldHandleAsUnauthorized = (response, payload) => {
-        if (response.status === 401 || isUnauthorizedPayload(payload)) {
-            return true;
-        }
-
-        const redirectedToLogin = response.redirected && typeof response.url === 'string' && response.url.toLowerCase().includes('/login');
-        return redirectedToLogin;
-    };
-
     const fetchJson = async (url, payload) => {
         showLoader();
         try {
@@ -104,8 +146,20 @@
                 http_code: response.status,
             };
 
-            if (shouldHandleAsUnauthorized(response, parsedPayload)) {
-                handleSessionExpired('La sesion ha vencido. Cerrando sesion y redirigiendo a login...');
+            const httpCode = getHttpCode(response, parsedPayload);
+            const redirectedToLogin = response.redirected && typeof response.url === 'string' && response.url.toLowerCase().includes('/login');
+
+            if (httpCode === 403) {
+                showForbiddenMessage();
+                return {
+                    ...parsedPayload,
+                    code: '403',
+                    http_code: 403,
+                };
+            }
+
+            if (httpCode === 401 || redirectedToLogin) {
+                handleUnauthorized('Sesion expirada. Cerrando sesion y redirigiendo a login...');
                 return {
                     ...parsedPayload,
                     code: '401',
@@ -135,6 +189,35 @@
         toggleButton.addEventListener('click', () => {
             sidebar.classList.toggle('show');
         });
+    };
+
+    const initTheme = () => {
+        const themeSelect = document.getElementById('themeSelect');
+        const root = document.documentElement;
+        const storageKey = 'odinbo-theme';
+        const allowedThemes = new Set(['default', 'flat', 'dark']);
+
+        const applyTheme = (theme) => {
+            const selected = allowedThemes.has(theme) ? theme : 'default';
+            if (selected === 'default') {
+                delete root.dataset.theme;
+            } else {
+                root.dataset.theme = selected;
+            }
+            return selected;
+        };
+
+        const savedTheme = localStorage.getItem(storageKey) || 'default';
+        const appliedTheme = applyTheme(savedTheme);
+
+        if (themeSelect instanceof HTMLSelectElement) {
+            themeSelect.value = appliedTheme;
+            themeSelect.addEventListener('change', (event) => {
+                const value = event.target instanceof HTMLSelectElement ? event.target.value : 'default';
+                const normalized = applyTheme(value);
+                localStorage.setItem(storageKey, normalized);
+            });
+        }
     };
 
     const tableState = {
@@ -423,8 +506,16 @@
                 http_code: response.status,
             };
 
-            if (shouldHandleAsUnauthorized(response, payload)) {
-                handleSessionExpired('La sesion ha vencido. Cerrando sesion y redirigiendo a login...');
+            const reloadHttpCode = getHttpCode(response, payload);
+            const reloadRedirectedToLogin = response.redirected && typeof response.url === 'string' && response.url.toLowerCase().includes('/login');
+
+            if (reloadHttpCode === 403) {
+                showForbiddenMessage();
+                return;
+            }
+
+            if (reloadHttpCode === 401 || reloadRedirectedToLogin) {
+                handleUnauthorized('Sesion expirada. Cerrando sesion y redirigiendo a login...');
                 return;
             }
 
@@ -750,6 +841,7 @@
     };
 
     document.addEventListener('DOMContentLoaded', () => {
+        initTheme();
         initSidebar();
         consumeFlashMessages();
         initUsersModule();

@@ -12,7 +12,6 @@ ini_set('display_errors', APP_DEBUG ? '1' : '0');
 date_default_timezone_set(APP_TIMEZONE);
 
 session_name(SESSION_NAME);
-session_save_path(__DIR__ . '/../storage/sessions');
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }

@@ -12,7 +12,7 @@ final class SessionManager
     private const KEY_AUTH = 'auth';
 
     /**
-     * @param array{id: string, username: string, token: string} $userData
+     * @param array{id: string, username: string, token: string, rolename: string} $userData
      */
     public function storeAuth(array $userData): void
     {
@@ -20,6 +20,7 @@ final class SessionManager
             'id' => $userData['id'],
             'username' => $userData['username'],
             'token' => $userData['token'],
+            'rolename' => $userData['rolename'],
             'expires_at' => time() + (SESSION_TIMEOUT * 60),
         ];
     }
@@ -57,7 +58,7 @@ final class SessionManager
     }
 
     /**
-     * @return array{id: string, username: string}|null
+     * @return array{id: string, username: string, rolename: string}|null
      */
     public function getUser(): ?array
     {
@@ -68,6 +69,7 @@ final class SessionManager
         return [
             'id' => (string) ($_SESSION[self::KEY_AUTH]['id'] ?? ''),
             'username' => (string) ($_SESSION[self::KEY_AUTH]['username'] ?? ''),
+            'rolename' => (string) ($_SESSION[self::KEY_AUTH]['rolename'] ?? ''),
         ];
     }
 

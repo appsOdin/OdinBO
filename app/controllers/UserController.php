@@ -18,12 +18,21 @@ final class UserController extends Controller
     public function index(Request $request): void
     {
         $response = ServiceFactory::userService()->getAllUsers();
-        $rows = is_array($response['data'] ?? null) ? $response['data'] : [];
+        $apiHttpCode = (int) ($response['http_code'] ?? 200);
+
+        if ($apiHttpCode === 401) {
+            ServiceFactory::authService()->logout();
+            $this->redirect('login');
+            return;
+        }
+
+        $rows = $apiHttpCode === 200 && is_array($response['data'] ?? null) ? $response['data'] : [];
         $users = array_map(static fn (array $row): User => User::fromArray($row), $rows);
 
         $this->view('users/index', [
             'title' => 'Usuarios',
             'users' => $users,
+            'apiHttpCode' => $apiHttpCode,
             'authUser' => ServiceFactory::sessionManager()->getUser(),
             'csrfToken' => get_csrf_token(),
             'flashMessages' => consume_flash(),
