@@ -10,5 +10,8 @@
         <li class="nav-item">
             <a href="<?= base_url('users') ?>" class="nav-link <?= str_contains($_SERVER['REQUEST_URI'] ?? '', '/users') ? 'active' : '' ?>">Usuarios</a>
         </li>
+        <li class="nav-item">
+            <a href="<?= base_url('articles') ?>" class="nav-link <?= str_contains($_SERVER['REQUEST_URI'] ?? '', '/articles') ? 'active' : '' ?>">Articulos</a>
+        </li>
     </ul>
 </aside>

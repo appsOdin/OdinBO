@@ -35,9 +35,13 @@ $appJsVersion = is_file($appJsFile) ? (string) filemtime($appJsFile) : (string) 
 window.APP = {
     csrfToken: '<?= htmlspecialchars(get_csrf_token(), ENT_QUOTES, 'UTF-8') ?>',
     flashMessages: <?= json_encode($flashMessages, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>,
+    loginUrl: '<?= base_url('login') ?>',
+    logoutUrl: '<?= base_url('logout') ?>',
     usersListUrl: '<?= base_url('users/list') ?>',
     usersStoreUrl: '<?= base_url('users/store') ?>',
-    usersUpdateUrl: '<?= base_url('users/update') ?>'
+    usersUpdateUrl: '<?= base_url('users/update') ?>',
+    articlesListUrl: '<?= base_url('articles/list') ?>',
+    articlesDetailUrl: '<?= base_url('articles/detail') ?>'
 };
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>

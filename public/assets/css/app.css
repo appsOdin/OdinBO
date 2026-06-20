@@ -1,15 +1,16 @@
 :root {
-    --bg-soft: #f3f6fb;
-    --bg-strong: #0f172a;
-    --accent: #0ea5e9;
-    --accent-dark: #0369a1;
-    --text-main: #1e293b;
+    --primary-color: #e66411;
+    --accent-color: #ec955f;
+    --button-color: #1e88e5;
+    --text-main: #222222;
+    --bg-soft: #fff7f2;
+    --bg-strong: #c7530d;
 }
 
 body {
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     color: var(--text-main);
-    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    background: linear-gradient(135deg, #fff8f3 0%, #ffe9dc 100%);
     min-height: 100vh;
 }
 
@@ -20,9 +21,9 @@ body {
 .auth-gradient {
     position: fixed;
     inset: 0;
-    background: radial-gradient(circle at 10% 10%, #38bdf8 0%, transparent 35%),
-    radial-gradient(circle at 80% 20%, #bae6fd 0%, transparent 35%),
-    radial-gradient(circle at 60% 80%, #0ea5e9 0%, transparent 40%);
+    background: radial-gradient(circle at 10% 10%, var(--primary-color) 0%, transparent 35%),
+    radial-gradient(circle at 80% 20%, var(--accent-color) 0%, transparent 35%),
+    radial-gradient(circle at 60% 80%, var(--button-color) 0%, transparent 40%);
     opacity: 0.3;
     z-index: 0;
 }
@@ -41,24 +42,24 @@ body {
 
 .sidebar {
     width: 260px;
-    background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+    background: linear-gradient(180deg, var(--bg-strong) 0%, var(--primary-color) 100%);
     color: #fff;
     transition: transform 0.3s ease;
 }
 
 .sidebar-brand small {
-    color: #cbd5e1;
+    color: #ffe9dc;
 }
 
 .sidebar .nav-link {
-    color: #cbd5e1;
+    color: #fff5ef;
     border-radius: 10px;
     padding: 0.65rem 0.85rem;
 }
 
 .sidebar .nav-link.active,
 .sidebar .nav-link:hover {
-    background: rgba(14, 165, 233, 0.2);
+    background: rgba(255, 255, 255, 0.2);
     color: #fff;
 }
 
@@ -81,6 +82,37 @@ body {
     white-space: nowrap;
 }
 
+.btn-primary {
+    --bs-btn-bg: var(--button-color);
+    --bs-btn-border-color: var(--button-color);
+    --bs-btn-hover-bg: #1976d2;
+    --bs-btn-hover-border-color: #1976d2;
+    --bs-btn-active-bg: #1565c0;
+    --bs-btn-active-border-color: #1565c0;
+}
+
+.btn-outline-primary {
+    --bs-btn-color: var(--button-color);
+    --bs-btn-border-color: var(--button-color);
+    --bs-btn-hover-bg: var(--button-color);
+    --bs-btn-hover-border-color: var(--button-color);
+    --bs-btn-active-bg: #1565c0;
+    --bs-btn-active-border-color: #1565c0;
+}
+
+.page-item.active .page-link {
+    background-color: var(--button-color);
+    border-color: var(--button-color);
+}
+
+a {
+    color: var(--primary-color);
+}
+
+a:hover {
+    color: var(--bg-strong);
+}
+
 .global-loader {
     position: fixed;
     inset: 0;
@@ -89,6 +121,15 @@ body {
     align-items: center;
     justify-content: center;
     z-index: 2000;
+}
+
+.article-image-box {
+    min-height: 240px;
+}
+
+#articleMainImage {
+    max-height: 320px;
+    object-fit: contain;
 }
 
 @media (max-width: 991.98px) {
@@ -102,5 +143,83 @@ body {
 
     .sidebar.show {
         transform: translateX(0);
+    }
+
+    .article-image-box {
+        min-height: 180px;
+    }
+}
+
+@media (max-width: 575.98px) {
+    body {
+        font-size: 0.92rem;
+    }
+
+    h1,
+    .h1 {
+        font-size: 1.5rem;
+    }
+
+    h2,
+    .h2 {
+        font-size: 1.28rem;
+    }
+
+    h3,
+    .h3 {
+        font-size: 1.12rem;
+    }
+
+    h4,
+    .h4,
+    h5,
+    .h5,
+    h6,
+    .h6 {
+        font-size: 1rem;
+    }
+
+    .table {
+        font-size: 0.86rem;
+    }
+
+    .btn,
+    .form-control,
+    .form-select,
+    .form-label,
+    .modal-title,
+    .card-body,
+    .pagination,
+    small,
+    .small {
+        font-size: 0.86rem;
+    }
+
+    #articleMainImage {
+        max-height: 220px;
+    }
+
+    #articlesTable,
+    #articleStocksTable {
+        font-size: 0.8rem;
+    }
+
+    #articlesTable th,
+    #articlesTable td,
+    #articleStocksTable th,
+    #articleStocksTable td {
+        padding: 0.4rem 0.45rem;
+        vertical-align: middle;
+    }
+
+    #articlesTable .btn,
+    #articleDetailModal .btn,
+    #articlesPaginationInfo,
+    #articlesPageIndicator {
+        font-size: 0.8rem;
+    }
+
+    #articlesPerPage {
+        min-width: 64px;
     }
 }

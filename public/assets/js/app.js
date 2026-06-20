@@ -1,6 +1,7 @@
 (() => {
     const globalLoader = document.getElementById('globalLoader');
     const toastContainer = document.getElementById('toastContainer');
+    let isSessionExpiredHandled = false;
 
     const showLoader = () => globalLoader && globalLoader.classList.remove('d-none');
     const hideLoader = () => globalLoader && globalLoader.classList.add('d-none');
@@ -28,6 +29,60 @@
         wrapper.addEventListener('hidden.bs.toast', () => wrapper.remove());
     };
 
+    const isUnauthorizedPayload = (payload) => {
+        if (!payload || typeof payload !== 'object') {
+            return false;
+        }
+
+        const code = String(payload.code ?? '');
+        const httpCode = String(payload.http_code ?? '');
+        return code === '401' || httpCode === '401';
+    };
+
+    const handleSessionExpired = async (message = 'La sesion ha vencido. Redirigiendo a login...') => {
+        if (isSessionExpiredHandled) {
+            return;
+        }
+
+        isSessionExpiredHandled = true;
+        showToast('danger', message);
+
+        try {
+            const csrfToken = window.APP?.csrfToken || '';
+            const logoutUrl = window.APP?.logoutUrl;
+
+            if (logoutUrl && csrfToken) {
+                await fetch(logoutUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({ _csrf_token: csrfToken })
+                });
+            }
+        } catch (error) {
+            // If logout request fails, continue with login redirect.
+        }
+
+        setTimeout(() => {
+            try {
+                window.location.href = window.APP?.loginUrl || '/login';
+            } catch (error) {
+                window.location.assign('/login');
+            }
+        }, 1200);
+    };
+
+    const shouldHandleAsUnauthorized = (response, payload) => {
+        if (response.status === 401 || isUnauthorizedPayload(payload)) {
+            return true;
+        }
+
+        const redirectedToLogin = response.redirected && typeof response.url === 'string' && response.url.toLowerCase().includes('/login');
+        return redirectedToLogin;
+    };
+
     const fetchJson = async (url, payload) => {
         showLoader();
         try {
@@ -40,7 +95,25 @@
                 body: JSON.stringify(payload)
             });
 
-            return await response.json();
+            const contentType = response.headers.get('content-type') || '';
+            const isJson = contentType.toLowerCase().includes('application/json');
+            const parsedPayload = isJson ? await response.json() : {
+                code: String(response.status || ''),
+                message: '',
+                data: null,
+                http_code: response.status,
+            };
+
+            if (shouldHandleAsUnauthorized(response, parsedPayload)) {
+                handleSessionExpired('La sesion ha vencido. Cerrando sesion y redirigiendo a login...');
+                return {
+                    ...parsedPayload,
+                    code: '401',
+                    http_code: 401,
+                };
+            }
+
+            return parsedPayload;
         } finally {
             hideLoader();
         }
@@ -110,6 +183,14 @@
         return p.innerHTML;
     };
 
+    const formatCurrency = (value) => {
+        const amount = Number(value || 0);
+        return new Intl.NumberFormat('es-CO', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(Number.isFinite(amount) ? amount : 0);
+    };
+
     const initUsersModule = () => {
         const tableBody = document.getElementById('usersTableBody');
         if (!tableBody) {
@@ -117,9 +198,14 @@
         }
 
         const searchInput = document.getElementById('searchUsers');
-        const pagination = document.getElementById('pagination');
         const paginationInfo = document.getElementById('paginationInfo');
+        const perPageSelect = document.getElementById('usersPerPage');
+        const prevPageButton = document.getElementById('usersPrevPage');
+        const nextPageButton = document.getElementById('usersNextPage');
+        const pageIndicator = document.getElementById('usersPageIndicator');
         const sortHeaders = document.querySelectorAll('th[data-sort]');
+
+        tableState.perPage = Number(perPageSelect?.value || tableState.perPage);
 
         const getRows = () => Array.from(tableBody.querySelectorAll('tr'));
 
@@ -167,18 +253,16 @@
                 paginationInfo.textContent = `Mostrando ${filtered.length === 0 ? 0 : start + 1} a ${Math.min(end, filtered.length)} de ${filtered.length} registros`;
             }
 
-            if (pagination) {
-                pagination.innerHTML = '';
-                for (let i = 1; i <= totalPages; i += 1) {
-                    const li = document.createElement('li');
-                    li.className = `page-item ${i === tableState.page ? 'active' : ''}`;
-                    li.innerHTML = `<button class="page-link" type="button">${i}</button>`;
-                    li.addEventListener('click', () => {
-                        tableState.page = i;
-                        applyTableState();
-                    });
-                    pagination.appendChild(li);
-                }
+            if (pageIndicator) {
+                pageIndicator.textContent = `Pagina ${tableState.page} de ${totalPages}`;
+            }
+
+            if (prevPageButton) {
+                prevPageButton.disabled = tableState.page <= 1;
+            }
+
+            if (nextPageButton) {
+                nextPageButton.disabled = tableState.page >= totalPages;
             }
         };
 
@@ -203,6 +287,42 @@
                 }
                 applyTableState();
             });
+        });
+
+        perPageSelect?.addEventListener('change', () => {
+            const nextPerPage = Number(perPageSelect.value || 8);
+            tableState.perPage = Number.isFinite(nextPerPage) && nextPerPage > 0 ? nextPerPage : 8;
+            tableState.page = 1;
+            applyTableState();
+        });
+
+        prevPageButton?.addEventListener('click', () => {
+            if (tableState.page <= 1) {
+                return;
+            }
+
+            tableState.page -= 1;
+            applyTableState();
+        });
+
+        nextPageButton?.addEventListener('click', () => {
+            const totalRows = getRows().filter((row) => {
+                const values = [
+                    row.dataset.name,
+                    row.dataset.lastname,
+                    row.dataset.username,
+                    row.dataset.email
+                ].join(' ').toLowerCase();
+                return values.includes(tableState.search.toLowerCase());
+            }).length;
+
+            const totalPages = Math.max(1, Math.ceil(totalRows / tableState.perPage));
+            if (tableState.page >= totalPages) {
+                return;
+            }
+
+            tableState.page += 1;
+            applyTableState();
         });
 
         const createForm = document.getElementById('createUserForm');
@@ -293,7 +413,21 @@
             const response = await fetch(window.APP.usersListUrl, {
                 headers: { 'X-Requested-With': 'XMLHttpRequest' }
             });
-            const payload = await response.json();
+
+            const contentType = response.headers.get('content-type') || '';
+            const isJson = contentType.toLowerCase().includes('application/json');
+            const payload = isJson ? await response.json() : {
+                code: String(response.status || ''),
+                message: '',
+                data: null,
+                http_code: response.status,
+            };
+
+            if (shouldHandleAsUnauthorized(response, payload)) {
+                handleSessionExpired('La sesion ha vencido. Cerrando sesion y redirigiendo a login...');
+                return;
+            }
+
             const rows = Array.isArray(payload.data) ? payload.data : [];
 
             tableBody.innerHTML = '';
@@ -308,9 +442,317 @@
         }
     };
 
+    const initArticlesModule = () => {
+        const tableBody = document.getElementById('articlesTableBody');
+        if (!tableBody) {
+            return;
+        }
+
+        const searchForm = document.getElementById('articleSearchForm');
+        const searchInput = document.getElementById('searchArticles');
+        const clearButton = document.getElementById('clearArticleSearch');
+        const perPageSelect = document.getElementById('articlesPerPage');
+        const paginationInfo = document.getElementById('articlesPaginationInfo');
+        const prevPageButton = document.getElementById('articlesPrevPage');
+        const nextPageButton = document.getElementById('articlesNextPage');
+        const pageIndicator = document.getElementById('articlesPageIndicator');
+
+        const detailModalEl = document.getElementById('articleDetailModal');
+        const imageModalEl = document.getElementById('articleImageModal');
+        const detailSelected = document.getElementById('articleDetailSelected');
+        const detailId = document.getElementById('articleDetailId');
+        const detailDescription = document.getElementById('articleDetailDescription');
+        const detailPrice = document.getElementById('articleDetailPrice');
+        const mainImage = document.getElementById('articleMainImage');
+        const mainImageEmpty = document.getElementById('articleMainImageEmpty');
+        const imageThumbs = document.getElementById('articleImageThumbs');
+        const expandImageButton = document.getElementById('expandArticleImage');
+        const expandedImage = document.getElementById('articleExpandedImage');
+        const stocksTableBody = document.getElementById('articleStocksTableBody');
+
+        let selectedImageDataUri = '';
+
+        const state = {
+            search: '',
+            page: 1,
+            perPage: Number(perPageSelect?.value || 8),
+            rows: []
+        };
+
+        const buildArticleRow = (item) => {
+            const id = escapeHtml(String(item.ID || ''));
+            const description = escapeHtml(String(item.DESCRIPTION || ''));
+            const price = formatCurrency(item.PRICE);
+
+            return `
+                <tr data-id="${id}" data-description="${description}" data-price="${escapeHtml(String(item.PRICE || 0))}">
+                    <td>${id}</td>
+                    <td>${description}</td>
+                    <td>${price}</td>
+                    <td><button class="btn btn-sm btn-outline-primary btn-article-detail" type="button">Detalle</button></td>
+                </tr>
+            `;
+        };
+
+        const parseInitialRows = () => Array.from(tableBody.querySelectorAll('tr')).map((row) => ({
+            ID: row.dataset.id || '',
+            DESCRIPTION: row.dataset.description || '',
+            PRICE: Number(row.dataset.price || 0)
+        }));
+
+        const renderRows = () => {
+            const totalRows = state.rows.length;
+            const totalPages = Math.max(1, Math.ceil(totalRows / state.perPage));
+
+            if (state.page > totalPages) {
+                state.page = totalPages;
+            }
+
+            const start = (state.page - 1) * state.perPage;
+            const end = start + state.perPage;
+            const pageRows = state.rows.slice(start, end);
+
+            tableBody.innerHTML = pageRows.map((item) => buildArticleRow(item)).join('');
+
+            if (paginationInfo) {
+                paginationInfo.textContent = `Mostrando ${totalRows === 0 ? 0 : start + 1} a ${Math.min(end, totalRows)} de ${totalRows} registros`;
+            }
+
+            if (pageIndicator) {
+                pageIndicator.textContent = `Pagina ${state.page} de ${totalPages}`;
+            }
+
+            if (prevPageButton) {
+                prevPageButton.disabled = state.page <= 1;
+            }
+
+            if (nextPageButton) {
+                nextPageButton.disabled = state.page >= totalPages;
+            }
+        };
+
+        const normalizeDetail = (payload) => {
+            const apiData = payload && typeof payload === 'object' ? payload : {};
+
+            const article = apiData.Article
+                || (Array.isArray(apiData.atricle) ? apiData.atricle[0] : null)
+                || (Array.isArray(apiData.article) ? apiData.article[0] : null)
+                || null;
+
+            const pictures = Array.isArray(apiData.Pictures)
+                ? apiData.Pictures
+                : (Array.isArray(apiData.pictures) ? apiData.pictures : []);
+
+            const stocks = Array.isArray(apiData.Stocks)
+                ? apiData.Stocks
+                : (Array.isArray(apiData.stocks) ? apiData.stocks : []);
+
+            return { article, pictures, stocks };
+        };
+
+        const setMainImage = (dataUri) => {
+            selectedImageDataUri = dataUri || '';
+
+            if (!mainImage || !mainImageEmpty || !expandImageButton) {
+                return;
+            }
+
+            if (selectedImageDataUri === '') {
+                mainImage.classList.add('d-none');
+                mainImage.removeAttribute('src');
+                mainImageEmpty.classList.remove('d-none');
+                expandImageButton.disabled = true;
+                return;
+            }
+
+            mainImage.src = selectedImageDataUri;
+            mainImage.classList.remove('d-none');
+            mainImageEmpty.classList.add('d-none');
+            expandImageButton.disabled = false;
+        };
+
+        const renderArticleDetail = (articleId, detailPayload) => {
+            if (!detailModalEl || !detailId || !detailDescription || !detailPrice || !imageThumbs || !stocksTableBody || !detailSelected) {
+                return;
+            }
+
+            const normalized = normalizeDetail(detailPayload);
+            const article = normalized.article || {};
+            const pictures = normalized.pictures;
+            const stocks = normalized.stocks;
+
+            detailSelected.textContent = articleId ? `Seleccionado: ${articleId}` : '';
+            detailId.textContent = article.ID || '-';
+            detailDescription.textContent = article.DESCRIPTION || '-';
+            detailPrice.textContent = formatCurrency(article.PRICE || 0);
+
+            imageThumbs.innerHTML = '';
+            if (pictures.length === 0) {
+                setMainImage('');
+                imageThumbs.innerHTML = '<small class="text-muted">Sin imagenes disponibles.</small>';
+            } else {
+                const pictureDataUris = [];
+
+                pictures.forEach((pictureItem) => {
+                    const dataUri = pictureItem.dataUri || (pictureItem.picture && pictureItem.ext
+                        ? `data:image/${String(pictureItem.ext).toLowerCase()};base64,${pictureItem.picture}`
+                        : '');
+
+                    if (dataUri !== '') {
+                        pictureDataUris.push(dataUri);
+                    }
+                });
+
+                setMainImage(pictureDataUris[0] || '');
+
+                pictureDataUris.forEach((dataUri, index) => {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = `btn p-0 border rounded overflow-hidden ${index === 0 ? 'border-primary' : 'border-light'}`;
+                    button.style.width = '70px';
+                    button.style.height = '70px';
+                    button.innerHTML = `<img src="${dataUri}" alt="Miniatura" class="w-100 h-100" style="object-fit: cover;">`;
+                    button.addEventListener('click', () => {
+                        setMainImage(dataUri);
+                        Array.from(imageThumbs.querySelectorAll('button')).forEach((thumbButton) => {
+                            thumbButton.classList.remove('border-primary');
+                            thumbButton.classList.add('border-light');
+                        });
+                        button.classList.remove('border-light');
+                        button.classList.add('border-primary');
+                    });
+
+                    imageThumbs.appendChild(button);
+                });
+
+                if (pictureDataUris.length === 0) {
+                    setMainImage('');
+                    imageThumbs.innerHTML = '<small class="text-muted">Imagen invalida.</small>';
+                }
+            }
+
+            stocksTableBody.innerHTML = '';
+            if (stocks.length === 0) {
+                stocksTableBody.innerHTML = '<tr><td colspan="2" class="text-muted">Sin inventario disponible.</td></tr>';
+            } else {
+                stocks.forEach((stockItem) => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${escapeHtml(String(stockItem.NAME || ''))}</td>
+                        <td>${formatCurrency(stockItem.AVAILABLE || 0)}</td>
+                    `;
+                    stocksTableBody.appendChild(tr);
+                });
+            }
+
+            bootstrap.Modal.getOrCreateInstance(detailModalEl).show();
+        };
+
+        const reloadArticles = async (searchValue, resetPage = false) => {
+            if (resetPage) {
+                state.page = 1;
+            }
+
+            const payload = { search: searchValue || '' };
+            const result = await fetchJson(window.APP.articlesListUrl, payload);
+
+            if (String(result.code) !== '200') {
+                showToast('danger', result.message || 'No fue posible cargar los articulos');
+                return;
+            }
+
+            state.rows = Array.isArray(result.data) ? result.data : [];
+            renderRows();
+        };
+
+        const loadArticleDetail = async (articleId) => {
+            if (!articleId) {
+                showToast('danger', 'ID de articulo no valido');
+                return;
+            }
+
+            const result = await fetchJson(window.APP.articlesDetailUrl, { search: articleId });
+            if (String(result.code) !== '200') {
+                showToast('danger', result.message || 'No fue posible consultar el detalle');
+                return;
+            }
+
+            renderArticleDetail(articleId, result.data || {});
+        };
+
+        searchForm?.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            state.search = String(searchInput?.value || '').trim();
+            await reloadArticles(state.search, true);
+        });
+
+        clearButton?.addEventListener('click', async () => {
+            state.search = '';
+            if (searchInput) {
+                searchInput.value = '';
+            }
+            await reloadArticles('', true);
+        });
+
+        perPageSelect?.addEventListener('change', () => {
+            const newPerPage = Number(perPageSelect.value || 8);
+            state.perPage = Number.isFinite(newPerPage) && newPerPage > 0 ? newPerPage : 8;
+            state.page = 1;
+            renderRows();
+        });
+
+        prevPageButton?.addEventListener('click', () => {
+            if (state.page <= 1) {
+                return;
+            }
+
+            state.page -= 1;
+            renderRows();
+        });
+
+        nextPageButton?.addEventListener('click', () => {
+            const totalPages = Math.max(1, Math.ceil(state.rows.length / state.perPage));
+            if (state.page >= totalPages) {
+                return;
+            }
+
+            state.page += 1;
+            renderRows();
+        });
+
+        tableBody.addEventListener('click', async (event) => {
+            const target = event.target;
+            if (!(target instanceof Element)) {
+                return;
+            }
+
+            const detailButton = target.closest('.btn-article-detail');
+            if (!(detailButton instanceof HTMLElement)) {
+                return;
+            }
+
+            const row = detailButton.closest('tr');
+            const articleId = row?.dataset.id || '';
+            await loadArticleDetail(articleId);
+        });
+
+        expandImageButton?.addEventListener('click', () => {
+            if (!imageModalEl || !expandedImage || selectedImageDataUri === '') {
+                return;
+            }
+
+            expandedImage.src = selectedImageDataUri;
+            bootstrap.Modal.getOrCreateInstance(imageModalEl).show();
+        });
+
+        state.rows = parseInitialRows();
+        renderRows();
+    };
+
     document.addEventListener('DOMContentLoaded', () => {
         initSidebar();
         consumeFlashMessages();
         initUsersModule();
+        initArticlesModule();
     });
 })();

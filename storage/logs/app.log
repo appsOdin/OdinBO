@@ -7,3 +7,10 @@
 [2026-06-11 13:25:09] ERROR: Invalid JSON response {"method":"PUT","url":"http://localhost/api/User/UpdateUser","body":"","http_code":401}
 [2026-06-11 13:25:23] ERROR: Invalid JSON response {"method":"PUT","url":"http://localhost/api/User/UpdateUser","body":"","http_code":401}
 [2026-06-11 13:28:02] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost/api/User/GetAllUsers","body":"","http_code":401}
+[2026-06-19 20:40:04] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost/api/User/GetAllUsers","body":"","http_code":401}
+[2026-06-19 20:40:15] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost/api/User/GetAllUsers","body":"","http_code":401}
+[2026-06-19 20:40:25] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost/api/User/GetAllUsers","body":"","http_code":401}
+[2026-06-19 20:40:34] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost/api/User/GetAllUsers","body":"","http_code":401}
+[2026-06-19 20:40:40] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost/api/User/GetAllUsers","body":"","http_code":401}
+[2026-06-19 20:40:44] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost/api/User/GetAllUsers","body":"","http_code":401}
+[2026-06-19 20:41:29] ERROR: Invalid JSON response {"method":"POST","url":"http://localhost/api/Article/GetAllArticles","body":"","http_code":401}

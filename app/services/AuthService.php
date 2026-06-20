@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Core\Logger;
+
 /**
  * Handles authentication use-cases.
  */
@@ -65,6 +67,22 @@ final class AuthService
 
     public function logout(): void
     {
+        $token = $this->sessionManager->getToken();
+
+        if ($token === null || $token === '') {
+            Logger::error('Logout requested without bearer token in session');
+            $this->sessionManager->clearAuth();
+            return;
+        }
+
+        // ApiService sends Authorization: Bearer <token> automatically using SessionManager token.
+        $response = $this->apiService->post('/api/User/Logout', []);
+        $httpCode = (int) ($response['http_code'] ?? 0);
+
+        if ($httpCode >= 400) {
+            Logger::error('Logout API failed', ['response' => $response]);
+        }
+
         $this->sessionManager->clearAuth();
     }
 }

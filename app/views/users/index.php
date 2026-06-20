@@ -64,11 +64,22 @@ $users = $users ?? [];
             </table>
         </div>
 
-        <div class="d-flex justify-content-between align-items-center mt-3">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
             <small class="text-muted" id="paginationInfo"></small>
-            <nav>
-                <ul class="pagination pagination-sm m-0" id="pagination"></ul>
-            </nav>
+            <div class="d-flex align-items-center gap-2">
+                <label for="usersPerPage" class="small text-muted m-0">Registros por pagina</label>
+                <select id="usersPerPage" class="form-select form-select-sm" style="width: auto;">
+                    <option value="5">5</option>
+                    <option value="8" selected>8</option>
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                </select>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-sm btn-outline-secondary" type="button" id="usersPrevPage" aria-label="Pagina anterior">&larr;</button>
+                <small class="text-muted" id="usersPageIndicator">Pagina 1 de 1</small>
+                <button class="btn btn-sm btn-outline-secondary" type="button" id="usersNextPage" aria-label="Pagina siguiente">&rarr;</button>
+            </div>
         </div>
     </div>
 </div>

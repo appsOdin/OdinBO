@@ -33,4 +33,9 @@ final class ServiceFactory
     {
         return new UserService(self::apiService());
     }
+
+    public static function articleService(): ArticleService
+    {
+        return new ArticleService(self::apiService());
+    }
 }
