@@ -24,13 +24,36 @@ const MENU_OPTIONS_ADMIN = [
 	['label' => 'Dashboard', 'path' => 'dashboard'],
 	['label' => 'Usuarios', 'path' => 'users'],
 	['label' => 'Articulos', 'path' => 'articles'],
+	[
+		'label' => 'RRHH',
+		'children' => [
+			['label' => 'Solicitud de vacaciones', 'path' => 'rrhh/solicitud-vacaciones'],
+			['label' => 'Todas las solicitudes', 'path' => 'rrhh/solicitudes-vacaciones'],
+			['label' => 'Para Firmar', 'path' => 'rrhh/solicitudes-para-firmar'],
+			['label' => 'Recepcion de tuplas', 'path' => 'rrhh/recepcion-tuplas'],
+		],
+	],
 ];
 
 const MENU_OPTIONS_USER = [
 	['label' => 'Dashboard', 'path' => 'dashboard'],
 	['label' => 'Articulos', 'path' => 'articles'],
+	[
+		'label' => 'RRHH',
+		'children' => [
+			['label' => 'Solicitud de vacaciones', 'path' => 'rrhh/solicitud-vacaciones'],
+			['label' => 'Para Firmar', 'path' => 'rrhh/solicitudes-para-firmar'],
+		],
+	],
 ];
 
 const MENU_OPTIONS_SUBSCRIBER = [
 	['label' => 'Dashboard', 'path' => 'dashboard'],
+	[
+		'label' => 'RRHH',
+		'children' => [
+			['label' => 'Solicitud de vacaciones', 'path' => 'rrhh/solicitud-vacaciones'],
+			['label' => 'Recepcion de tuplas', 'path' => 'rrhh/recepcion-tuplas'],
+		],
+	],
 ];

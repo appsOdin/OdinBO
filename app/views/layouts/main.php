@@ -70,10 +70,17 @@ window.APP = {
     usersStoreUrl: '<?= base_url('users/store') ?>',
     usersUpdateUrl: '<?= base_url('users/update') ?>',
     articlesListUrl: '<?= base_url('articles/list') ?>',
-    articlesDetailUrl: '<?= base_url('articles/detail') ?>'
+    articlesDetailUrl: '<?= base_url('articles/detail') ?>',
+    vacationGetSignersUrl: '<?= base_url('rrhh/solicitudes-vacaciones/signers') ?>',
+    vacationGetFilesUrl: '<?= base_url('rrhh/solicitudes-vacaciones/files') ?>',
+    vacationAddSignersUrl: '<?= base_url('rrhh/solicitudes-vacaciones/add-signers') ?>',
+    vacationSaveSignatureUrl: '<?= base_url('rrhh/solicitud-vacaciones/save-signature') ?>',
+    vacationDownloadFileUrl: '<?= base_url('rrhh/vacaciones/descargar') ?>',
+    vacationRejectUrl: '<?= base_url('rrhh/solicitud-vacaciones/reject') ?>'
 };
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="<?= base_url('assets/js/app.js?v=' . urlencode($appJsVersion)) ?>"></script>
 </body>
 </html>

@@ -245,6 +245,30 @@ a:hover {
     min-height: 240px;
 }
 
+.vacation-card {
+    border-radius: 14px;
+}
+
+.vacation-actions .btn {
+    min-width: 120px;
+}
+
+.signature-pad-wrapper {
+    border: 1px solid rgba(15, 23, 42, 0.16);
+    border-radius: 10px;
+    background: #ffffff;
+    padding: 0.5rem;
+}
+
+.signature-canvas {
+    width: 100%;
+    min-height: 220px;
+    border-radius: 8px;
+    border: 1px dashed rgba(15, 23, 42, 0.3);
+    touch-action: none;
+    cursor: crosshair;
+}
+
 #articleMainImage {
     max-height: 320px;
     object-fit: contain;
@@ -339,5 +363,13 @@ a:hover {
 
     #articlesPerPage {
         min-width: 64px;
+    }
+
+    .vacation-actions .btn {
+        min-width: 100%;
+    }
+
+    .signature-canvas {
+        min-height: 180px;
     }
 }

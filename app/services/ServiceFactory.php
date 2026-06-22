@@ -38,4 +38,9 @@ final class ServiceFactory
     {
         return new ArticleService(self::apiService());
     }
+
+    public static function vacationRequestService(): VacationRequestService
+    {
+        return new VacationRequestService(self::apiService());
+    }
 }

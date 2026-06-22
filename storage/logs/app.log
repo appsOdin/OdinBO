@@ -108,3 +108,29 @@
 [2026-06-19 23:32:09] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost:5104/api/User/GetAllUsers","body":"","http_code":403}
 [2026-06-19 23:34:32] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost:5104/api/User/GetAllUsers","body":"","http_code":403}
 [2026-06-19 23:35:02] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost:5104/api/User/GetAllUsers","body":"","http_code":403}
+[2026-06-19 23:45:41] ERROR: HTTP cURL error {"method":"POST","url":"http://localhost:5104/api/User/Login","error":"Failed to connect to localhost port 5104 after 2246 ms: Couldn't connect to server"}
+[2026-06-22 13:55:30] ERROR: Invalid JSON response {"method":"POST","url":"http://localhost:5104/api/VacationRequest/Create","body":"","http_code":401}
+[2026-06-22 14:09:12] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost:5104/api/User/GetAllUsers","body":"","http_code":401}
+[2026-06-22 14:20:28] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost:5104/api/VacationRequest/GetFiles/3","body":"","http_code":401}
+[2026-06-22 14:20:43] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost:5104/api/VacationRequest/GetFiles/3","body":"","http_code":401}
+[2026-06-22 14:21:44] ERROR: HTTP cURL error {"method":"GET","url":"http://localhost:5104/api/VacationRequest/GetMy","error":"Failed to connect to localhost port 5104 after 2230 ms: Couldn't connect to server"}
+[2026-06-22 14:53:25] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost:5104/api/VacationRequest/GetMy","body":"","http_code":401}
+[2026-06-22 14:55:07] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost:5104/api/User/GetAllUsers","body":"","http_code":403}
+[2026-06-22 15:08:36] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost:5104/api/VacationRequest/GetAll","body":"","http_code":401}
+[2026-06-22 15:17:22] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost:5104/api/VacationRequest/GetAll","body":"","http_code":401}
+[2026-06-22 15:19:06] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost:5104/api/User/GetAllUsers","body":"","http_code":403}
+[2026-06-22 15:20:06] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost:5104/api/User/GetAllUsers","body":"","http_code":403}
+[2026-06-22 15:28:26] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost:5104/api/VacationRequest/GetMy","body":"","http_code":401}
+[2026-06-22 15:28:34] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost:5104/api/User/GetAllUsers","body":"","http_code":403}
+[2026-06-22 15:29:06] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost:5104/api/VacationRequest/GetMy","body":"","http_code":401}
+[2026-06-22 15:31:09] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost:5104/api/User/GetAllUsers","body":"","http_code":403}
+[2026-06-22 15:33:10] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost:5104/api/User/GetAllUsers","body":"","http_code":403}
+[2026-06-22 15:33:47] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost:5104/api/User/GetAllUsers","body":"","http_code":403}
+[2026-06-22 15:42:44] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost:5104/api/VacationRequest/GetRequestsToSign","body":"","http_code":401}
+[2026-06-22 16:20:04] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost:5104/api/User/GetAllUsers","body":"","http_code":401}
+[2026-06-22 16:21:40] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost:5104/api/User/GetAllUsers","body":"","http_code":403}
+[2026-06-22 16:23:23] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost:5104/api/User/GetAllUsers","body":"","http_code":403}
+[2026-06-22 16:23:45] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost:5104/api/User/GetAllUsers","body":"","http_code":403}
+[2026-06-22 16:24:12] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost:5104/api/User/GetAllUsers","body":"","http_code":403}
+[2026-06-22 16:58:04] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost:5104/api/VacationRequest/GetAll","body":"","http_code":401}
+[2026-06-22 17:03:13] ERROR: Invalid JSON response {"method":"POST","url":"http://localhost:5104/api/VacationRequest/Reject","body":"","http_code":401}
