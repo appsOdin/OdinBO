@@ -367,6 +367,12 @@ final class VacationRequestController extends Controller
         }
 
         $rows = $apiHttpCode === 200 && is_array($response['data'] ?? null) ? $response['data'] : [];
+        $rows = array_values(array_filter($rows, static function (array $row): bool {
+            $stateKey = strtoupper((string) ($row['stateKey'] ?? ''));
+            $stateName = strtoupper((string) ($row['stateName'] ?? ''));
+
+            return $stateKey !== 'REJECTED' && $stateName !== 'RECHAZADO';
+        }));
 
         $this->view('vacations/to-sign', [
             'title' => 'Solicitudes para firmar',

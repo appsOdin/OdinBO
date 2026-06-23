@@ -15,6 +15,7 @@ $stateBadge = match ($stateKey) {
     default => '<span class="badge text-bg-secondary">' . htmlspecialchars($stateName, ENT_QUOTES, 'UTF-8') . '</span>',
 };
 
+$solicitanteSigner = is_array($detail['solicitanteSigner'] ?? null) ? $detail['solicitanteSigner'] : [];
 $signers = is_array($detail['signers'] ?? null) ? $detail['signers'] : [];
 $files = is_array($detail['files'] ?? null) ? $detail['files'] : [];
 $totalSigners = (int) ($detail['totalSigners'] ?? count($signers));
@@ -25,6 +26,63 @@ $canCurrentUserSign = (bool) ($detail['canCurrentUserSign'] ?? false);
 $isOwner = (bool) ($detail['isOwner'] ?? false);
 $canOwnerSign = $isOwner && $stateKey === 'APPROVED';
 $progress = $totalSigners > 0 ? (int) round(($signedCount / $totalSigners) * 100) : 0;
+
+$buildSignatureSrc = static function (string $signatureRaw): string {
+    $signatureRaw = trim($signatureRaw);
+    if ($signatureRaw === '') {
+        return '';
+    }
+
+    if (str_starts_with($signatureRaw, 'data:image/')) {
+        return $signatureRaw;
+    }
+
+    return 'data:image/png;base64,' . $signatureRaw;
+};
+
+$ownerUserId = (int) ($detail['userId'] ?? 0);
+$ownerDisplayName = (string) ($solicitanteSigner['userName'] ?? ($detail['userName'] ?? 'Solicitante'));
+$ownerSignatureRaw = (string) (
+    $solicitanteSigner['signatureImageBase64']
+    ?? $solicitanteSigner['signatureImage']
+    ?? $solicitanteSigner['signature']
+    ?? ''
+);
+
+if ($ownerSignatureRaw === '') {
+    $ownerSignatureRaw = (string) (
+    $detail['ownerSignatureImageBase64']
+    ?? $detail['ownerSignatureBase64']
+    ?? $detail['ownerSignatureImage']
+    ?? $detail['ownerSignature']
+    ?? $detail['signatureImageBase64']
+    ?? $detail['signatureImage']
+    ?? ''
+    );
+}
+
+if ($ownerSignatureRaw === '' && $signers !== []) {
+    foreach ($signers as $signer) {
+        $isOwnerSigner = (bool) ($signer['isOwner'] ?? false);
+        $sameUser = $ownerUserId > 0 && (int) ($signer['userId'] ?? 0) === $ownerUserId;
+        if (!$isOwnerSigner && !$sameUser) {
+            continue;
+        }
+
+        $ownerSignatureRaw = (string) (
+            $signer['signatureImageBase64']
+            ?? $signer['signatureImage']
+            ?? $signer['signature']
+            ?? ''
+        );
+
+        if ($ownerSignatureRaw !== '') {
+            break;
+        }
+    }
+}
+
+$ownerSignatureSrc = $buildSignatureSrc($ownerSignatureRaw);
 ?>
 <section class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
     <div>
@@ -91,6 +149,17 @@ $progress = $totalSigners > 0 ? (int) round(($signedCount / $totalSigners) * 100
                 <div class="mt-3 small text-muted">
                     <?= $isOwner ? 'Eres el propietario de esta solicitud.' : 'No eres el propietario de esta solicitud.' ?>
                 </div>
+                <?php if ($ownerSignatureSrc !== ''): ?>
+                    <div class="mt-3">
+                        <small class="text-muted d-block mb-1">Firma del solicitante (<?= htmlspecialchars($ownerDisplayName, ENT_QUOTES, 'UTF-8') ?>):</small>
+                        <img
+                            src="<?= htmlspecialchars($ownerSignatureSrc, ENT_QUOTES, 'UTF-8') ?>"
+                            alt="Firma del solicitante <?= htmlspecialchars($ownerDisplayName, ENT_QUOTES, 'UTF-8') ?>"
+                            class="img-fluid border rounded bg-white p-1"
+                            style="max-height: 140px;"
+                        >
+                    </div>
+                <?php endif; ?>
                 <?php if ($canOwnerSign): ?>
                     <div class="alert alert-success mt-3 mb-0">
                         Todos los firmantes (<?= $signedCount ?>/<?= $totalSigners ?>) han completado su firma. Ahora puedes firmar tu para finalizar la solicitud.
@@ -130,8 +199,14 @@ $progress = $totalSigners > 0 ? (int) round(($signedCount / $totalSigners) * 100
                     <div class="vstack gap-3">
                         <?php foreach ($signers as $signer): ?>
                             <?php
-                            $hasSigned = (bool) ($signer['hasSigned'] ?? false);
-                            $signatureBase64 = (string) ($signer['signatureImageBase64'] ?? '');
+                            $signatureRaw = (string) (
+                                $signer['signatureImageBase64']
+                                ?? $signer['signatureImage']
+                                ?? $signer['signature']
+                                ?? ''
+                            );
+                            $signatureSrc = $buildSignatureSrc($signatureRaw);
+                            $hasSigned = (bool) ($signer['hasSigned'] ?? ($signatureSrc !== ''));
                             ?>
                             <div class="p-3 rounded border <?= $hasSigned ? 'border-success bg-success-subtle' : 'border-warning bg-warning-subtle' ?>">
                                 <div class="d-flex flex-wrap justify-content-between gap-2 mb-2">
@@ -151,11 +226,11 @@ $progress = $totalSigners > 0 ? (int) round(($signedCount / $totalSigners) * 100
                                     <small class="text-muted d-block mb-2">Fecha de firma: <?= htmlspecialchars(date('d/m/Y H:i', strtotime((string) ($signer['signDate'] ?? 'now'))), ENT_QUOTES, 'UTF-8') ?></small>
                                 <?php endif; ?>
 
-                                <?php if ($signatureBase64 !== ''): ?>
+                                <?php if ($signatureSrc !== ''): ?>
                                     <div>
                                         <small class="text-muted d-block mb-1">Firma:</small>
                                         <img
-                                            src="data:image/png;base64,<?= htmlspecialchars($signatureBase64, ENT_QUOTES, 'UTF-8') ?>"
+                                            src="<?= htmlspecialchars($signatureSrc, ENT_QUOTES, 'UTF-8') ?>"
                                             alt="Firma de <?= htmlspecialchars((string) ($signer['userName'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
                                             class="img-fluid border rounded bg-white p-1"
                                             style="max-height: 140px;"

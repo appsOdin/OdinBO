@@ -291,6 +291,7 @@ $currentUserRole = strtoupper((string) ($authUser['rolename'] ?? ''));
             const signModal = getModalInstance(signModalEl);
             await notify('Firma guardada exitosamente.', 'success');
             signModal?.hide();
+            window.location.reload();
         });
     };
 

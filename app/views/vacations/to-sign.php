@@ -39,6 +39,9 @@ $pendingCount = count($requests);
                         $id = (int) ($req['id'] ?? 0);
                         $stateKey = strtoupper((string) ($req['stateKey'] ?? ''));
                         $stateName = (string) ($req['stateName'] ?? 'Desconocido');
+                        if ($stateKey === 'REJECTED') {
+                            continue;
+                        }
                         $stateBadge = match ($stateKey) {
                             'PENDING' => '<span class="badge text-bg-warning">Pendiente</span>',
                             'TOSIGNED' => '<span class="badge text-bg-info">Para Firmar</span>',
