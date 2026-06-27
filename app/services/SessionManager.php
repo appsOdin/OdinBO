@@ -16,12 +16,13 @@ final class SessionManager
      */
     public function storeAuth(array $userData): void
     {
+        $token = (string) ($userData['token'] ?? '');
         $_SESSION[self::KEY_AUTH] = [
             'id' => $userData['id'],
             'username' => $userData['username'],
-            'token' => $userData['token'],
+            'token' => $token,
             'rolename' => $userData['rolename'],
-            'expires_at' => time() + (SESSION_TIMEOUT * 60),
+            'expires_at' => $this->resolveExpiresAtFromToken($token),
         ];
     }
 
@@ -54,7 +55,7 @@ final class SessionManager
         }
 
         $_SESSION[self::KEY_AUTH]['token'] = $token;
-        $_SESSION[self::KEY_AUTH]['expires_at'] = time() + (SESSION_TIMEOUT * 60);
+        $_SESSION[self::KEY_AUTH]['expires_at'] = $this->resolveExpiresAtFromToken($token);
     }
 
     /**
@@ -76,5 +77,46 @@ final class SessionManager
     public function getExpiresAt(): int
     {
         return (int) ($_SESSION[self::KEY_AUTH]['expires_at'] ?? 0);
+    }
+
+    private function resolveExpiresAtFromToken(string $token): int
+    {
+        $fallback = time() + (SESSION_TIMEOUT * 60);
+        if ($token === '') {
+            return $fallback;
+        }
+
+        $parts = explode('.', $token);
+        if (count($parts) < 2) {
+            return $fallback;
+        }
+
+        $payload = strtr($parts[1], '-_', '+/');
+        $padding = strlen($payload) % 4;
+        if ($padding > 0) {
+            $payload .= str_repeat('=', 4 - $padding);
+        }
+
+        $decoded = base64_decode($payload, true);
+        if ($decoded === false) {
+            return $fallback;
+        }
+
+        $claims = json_decode($decoded, true);
+        if (!is_array($claims)) {
+            return $fallback;
+        }
+
+        $exp = $claims['exp'] ?? null;
+        if (!is_numeric($exp)) {
+            return $fallback;
+        }
+
+        $expiresAt = (int) $exp;
+        if ($expiresAt <= 0) {
+            return $fallback;
+        }
+
+        return $expiresAt;
     }
 }
