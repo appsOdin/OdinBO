@@ -24,7 +24,8 @@ $currentUserRole = strtoupper((string) ($authUser['rolename'] ?? ''));
                         <th>ID</th>
                         <th>Inicio</th>
                         <th>Fin</th>
-                        <th>Dias</th>
+                        <th>Tipo</th>
+                        <th>Cantidad</th>
                         <th>Descripcion</th>
                         <th>Estado</th>
                         <th>Acciones</th>
@@ -44,13 +45,23 @@ $currentUserRole = strtoupper((string) ($authUser['rolename'] ?? ''));
                             'REJECTED' => '<span class="badge text-bg-danger">Rechazado</span>',
                             default => '<span class="badge text-bg-secondary">' . htmlspecialchars($stateName, ENT_QUOTES, 'UTF-8') . '</span>',
                         };
+                        $requestType = isset($req['requestType']) && $req['requestType'] !== null ? (int) $req['requestType'] : null;
+                        $quantityLabel = $requestType === 1 ? 'h' : ($requestType === 0 ? 'd' : '');
+                        $typeLabel = $requestType === 1 ? 'Permiso' : ($requestType === 0 ? 'Vacaciones' : null);
                         $isOwner = (string) ($req['userId'] ?? '') === $currentUserId;
                         ?>
                         <tr>
                             <td><?= $id ?></td>
                             <td><?= htmlspecialchars(date('d/m/Y', strtotime((string) ($req['startDate'] ?? 'now'))), ENT_QUOTES, 'UTF-8') ?></td>
                             <td><?= htmlspecialchars(date('d/m/Y', strtotime((string) ($req['endDate'] ?? 'now'))), ENT_QUOTES, 'UTF-8') ?></td>
-                            <td><?= (int) ($req['quantity'] ?? 0) ?></td>
+                            <td>
+                                <?php if ($typeLabel !== null): ?>
+                                    <span class="badge <?= $requestType === 1 ? 'text-bg-secondary' : 'text-bg-primary' ?>"><?= $typeLabel ?></span>
+                                <?php else: ?>
+                                    <span class="text-muted">—</span>
+                                <?php endif; ?>
+                            </td>
+                            <td><?= (int) ($req['quantity'] ?? 0) ?><?= $quantityLabel !== '' ? ' ' . $quantityLabel : '' ?></td>
                             <td><?= htmlspecialchars((string) ($req['description'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
                             <td><?= $stateBadge ?></td>
                             <td>

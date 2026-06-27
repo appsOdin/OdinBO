@@ -16,13 +16,14 @@ final class VacationRequestService
     /**
      * @return array<string, mixed>
      */
-    public function create(string $startDateIso, string $endDateIso, int $quantity, string $description): array
+    public function create(string $startDateIso, string $endDateIso, int $quantity, string $description, int $requestType): array
     {
         return $this->apiService->post('/api/VacationRequest/Create', [
             'startDate' => $startDateIso,
             'endDate' => $endDateIso,
             'quantity' => $quantity,
             'description' => $description,
+            'requestType' => $requestType,
         ]);
     }
 

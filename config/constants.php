@@ -9,7 +9,7 @@ const APP_DEBUG = true;
 const APP_URL = 'http://localhost:8080/OdinBO/public';
 const APP_TIMEZONE = 'America/Bogota';
 
-const API_BASE_URL = 'http://localhost';
+const API_BASE_URL = 'http://localhost:5104';
 const TOKEN_REFRESH_MINUTES = 5;
 const SESSION_TIMEOUT = 60;
 
@@ -30,7 +30,6 @@ const MENU_OPTIONS_ADMIN = [
 			['label' => 'Solicitud de vacaciones', 'path' => 'rrhh/solicitud-vacaciones'],
 			['label' => 'Todas las solicitudes', 'path' => 'rrhh/solicitudes-vacaciones'],
 			['label' => 'Para Firmar', 'path' => 'rrhh/solicitudes-para-firmar'],
-			['label' => 'Recepcion de tuplas', 'path' => 'rrhh/recepcion-tuplas'],
 		],
 	],
 ];
@@ -53,7 +52,6 @@ const MENU_OPTIONS_SUBSCRIBER = [
 		'label' => 'RRHH',
 		'children' => [
 			['label' => 'Solicitud de vacaciones', 'path' => 'rrhh/solicitud-vacaciones'],
-			['label' => 'Recepcion de tuplas', 'path' => 'rrhh/recepcion-tuplas'],
 		],
 	],
 ];

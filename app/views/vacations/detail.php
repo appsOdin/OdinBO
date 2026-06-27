@@ -134,17 +134,27 @@ $ownerSignatureSrc = $buildSignatureSrc($ownerSignatureRaw);
                         <div><?= htmlspecialchars(date('d/m/Y', strtotime((string) ($detail['endDate'] ?? 'now'))), ENT_QUOTES, 'UTF-8') ?></div>
                     </div>
                     <div class="col-md-6 col-lg-2">
-                        <small class="text-muted d-block">Dias</small>
+                        <small class="text-muted d-block"><?= (int) ($detail['requestType'] ?? 0) === 1 ? 'Horas' : 'Dias' ?></small>
                         <div><?= (int) ($detail['quantity'] ?? 0) ?></div>
                     </div>
                     <div class="col-md-6 col-lg-4">
                         <small class="text-muted d-block">Fecha de solicitud</small>
                         <div><?= htmlspecialchars(date('d/m/Y H:i', strtotime((string) ($detail['requestDate'] ?? 'now'))), ENT_QUOTES, 'UTF-8') ?></div>
                     </div>
+                    <div class="col-md-6 col-lg-3">
+                        <small class="text-muted d-block">Tipo</small>
+                        <div><?= (int) ($detail['requestType'] ?? 0) === 1 ? 'Permiso' : 'Vacaciones' ?></div>
+                    </div>
                     <div class="col-12">
                         <small class="text-muted d-block">Descripcion</small>
                         <div><?= htmlspecialchars((string) ($detail['description'] ?? ''), ENT_QUOTES, 'UTF-8') ?></div>
                     </div>
+                    <?php if ($stateKey === 'REJECTED' && ($detail['rejectedDescription'] ?? '') !== ''): ?>
+                    <div class="col-12">
+                        <small class="text-muted d-block">Motivo de Rechazo</small>
+                        <div class="text-danger"><?= htmlspecialchars((string) $detail['rejectedDescription'], ENT_QUOTES, 'UTF-8') ?></div>
+                    </div>
+                    <?php endif; ?>
                 </div>
                 <div class="mt-3 small text-muted">
                     <?= $isOwner ? 'Eres el propietario de esta solicitud.' : 'No eres el propietario de esta solicitud.' ?>
@@ -398,8 +408,8 @@ $ownerSignatureSrc = $buildSignatureSrc($ownerSignatureRaw);
                 <input type="hidden" id="rejectRequestId" value="<?= $id ?>">
                 <div class="mb-3">
                     <label for="rejectReason" class="form-label fw-semibold">Motivo del Rechazo <span class="text-danger">*</span></label>
-                    <textarea class="form-control" id="rejectReason" rows="4" maxlength="500" required placeholder="Describa el motivo del rechazo..."></textarea>
-                    <small class="text-muted d-block mt-1"><span id="rejectReasonCounter">0</span>/500 caracteres</small>
+                    <textarea class="form-control" id="rejectReason" rows="4" maxlength="200" required placeholder="Describa el motivo del rechazo..."></textarea>
+                    <small class="text-muted d-block mt-1"><span id="rejectReasonCounter">0</span>/200 caracteres</small>
                 </div>
             </div>
             <div class="modal-footer">

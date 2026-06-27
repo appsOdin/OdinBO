@@ -102,6 +102,14 @@ final class VacationRequestController extends Controller
         $endDateRaw = sanitize_text((string) $request->input('end_date', ''));
         $description = sanitize_text((string) $request->input('description', ''));
         $quantityInput = (int) $request->input('quantity', 0);
+        $requestTypeRaw = $request->input('request_type', null);
+
+        if (!in_array((string) $requestTypeRaw, ['0', '1'], true)) {
+            flash('danger', 'Tipo de solicitud invalido. Seleccione Vacaciones o Permiso.');
+            $this->redirect('/rrhh/solicitud-vacaciones/crear');
+            return;
+        }
+        $requestType = (int) $requestTypeRaw;
 
         $startDate = \DateTimeImmutable::createFromFormat('Y-m-d', $startDateRaw);
         $endDate = \DateTimeImmutable::createFromFormat('Y-m-d', $endDateRaw);
@@ -125,23 +133,39 @@ final class VacationRequestController extends Controller
             return;
         }
 
-        if ($endDate <= $startDate) {
-            flash('danger', 'La fecha de inicio debe ser menor que la fecha de fin.');
-            $this->redirect('/rrhh/solicitud-vacaciones/crear');
-            return;
-        }
-
-        $days = (int) $startDate->diff($endDate)->format('%a');
-        if ($days < 1 || $days > 255) {
-            flash('danger', 'La cantidad de dias debe estar entre 1 y 255.');
-            $this->redirect('/rrhh/solicitud-vacaciones/crear');
-            return;
-        }
-
-        if ($quantityInput > 0 && $quantityInput !== $days) {
-            flash('danger', 'La cantidad de dias no coincide con el rango de fechas.');
-            $this->redirect('/rrhh/solicitud-vacaciones/crear');
-            return;
+        if ($requestType === 1) {
+            // Permiso: start and end must be the same date; quantity = hours
+            if ($endDate->format('Y-m-d') !== $startDate->format('Y-m-d')) {
+                flash('danger', 'Para permisos, la fecha de inicio y fin deben ser el mismo dia.');
+                $this->redirect('/rrhh/solicitud-vacaciones/crear');
+                return;
+            }
+            if ($quantityInput < 1 || $quantityInput > 999) {
+                flash('danger', 'La cantidad de horas debe estar entre 1 y 999.');
+                $this->redirect('/rrhh/solicitud-vacaciones/crear');
+                return;
+            }
+            $finalQuantity = $quantityInput;
+        } else {
+            // Vacaciones: end >= start, quantity = inclusive days
+            if ($endDate < $startDate) {
+                flash('danger', 'La fecha de fin no puede ser anterior a la fecha de inicio.');
+                $this->redirect('/rrhh/solicitud-vacaciones/crear');
+                return;
+            }
+            $finalQuantity = 0;
+            $cur = $startDate;
+            while ($cur <= $endDate) {
+                if ((int) $cur->format('w') !== 0) { // 0 = domingo
+                    $finalQuantity++;
+                }
+                $cur = $cur->modify('+1 day');
+            }
+            if ($finalQuantity < 1 || $finalQuantity > 255) {
+                flash('danger', 'La cantidad de dias debe estar entre 1 y 255 (sin contar domingos).');
+                $this->redirect('/rrhh/solicitud-vacaciones/crear');
+                return;
+            }
         }
 
         if ($description === '' || mb_strlen($description, 'UTF-8') > 100) {
@@ -153,8 +177,9 @@ final class VacationRequestController extends Controller
         $response = ServiceFactory::vacationRequestService()->create(
             $startDate->format('Y-m-d') . 'T00:00:00',
             $endDate->format('Y-m-d') . 'T00:00:00',
-            $days,
-            $description
+            $finalQuantity,
+            $description,
+            $requestType
         );
 
         $httpCode = (int) ($response['http_code'] ?? 0);
@@ -495,8 +520,8 @@ final class VacationRequestController extends Controller
             return;
         }
 
-        if (mb_strlen($rejectReason, 'UTF-8') > 500) {
-            $this->json(['code' => '422', 'message' => 'El motivo no puede superar 500 caracteres', 'data' => null], 422);
+        if (mb_strlen($rejectReason, 'UTF-8') > 200) {
+            $this->json(['code' => '422', 'message' => 'El motivo no puede superar 200 caracteres', 'data' => null], 422);
             return;
         }
 
