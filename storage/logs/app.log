@@ -16,3 +16,11 @@
 [2026-06-26 23:49:21] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost:5104/api/User/GetAllUsers","body":"","http_code":403}
 [2026-06-26 23:51:44] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost:5104/api/User/GetAllUsers","body":"","http_code":403}
 [2026-06-26 23:59:52] ERROR: Invalid JSON response {"method":"POST","url":"http://localhost:5104/api/Article/GetArticleDetail","body":"","http_code":401}
+[2026-06-27 00:05:46] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost:5104/api/User/GetAllUsers","body":"","http_code":401}
+[2026-06-27 00:06:56] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost:5104/api/User/GetAllUsers","body":"","http_code":401}
+[2026-06-27 00:07:17] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost:5104/api/User/GetAllUsers","body":"","http_code":401}
+[2026-06-27 00:07:18] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost:5104/api/User/GetAllUsers","body":"","http_code":401}
+[2026-06-27 00:07:36] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost:5104/api/User/GetAllUsers","body":"","http_code":401}
+[2026-06-27 00:07:42] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost:5104/api/User/GetAllUsers","body":"","http_code":401}
+[2026-06-27 00:09:26] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost:5104/api/User/GetAllUsers","body":"","http_code":401}
+[2026-06-27 00:09:31] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost:5104/api/VacationRequest/GetMy","body":"","http_code":401}

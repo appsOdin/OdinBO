@@ -99,16 +99,116 @@ body {
     color: var(--sidebar-brand-text);
 }
 
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-bottom: 1rem;
+}
+
 .sidebar .nav-link {
     color: var(--sidebar-link-text);
-    border-radius: 10px;
-    padding: 0.65rem 0.85rem;
+    border-radius: 8px;
+    padding: 0.6rem 0.85rem;
+    font-size: 0.9rem;
+    transition: background 0.18s ease, color 0.18s ease;
 }
 
 .sidebar .nav-link.active,
 .sidebar .nav-link:hover {
     background: var(--sidebar-link-hover-bg);
     color: #fff;
+}
+
+/* Group toggle (parent with children) */
+.sidebar-group-toggle {
+    cursor: pointer;
+    user-select: none;
+}
+
+.sidebar-group-toggle.active {
+    background: var(--sidebar-link-hover-bg);
+    color: #fff;
+}
+
+/* Arrow indicator */
+.sidebar-arrow {
+    display: inline-block;
+    width: 0.55rem;
+    height: 0.55rem;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(-45deg);
+    transition: transform 0.25s ease;
+    flex-shrink: 0;
+    margin-right: 2px;
+}
+
+.sidebar-group-toggle[aria-expanded="true"] .sidebar-arrow {
+    transform: rotate(45deg);
+}
+
+.sidebar-group-hint {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    opacity: 0.65;
+}
+
+.sidebar-group-hint-text {
+    font-size: 0.68rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    line-height: 1;
+    transition: opacity 0.2s;
+}
+
+.sidebar-group-toggle:hover .sidebar-group-hint,
+.sidebar-group-toggle.active .sidebar-group-hint {
+    opacity: 1;
+}
+
+/* Submenu */
+.sidebar-submenu {
+    margin: 2px 0 4px 0;
+    padding: 0;
+    gap: 1px;
+}
+
+.sidebar-submenu-link {
+    padding: 0.45rem 0.85rem 0.45rem 1.4rem;
+    font-size: 0.855rem;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: rgba(255, 255, 255, 0.82);
+}
+
+.sidebar-submenu-link:hover,
+.sidebar-submenu-link.active {
+    background: var(--sidebar-link-hover-bg);
+    color: #fff;
+}
+
+.sidebar-submenu-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+    flex-shrink: 0;
+    opacity: 0.7;
+}
+
+.sidebar-submenu-link.active .sidebar-submenu-dot,
+.sidebar-submenu-link:hover .sidebar-submenu-dot {
+    opacity: 1;
+}
+
+/* Left border accent on active submenu item */
+.sidebar-submenu-link.active {
+    border-left: 3px solid rgba(255,255,255,0.7);
+    padding-left: calc(1.4rem - 3px);
 }
 
 .content-shell {
