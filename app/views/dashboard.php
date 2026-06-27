@@ -7,14 +7,6 @@
     <div class="col-md-4">
         <div class="card stat-card border-0 shadow-sm h-100">
             <div class="card-body">
-                <p class="text-muted mb-2">Cantidad de usuarios</p>
-                <h3 class="m-0"><?= (int) ($totalUsers ?? 0) ?></h3>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card stat-card border-0 shadow-sm h-100">
-            <div class="card-body">
                 <p class="text-muted mb-2">Usuario autenticado</p>
                 <h3 class="m-0"><?= htmlspecialchars((string) (($authUser['username'] ?? '') ?: 'N/D'), ENT_QUOTES, 'UTF-8') ?></h3>
             </div>

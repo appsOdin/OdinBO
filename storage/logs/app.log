@@ -15,3 +15,4 @@
 [2026-06-26 23:48:44] ERROR: HTTP cURL error {"method":"POST","url":"http://localhost:5104/api/User/Login","error":"Failed to connect to localhost port 5104 after 2240 ms: Couldn't connect to server"}
 [2026-06-26 23:49:21] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost:5104/api/User/GetAllUsers","body":"","http_code":403}
 [2026-06-26 23:51:44] ERROR: Invalid JSON response {"method":"GET","url":"http://localhost:5104/api/User/GetAllUsers","body":"","http_code":403}
+[2026-06-26 23:59:52] ERROR: Invalid JSON response {"method":"POST","url":"http://localhost:5104/api/Article/GetArticleDetail","body":"","http_code":401}

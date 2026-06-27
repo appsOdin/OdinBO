@@ -568,7 +568,8 @@
             search: '',
             page: 1,
             perPage: Number(perPageSelect?.value || 8),
-            rows: []
+            rows: [],
+            allRows: []
         };
 
         const buildArticleRow = (item) => {
@@ -741,6 +742,20 @@
             bootstrap.Modal.getOrCreateInstance(detailModalEl).show();
         };
 
+        const applyFilter = (resetPage = false) => {
+            if (resetPage) {
+                state.page = 1;
+            }
+            const term = state.search.toLowerCase();
+            state.rows = term === ''
+                ? state.allRows
+                : state.allRows.filter((item) =>
+                    String(item.ID || '').toLowerCase().includes(term) ||
+                    String(item.DESCRIPTION || '').toLowerCase().includes(term)
+                );
+            renderRows();
+        };
+
         const reloadArticles = async (searchValue, resetPage = false) => {
             if (resetPage) {
                 state.page = 1;
@@ -754,7 +769,8 @@
                 return;
             }
 
-            state.rows = Array.isArray(result.data) ? result.data : [];
+            state.allRows = Array.isArray(result.data) ? result.data : [];
+            state.rows = state.allRows;
             renderRows();
         };
 
@@ -773,18 +789,28 @@
             renderArticleDetail(articleId, result.data || {});
         };
 
-        searchForm?.addEventListener('submit', async (event) => {
+        let searchDebounceTimer = null;
+
+        searchForm?.addEventListener('submit', (event) => {
             event.preventDefault();
             state.search = String(searchInput?.value || '').trim();
-            await reloadArticles(state.search, true);
+            applyFilter(true);
         });
 
-        clearButton?.addEventListener('click', async () => {
+        searchInput?.addEventListener('input', () => {
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(() => {
+                state.search = String(searchInput.value || '').trim();
+                applyFilter(true);
+            }, 200);
+        });
+
+        clearButton?.addEventListener('click', () => {
             state.search = '';
             if (searchInput) {
                 searchInput.value = '';
             }
-            await reloadArticles('', true);
+            applyFilter(true);
         });
 
         perPageSelect?.addEventListener('change', () => {
@@ -838,7 +864,8 @@
             bootstrap.Modal.getOrCreateInstance(imageModalEl).show();
         });
 
-        state.rows = parseInitialRows();
+        state.allRows = parseInitialRows();
+        state.rows = state.allRows;
         renderRows();
     };
 
