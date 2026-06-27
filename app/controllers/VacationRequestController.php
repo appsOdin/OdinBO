@@ -18,8 +18,9 @@ final class VacationRequestController extends Controller
         $response = ServiceFactory::vacationRequestService()->getMy();
         $apiHttpCode = (int) ($response['http_code'] ?? 200);
 
-        if ($apiHttpCode === 401) {
+        if ($apiHttpCode === 401 || $apiHttpCode === 406) {
             ServiceFactory::authService()->logout();
+            flash('danger', (string) ($response['message'] ?? 'Sesion expirada.'));
             $this->redirect('/login');
             return;
         }
@@ -54,8 +55,9 @@ final class VacationRequestController extends Controller
         $vacationResponse = ServiceFactory::vacationRequestService()->getAll();
         $apiHttpCode = (int) ($vacationResponse['http_code'] ?? 200);
 
-        if ($apiHttpCode === 401) {
+        if ($apiHttpCode === 401 || $apiHttpCode === 406) {
             ServiceFactory::authService()->logout();
+            flash('danger', (string) ($vacationResponse['message'] ?? 'Sesion expirada.'));
             $this->redirect('/login');
             return;
         }
@@ -64,7 +66,11 @@ final class VacationRequestController extends Controller
 
         $usersResponse = ServiceFactory::userService()->getAllUsers();
         $usersRows = is_array($usersResponse['data'] ?? null) ? $usersResponse['data'] : [];
-        $users = array_values(array_filter($usersRows, static function (array $user): bool {
+        $users = array_values(array_filter($usersRows, static function ($user): bool {
+            if (!is_array($user)) {
+                return false;
+            }
+
             return (int) ($user['state'] ?? 0) === 1;
         }));
 
@@ -185,8 +191,9 @@ final class VacationRequestController extends Controller
         $httpCode = (int) ($response['http_code'] ?? 0);
         $code = trim((string) ($response['code'] ?? ''));
 
-        if ($httpCode === 401) {
+        if ($httpCode === 401 || $httpCode === 406) {
             ServiceFactory::authService()->logout();
+            flash('danger', (string) ($response['message'] ?? 'Sesion expirada.'));
             $this->redirect('/login');
             return;
         }
@@ -385,8 +392,9 @@ final class VacationRequestController extends Controller
         $response = ServiceFactory::vacationRequestService()->getRequestsToSign();
         $apiHttpCode = (int) ($response['http_code'] ?? 200);
 
-        if ($apiHttpCode === 401) {
+        if ($apiHttpCode === 401 || $apiHttpCode === 406) {
             ServiceFactory::authService()->logout();
+            flash('danger', (string) ($response['message'] ?? 'Sesion expirada.'));
             $this->redirect('/login');
             return;
         }
@@ -421,8 +429,9 @@ final class VacationRequestController extends Controller
         $response = ServiceFactory::vacationRequestService()->getDetail($requestId);
         $apiHttpCode = (int) ($response['http_code'] ?? 200);
 
-        if ($apiHttpCode === 401) {
+        if ($apiHttpCode === 401 || $apiHttpCode === 406) {
             ServiceFactory::authService()->logout();
+            flash('danger', (string) ($response['message'] ?? 'Sesion expirada.'));
             $this->redirect('/login');
             return;
         }
@@ -457,8 +466,9 @@ final class VacationRequestController extends Controller
         $result = ServiceFactory::vacationRequestService()->downloadFile($fileId);
         $httpCode = (int) ($result['http_code'] ?? 500);
 
-        if ($httpCode === 401) {
+        if ($httpCode === 401 || $httpCode === 406) {
             ServiceFactory::authService()->logout();
+            flash('danger', (string) ($result['message'] ?? 'Sesion expirada.'));
             $this->redirect('/login');
             return;
         }
@@ -530,6 +540,10 @@ final class VacationRequestController extends Controller
         if ($detailHttpCode === 401) {
             ServiceFactory::authService()->logout();
             $this->json(['code' => '401', 'message' => 'Sesion expirada', 'data' => null], 401);
+            return;
+        }
+        if ($detailHttpCode === 406) {
+            $this->json($detailResponse, 406);
             return;
         }
         if ($detailHttpCode !== 200 || !is_array($detailResponse['data'] ?? null)) {

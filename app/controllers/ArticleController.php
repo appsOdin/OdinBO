@@ -20,8 +20,9 @@ final class ArticleController extends Controller
         $response = ServiceFactory::articleService()->getAllArticles('');
         $apiHttpCode = (int) ($response['http_code'] ?? 200);
 
-        if ($apiHttpCode === 401) {
+        if ($apiHttpCode === 401 || $apiHttpCode === 406) {
             ServiceFactory::authService()->logout();
+            flash('danger', (string) ($response['message'] ?? 'Sesion expirada.'));
             $this->redirect('login');
             return;
         }

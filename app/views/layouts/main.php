@@ -24,6 +24,127 @@ $appJsVersion = is_file($appJsFile) ? (string) filemtime($appJsFile) : (string) 
         }
     })();
     </script>
+    <script>
+    (function () {
+        if (window.OdinSessionGuard && window.OdinSessionGuard.initialized) {
+            return;
+        }
+
+        var storageKey = 'odinbo-login-redirect-message';
+        var handled = false;
+
+        function isSessionClosedFlag(value) {
+            return value === true || String(value).toLowerCase() === 'true';
+        }
+
+        function clearAuthClientState() {
+            var localStorageKeys = ['token', 'user', 'auth', 'authToken', 'odinbo-auth', 'odinbo-user'];
+            localStorageKeys.forEach(function (key) {
+                try {
+                    localStorage.removeItem(key);
+                } catch (error) {
+                    // Ignore local storage cleanup failures.
+                }
+            });
+
+            try {
+                var preservedRedirectMessage = sessionStorage.getItem(storageKey);
+                sessionStorage.clear();
+                if (preservedRedirectMessage) {
+                    sessionStorage.setItem(storageKey, preservedRedirectMessage);
+                }
+            } catch (error) {
+                // Ignore session storage cleanup failures.
+            }
+
+            ['token', 'user', 'auth', 'authToken'].forEach(function (cookieName) {
+                try {
+                    document.cookie = cookieName + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+                } catch (error) {
+                    // Ignore cookie cleanup failures.
+                }
+            });
+        }
+
+        function persistLoginRedirectMessage(message, type) {
+            var payload = {
+                message: String(message || '').trim(),
+                type: String(type || 'danger').trim() || 'danger'
+            };
+
+            if (payload.message === '') {
+                return;
+            }
+
+            try {
+                sessionStorage.setItem(storageKey, JSON.stringify(payload));
+            } catch (error) {
+                // Ignore storage failures.
+            }
+        }
+
+        function redirectToLogin() {
+            var loginUrl = (window.APP && window.APP.loginUrl) ? window.APP.loginUrl : '/login';
+            try {
+                window.location.href = loginUrl;
+            } catch (error) {
+                window.location.assign('/login');
+            }
+        }
+
+        function handle406Payload(payload) {
+            var sessionClosed = isSessionClosedFlag(payload && payload.sessionClosed);
+            if (!sessionClosed) {
+                return false;
+            }
+
+            if (handled) {
+                return true;
+            }
+
+            handled = true;
+            var message = String((payload && payload.message) || '').trim();
+            if (message === '') {
+                message = 'No puedes ingresar porque estás fuera del horario laboral establecido. Tu sesión ha sido cerrada automáticamente. Por favor ingresa nuevamente durante tu horario permitido.';
+            }
+
+            persistLoginRedirectMessage(message, 'danger');
+            clearAuthClientState();
+            redirectToLogin();
+            return true;
+        }
+
+        window.OdinSessionGuard = {
+            initialized: true,
+            handle406Payload: handle406Payload,
+            isHandled: function () { return handled; }
+        };
+
+        if (typeof window.fetch === 'function' && !window.fetch.__odin406Wrapped) {
+            var nativeFetch = window.fetch.bind(window);
+            var wrappedFetch = async function () {
+                var response = await nativeFetch.apply(null, arguments);
+
+                try {
+                    if (response && response.status === 406) {
+                        var contentType = response.headers.get('content-type') || '';
+                        if (contentType.toLowerCase().indexOf('application/json') !== -1) {
+                            var payload = await response.clone().json();
+                            handle406Payload(payload);
+                        }
+                    }
+                } catch (error) {
+                    // Never break normal request flow because of interceptor errors.
+                }
+
+                return response;
+            };
+
+            wrappedFetch.__odin406Wrapped = true;
+            window.fetch = wrappedFetch;
+        }
+    })();
+    </script>
     <link rel="stylesheet" href="<?= base_url('assets/css/app.css') ?>">
 </head>
 <body>

@@ -28,6 +28,8 @@ $flashMessages = $flashMessages ?? [];
             <h3 class="fw-bold mb-1">Bienvenido</h3>
             <p class="text-muted mb-4">Inicia sesion para continuar.</p>
 
+            <div id="loginRedirectMessageContainer"></div>
+
             <?php foreach ($flashMessages as $flash): ?>
                 <div class="alert alert-<?= htmlspecialchars($flash['type'], ENT_QUOTES, 'UTF-8') ?> alert-dismissible fade show" role="alert">
                     <?= htmlspecialchars($flash['message'], ENT_QUOTES, 'UTF-8') ?>
@@ -51,5 +53,67 @@ $flashMessages = $flashMessages ?? [];
     </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<script>
+(function () {
+    var storageKey = 'odinbo-login-redirect-message';
+    var container = document.getElementById('loginRedirectMessageContainer');
+
+    if (!container) {
+        return;
+    }
+
+    var raw = '';
+    try {
+        raw = sessionStorage.getItem(storageKey) || '';
+    } catch (error) {
+        raw = '';
+    }
+
+    if (raw === '') {
+        return;
+    }
+
+    try {
+        sessionStorage.removeItem(storageKey);
+    } catch (error) {
+        // Ignore cleanup failures.
+    }
+
+    var payload;
+    try {
+        payload = JSON.parse(raw);
+    } catch (error) {
+        payload = null;
+    }
+
+    var message = payload && typeof payload.message === 'string' ? payload.message.trim() : '';
+    var type = payload && typeof payload.type === 'string' ? payload.type.trim() : 'danger';
+
+    if (message === '') {
+        return;
+    }
+
+    var allowedTypes = ['success', 'danger', 'warning', 'info', 'primary', 'secondary'];
+    if (allowedTypes.indexOf(type) === -1) {
+        type = 'danger';
+    }
+
+    var alert = document.createElement('div');
+    alert.className = 'alert alert-' + type + ' alert-dismissible fade show';
+    alert.setAttribute('role', 'alert');
+
+    var text = document.createTextNode(message);
+    alert.appendChild(text);
+
+    var close = document.createElement('button');
+    close.type = 'button';
+    close.className = 'btn-close';
+    close.setAttribute('data-bs-dismiss', 'alert');
+    close.setAttribute('aria-label', 'Close');
+    alert.appendChild(close);
+
+    container.appendChild(alert);
+})();
+</script>
 </body>
 </html>

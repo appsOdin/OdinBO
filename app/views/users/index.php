@@ -27,12 +27,20 @@ $users = $users ?? [];
                     <th data-sort="username">Usuario</th>
                     <th data-sort="email">Correo</th>
                     <th data-sort="rolename">Rol</th>
+                    <th>Horario Laboral</th>
                     <th data-sort="state">Estado</th>
                     <th>Acciones</th>
                 </tr>
                 </thead>
                 <tbody id="usersTableBody">
                 <?php foreach ($users as $user): ?>
+                    <?php
+                    $workingStart = (string) (($user->workingHour['start_time'] ?? ''));
+                    $workingEnd = (string) (($user->workingHour['end_time'] ?? ''));
+                    $workingLabel = ($workingStart !== '' && $workingEnd !== '')
+                        ? substr($workingStart, 0, 5) . ' - ' . substr($workingEnd, 0, 5)
+                        : 'No configurado';
+                    ?>
                     <tr
                         data-id="<?= htmlspecialchars($user->id, ENT_QUOTES, 'UTF-8') ?>"
                         data-name="<?= htmlspecialchars($user->name, ENT_QUOTES, 'UTF-8') ?>"
@@ -42,12 +50,15 @@ $users = $users ?? [];
                         data-role="<?= htmlspecialchars($user->rolename, ENT_QUOTES, 'UTF-8') ?>"
                         data-roleid="<?= $user->rolename === 'ADMIN' ? 1 : ($user->rolename === 'USER' ? 2 : 3) ?>"
                         data-state="<?= $user->state ?>"
+                        data-start-time="<?= htmlspecialchars($workingStart, ENT_QUOTES, 'UTF-8') ?>"
+                        data-end-time="<?= htmlspecialchars($workingEnd, ENT_QUOTES, 'UTF-8') ?>"
                     >
                         <td><?= htmlspecialchars($user->name, ENT_QUOTES, 'UTF-8') ?></td>
                         <td><?= htmlspecialchars($user->lastname, ENT_QUOTES, 'UTF-8') ?></td>
                         <td><?= htmlspecialchars($user->username, ENT_QUOTES, 'UTF-8') ?></td>
                         <td><?= htmlspecialchars($user->email, ENT_QUOTES, 'UTF-8') ?></td>
                         <td><?= htmlspecialchars($user->rolename, ENT_QUOTES, 'UTF-8') ?></td>
+                        <td><?= htmlspecialchars($workingLabel, ENT_QUOTES, 'UTF-8') ?></td>
                         <td>
                             <?php if ($user->state === 1): ?>
                                 <span class="badge text-bg-success">Activo</span>

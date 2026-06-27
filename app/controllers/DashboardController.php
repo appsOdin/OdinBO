@@ -19,6 +19,15 @@ final class DashboardController extends Controller
         $session = ServiceFactory::sessionManager();
 
         $usersResponse = $userService->getAllUsers();
+        $apiHttpCode = (int) ($usersResponse['http_code'] ?? 200);
+
+        if ($apiHttpCode === 401 || $apiHttpCode === 406) {
+            ServiceFactory::authService()->logout();
+            flash('danger', (string) ($usersResponse['message'] ?? 'Sesion expirada.'));
+            $this->redirect('/login');
+            return;
+        }
+
         $users = is_array($usersResponse['data'] ?? null) ? $usersResponse['data'] : [];
 
         $this->view('dashboard', [

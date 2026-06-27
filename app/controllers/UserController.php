@@ -20,8 +20,9 @@ final class UserController extends Controller
         $response = ServiceFactory::userService()->getAllUsers();
         $apiHttpCode = (int) ($response['http_code'] ?? 200);
 
-        if ($apiHttpCode === 401) {
+        if ($apiHttpCode === 401 || $apiHttpCode === 406) {
             ServiceFactory::authService()->logout();
+            flash('danger', (string) ($response['message'] ?? 'Sesion expirada.'));
             $this->redirect('login');
             return;
         }
@@ -104,6 +105,8 @@ final class UserController extends Controller
             'islogin' => 0,
             'roleid' => (int) $request->input('roleid', 2),
             'email' => sanitize_email((string) $request->input('email', '')),
+            'startTime' => trim((string) $request->input('startTime', '')),
+            'endTime' => trim((string) $request->input('endTime', '')),
         ];
     }
 
@@ -119,6 +122,8 @@ final class UserController extends Controller
             ->required('lastname', (string) $payload['lastname'], 'Apellido')
             ->required('username', (string) $payload['username'], 'Usuario')
             ->required('email', (string) $payload['email'], 'Correo')
+            ->required('startTime', (string) $payload['startTime'], 'Hora de inicio')
+            ->required('endTime', (string) $payload['endTime'], 'Hora de fin')
             ->email('email', (string) $payload['email'], 'Correo');
 
         if (!$isUpdate || ((string) $payload['password']) !== '') {
@@ -129,6 +134,28 @@ final class UserController extends Controller
 
         if ($isUpdate && (string) $payload['id'] === '') {
             return ['ID de usuario requerido para actualizar.'];
+        }
+
+        $startTime = (string) ($payload['startTime'] ?? '');
+        $endTime = (string) ($payload['endTime'] ?? '');
+        $timePattern = '/^([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d$/';
+
+        if ($startTime !== '' && preg_match($timePattern, $startTime) !== 1) {
+            $validatorErrors = $validator->errors();
+            $validatorErrors['startTime'] = 'Hora de inicio no es valida.';
+            return array_values($validatorErrors);
+        }
+
+        if ($endTime !== '' && preg_match($timePattern, $endTime) !== 1) {
+            $validatorErrors = $validator->errors();
+            $validatorErrors['endTime'] = 'Hora de fin no es valida.';
+            return array_values($validatorErrors);
+        }
+
+        if ($startTime !== '' && $endTime !== '' && $endTime <= $startTime) {
+            $validatorErrors = $validator->errors();
+            $validatorErrors['workingHour'] = 'La hora de fin debe ser mayor a la hora de inicio.';
+            return array_values($validatorErrors);
         }
 
         if ($validator->passes()) {

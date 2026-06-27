@@ -33,11 +33,11 @@
         // Check payload first: controllers may forward API error codes inside a 200 HTTP envelope.
         if (payload && typeof payload === 'object') {
             const fromHttpCode = Number(payload.http_code ?? 0);
-            if (fromHttpCode === 401 || fromHttpCode === 403) {
+            if (fromHttpCode === 401 || fromHttpCode === 403 || fromHttpCode === 406) {
                 return fromHttpCode;
             }
             const fromCode = Number(payload.code ?? 0);
-            if (fromCode === 401 || fromCode === 403) {
+            if (fromCode === 401 || fromCode === 403 || fromCode === 406) {
                 return fromCode;
             }
         }
@@ -125,6 +125,110 @@
         }, 1200);
     };
 
+    const clearAuthClientState = () => {
+        const localStorageKeys = ['token', 'user', 'auth', 'authToken', 'odinbo-auth', 'odinbo-user'];
+        localStorageKeys.forEach((key) => {
+            try {
+                localStorage.removeItem(key);
+            } catch (error) {
+                // Ignore local storage cleanup failures.
+            }
+        });
+
+        try {
+            const preservedRedirectMessage = sessionStorage.getItem('odinbo-login-redirect-message');
+            sessionStorage.clear();
+            if (preservedRedirectMessage) {
+                sessionStorage.setItem('odinbo-login-redirect-message', preservedRedirectMessage);
+            }
+        } catch (error) {
+            // Ignore session storage cleanup failures.
+        }
+
+        // Remove common non-httpOnly auth cookies when available.
+        ['token', 'user', 'auth', 'authToken'].forEach((cookieName) => {
+            try {
+                document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+            } catch (error) {
+                // Ignore cookie cleanup failures.
+            }
+        });
+    };
+
+    const isSessionClosedFlag = (value) => value === true || String(value).toLowerCase() === 'true';
+
+    const buildWorkingHoursClosedMessage = (payload) => {
+        const defaultMessage = 'No puedes ingresar porque estás fuera del horario laboral establecido. Tu sesión ha sido cerrada automáticamente. Por favor ingresa nuevamente durante tu horario permitido.';
+        const baseMessage = String(payload?.message || '').trim();
+        const data = payload && typeof payload === 'object' && payload.data && typeof payload.data === 'object'
+            ? payload.data
+            : null;
+
+        if (baseMessage !== '') {
+            return baseMessage;
+        }
+
+        if (!data) {
+            return defaultMessage;
+        }
+
+        const start = String(data.startTime || '').substring(0, 5);
+        const end = String(data.endTime || '').substring(0, 5);
+        const current = String(data.currentTime || '').substring(0, 5);
+        const hasTimes = start !== '' && end !== '';
+
+        if (!hasTimes) {
+            return defaultMessage;
+        }
+
+        const currentText = current !== '' ? `. Hora actual: ${current}` : '';
+        return `Estás fuera de tu horario laboral establecido. Tu horario es de ${start} a ${end}${currentText}. Tu sesión ha sido cerrada automáticamente. Por favor ingresa nuevamente durante tu horario permitido.`;
+    };
+
+    const redirectToLogin = () => {
+        try {
+            window.location.href = window.APP?.loginUrl || '/login';
+        } catch (error) {
+            window.location.assign('/login');
+        }
+    };
+
+    const persistLoginRedirectMessage = (message, type = 'danger') => {
+        const payload = {
+            message: String(message || '').trim(),
+            type: String(type || 'danger').trim() || 'danger'
+        };
+
+        if (payload.message === '') {
+            return;
+        }
+
+        try {
+            sessionStorage.setItem('odinbo-login-redirect-message', JSON.stringify(payload));
+        } catch (error) {
+            // Ignore storage failures and continue redirect flow.
+        }
+    };
+
+    const handleOutsideWorkingHours = (payload) => {
+        const sessionClosed = isSessionClosedFlag(payload?.sessionClosed);
+        const message = buildWorkingHoursClosedMessage(payload);
+
+        if (!sessionClosed) {
+            showToast('danger', message);
+            return;
+        }
+
+        if (isSessionExpiredHandled) {
+            return;
+        }
+
+        isSessionExpiredHandled = true;
+        persistLoginRedirectMessage(message, 'danger');
+        clearAuthClientState();
+        redirectToLogin();
+    };
+
     const fetchJson = async (url, payload) => {
         showLoader();
         try {
@@ -155,6 +259,15 @@
                     ...parsedPayload,
                     code: '403',
                     http_code: 403,
+                };
+            }
+
+            if (httpCode === 406) {
+                handleOutsideWorkingHours(parsedPayload);
+                return {
+                    ...parsedPayload,
+                    code: '406',
+                    http_code: 406,
                 };
             }
 
@@ -235,6 +348,15 @@
 
     const buildRow = (item) => {
         const tr = document.createElement('tr');
+        const workingHour = item && typeof item.working_hour === 'object' && item.working_hour !== null
+            ? item.working_hour
+            : null;
+        const startTime = String(workingHour?.start_time || item.start_time || item.startTime || '');
+        const endTime = String(workingHour?.end_time || item.end_time || item.endTime || '');
+        const scheduleText = (startTime !== '' && endTime !== '')
+            ? `${timeSpanToTime(startTime)} - ${timeSpanToTime(endTime)}`
+            : 'No configurado';
+
         tr.dataset.id = item.id || '';
         tr.dataset.name = item.name || '';
         tr.dataset.lastname = item.lastname || '';
@@ -243,6 +365,8 @@
         tr.dataset.role = item.rolename || getRoleName(item.roleid || 2);
         tr.dataset.roleid = String(item.roleid || 2);
         tr.dataset.state = String(item.state ?? 0);
+        tr.dataset.startTime = startTime;
+        tr.dataset.endTime = endTime;
 
         const stateBadge = Number(item.state) === 1
             ? '<span class="badge text-bg-success">Activo</span>'
@@ -254,6 +378,7 @@
             <td>${item.username || ''}</td>
             <td>${item.email || ''}</td>
             <td>${item.rolename || getRoleName(item.roleid || 2)}</td>
+            <td>${scheduleText}</td>
             <td>${stateBadge}</td>
             <td><button class="btn btn-sm btn-outline-secondary btn-edit-user" type="button">Editar</button></td>
         `;
@@ -272,6 +397,24 @@
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
         }).format(Number.isFinite(amount) ? amount : 0);
+    };
+
+    // Convert HH:mm to HH:mm:ss required by API payloads.
+    function timeToTimeSpan(time) {
+        return time + ':00';
+    }
+
+    // Convert HH:mm:ss to HH:mm to display in input type time.
+    function timeSpanToTime(timeSpan) {
+        return timeSpan.substring(0, 5);
+    }
+
+    const isWorkingHourRangeValid = (startTime, endTime) => {
+        if (startTime === '' || endTime === '') {
+            return false;
+        }
+
+        return endTime > startTime;
     };
 
     const initUsersModule = () => {
@@ -412,6 +555,16 @@
         createForm?.addEventListener('submit', async (event) => {
             event.preventDefault();
             const formData = Object.fromEntries(new FormData(createForm).entries());
+            const startTime = String(formData.startTime || '').trim();
+            const endTime = String(formData.endTime || '').trim();
+
+            if (!isWorkingHourRangeValid(startTime, endTime)) {
+                showToast('danger', 'La hora de fin debe ser mayor a la hora de inicio');
+                return;
+            }
+
+            formData.startTime = timeToTimeSpan(startTime);
+            formData.endTime = timeToTimeSpan(endTime);
 
             const result = await fetchJson(window.APP.usersStoreUrl, formData);
             if (String(result.code) === '200') {
@@ -445,8 +598,10 @@
             const editRoleId = document.getElementById('edit_roleid');
             const editState = document.getElementById('edit_state');
             const editPassword = document.getElementById('edit_password');
+            const editStartTime = document.getElementById('edit_startTime');
+            const editEndTime = document.getElementById('edit_endTime');
 
-            if (!row || !editModalEl || !editId || !editName || !editLastname || !editUsername || !editEmail || !editRoleId || !editState || !editPassword) {
+            if (!row || !editModalEl || !editId || !editName || !editLastname || !editUsername || !editEmail || !editRoleId || !editState || !editPassword || !editStartTime || !editEndTime) {
                 showToast('danger', 'No fue posible abrir el modal de edicion');
                 return;
             }
@@ -459,6 +614,8 @@
             editRoleId.value = row.dataset.roleid || '2';
             editState.value = row.dataset.state || '1';
             editPassword.value = '';
+            editStartTime.value = timeSpanToTime(row.dataset.startTime || '');
+            editEndTime.value = timeSpanToTime(row.dataset.endTime || '');
 
             const editModal = bootstrap.Modal.getOrCreateInstance(editModalEl);
             editModal.show();
@@ -475,6 +632,17 @@
             } else {
                 formData.password = password;
             }
+
+            const startTime = String(formData.startTime || '').trim();
+            const endTime = String(formData.endTime || '').trim();
+
+            if (!isWorkingHourRangeValid(startTime, endTime)) {
+                showToast('danger', 'La hora de fin debe ser mayor a la hora de inicio');
+                return;
+            }
+
+            formData.startTime = timeToTimeSpan(startTime);
+            formData.endTime = timeToTimeSpan(endTime);
 
             const result = await fetchJson(window.APP.usersUpdateUrl, formData);
 
@@ -511,6 +679,11 @@
 
             if (reloadHttpCode === 403) {
                 showForbiddenMessage();
+                return;
+            }
+
+            if (reloadHttpCode === 406) {
+                handleOutsideWorkingHours(payload);
                 return;
             }
 

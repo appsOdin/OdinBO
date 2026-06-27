@@ -1,3 +1,4 @@
+<?php /** @var string $csrfToken */ ?>
 <div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
@@ -44,6 +45,14 @@
                                 <option value="1">Activo</option>
                                 <option value="0">Inactivo</option>
                             </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Hora de Inicio</label>
+                            <input type="time" class="form-control" name="startTime" id="edit_startTime" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Hora de Fin</label>
+                            <input type="time" class="form-control" name="endTime" id="edit_endTime" required>
                         </div>
                     </div>
                 </div>

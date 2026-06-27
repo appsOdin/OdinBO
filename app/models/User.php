@@ -16,7 +16,9 @@ final class User
         public readonly string $username,
         public readonly int $state,
         public readonly string $rolename,
-        public readonly string $email
+        public readonly string $email,
+        /** @var array{start_time: string, end_time: string}|null */
+        public readonly ?array $workingHour
     ) {
     }
 
@@ -25,6 +27,14 @@ final class User
      */
     public static function fromArray(array $data): self
     {
+        $workingHourData = is_array($data['working_hour'] ?? null) ? $data['working_hour'] : null;
+        $workingHour = $workingHourData === null
+            ? null
+            : [
+                'start_time' => (string) ($workingHourData['start_time'] ?? ''),
+                'end_time' => (string) ($workingHourData['end_time'] ?? ''),
+            ];
+
         return new self(
             (string) ($data['id'] ?? ''),
             (string) ($data['name'] ?? ''),
@@ -32,7 +42,8 @@ final class User
             (string) ($data['username'] ?? ''),
             (int) ($data['state'] ?? 0),
             (string) ($data['rolename'] ?? ''),
-            (string) ($data['email'] ?? '')
+            (string) ($data['email'] ?? ''),
+            $workingHour
         );
     }
 }
