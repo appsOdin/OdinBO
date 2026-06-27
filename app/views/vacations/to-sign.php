@@ -102,7 +102,9 @@ $pendingCount = count($requests);
                 </div>
                 <div class="d-flex gap-2">
                     <button type="button" class="btn btn-outline-secondary" id="toSignClearBtn">Limpiar</button>
-                    <button type="button" class="btn btn-primary" id="toSignSaveBtn">Firmar Documento</button>
+                    <button type="button" class="btn btn-primary" id="toSignSaveBtn">
+                        <span class="spinner-border spinner-border-sm me-2 d-none" role="status" aria-hidden="true" id="toSignSpinner"></span>Firmar Documento
+                    </button>
                 </div>
             </div>
         </div>
@@ -121,6 +123,10 @@ $pendingCount = count($requests);
         const getModal = () => (signModalEl && window.bootstrap?.Modal)
             ? window.bootstrap.Modal.getOrCreateInstance(signModalEl)
             : null;
+
+        signModalEl?.addEventListener('shown.bs.modal', () => {
+            window.VacationSignaturePad?.init?.('toSignCanvas');
+        });
 
         const csrfToken = window.APP?.csrfToken || '';
         const notify = async (message, icon = 'warning') => {
@@ -167,11 +173,6 @@ $pendingCount = count($requests);
             }
 
             currentRequestId = requestId;
-
-            if (window.VacationSignaturePad?.init) {
-                window.VacationSignaturePad.init('toSignCanvas');
-            }
-
             getModal()?.show();
         });
 
@@ -197,7 +198,7 @@ $pendingCount = count($requests);
             }
 
             saveBtn.disabled = true;
-            saveBtn.textContent = 'Guardando...';
+            saveBtn.querySelector('#toSignSpinner')?.classList.remove('d-none');
 
             try {
                 const result = await fetchJson(window.APP.vacationSaveSignatureUrl, {
@@ -216,7 +217,7 @@ $pendingCount = count($requests);
                 window.location.reload();
             } finally {
                 saveBtn.disabled = false;
-                saveBtn.textContent = 'Firmar Documento';
+                saveBtn.querySelector('#toSignSpinner')?.classList.add('d-none');
             }
         });
     };

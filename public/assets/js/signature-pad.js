@@ -4,7 +4,8 @@
         ctx: null,
         drawing: false,
         lastX: 0,
-        lastY: 0
+        lastY: 0,
+        resizeObserver: null
     };
 
     const getPointerPosition = (event) => {
@@ -27,12 +28,21 @@
         }
 
         const ratio = Math.max(window.devicePixelRatio || 1, 1);
-        const width = Math.max(state.canvas.offsetWidth, 320);
-        const height = Math.max(state.canvas.offsetHeight, 180);
+        const width = state.canvas.offsetWidth;
+        const height = state.canvas.offsetHeight;
+
+        // Don't resize if the canvas is not yet visible
+        if (width === 0 || height === 0) {
+            return;
+        }
 
         state.canvas.width = Math.floor(width * ratio);
         state.canvas.height = Math.floor(height * ratio);
         state.ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+        state.ctx.strokeStyle = '#111827';
+        state.ctx.lineWidth = 2;
+        state.ctx.lineCap = 'round';
+        state.ctx.lineJoin = 'round';
         state.ctx.clearRect(0, 0, width, height);
     };
 
@@ -71,6 +81,12 @@
             return;
         }
 
+        // Detach previous ResizeObserver if reinitialising
+        if (state.resizeObserver) {
+            state.resizeObserver.disconnect();
+            state.resizeObserver = null;
+        }
+
         state.canvas = canvas;
         state.ctx = canvas.getContext('2d');
         if (!state.ctx) {
@@ -84,6 +100,15 @@
 
         resizeCanvas();
 
+        // Use ResizeObserver so the canvas re-sizes whenever its container changes
+        // (e.g. when a Bootstrap modal finishes its transition and becomes visible)
+        if (typeof ResizeObserver !== 'undefined') {
+            state.resizeObserver = new ResizeObserver(() => resizeCanvas());
+            state.resizeObserver.observe(canvas);
+        } else {
+            window.addEventListener('resize', resizeCanvas, { passive: true });
+        }
+
         canvas.onmousedown = startDrawing;
         canvas.onmousemove = draw;
         canvas.onmouseup = stopDrawing;
@@ -93,8 +118,6 @@
         canvas.ontouchmove = draw;
         canvas.ontouchend = stopDrawing;
         canvas.ontouchcancel = stopDrawing;
-
-        window.addEventListener('resize', resizeCanvas, { passive: true });
     };
 
     const clear = () => {

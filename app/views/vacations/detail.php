@@ -302,7 +302,9 @@ $ownerSignatureSrc = $buildSignatureSrc($ownerSignatureRaw);
                 </div>
                 <div class="d-flex gap-2">
                     <button type="button" class="btn btn-outline-secondary" id="detailSignClear">Limpiar</button>
-                    <button type="button" class="btn btn-primary" id="detailSignSave">Firmar Documento</button>
+                    <button type="button" class="btn btn-primary" id="detailSignSave">
+                        <span class="spinner-border spinner-border-sm me-2 d-none" role="status" aria-hidden="true" id="detailSignSpinner"></span>Firmar Documento
+                    </button>
                 </div>
             </div>
         </div>
@@ -349,8 +351,11 @@ $ownerSignatureSrc = $buildSignatureSrc($ownerSignatureRaw);
     };
 
     openBtn?.addEventListener('click', () => {
-        window.VacationSignaturePad?.init?.('detailSignCanvas');
         getModal()?.show();
+    });
+
+    modalEl?.addEventListener('shown.bs.modal', () => {
+        window.VacationSignaturePad?.init?.('detailSignCanvas');
     });
 
     clearBtn?.addEventListener('click', () => {
@@ -370,7 +375,7 @@ $ownerSignatureSrc = $buildSignatureSrc($ownerSignatureRaw);
         }
 
         saveBtn.disabled = true;
-        saveBtn.textContent = 'Guardando...';
+        saveBtn.querySelector('#detailSignSpinner')?.classList.remove('d-none');
 
         try {
             const result = await fetchJson(window.APP.vacationSaveSignatureUrl, {
@@ -389,7 +394,7 @@ $ownerSignatureSrc = $buildSignatureSrc($ownerSignatureRaw);
             window.location.reload();
         } finally {
             saveBtn.disabled = false;
-            saveBtn.textContent = 'Firmar Documento';
+            saveBtn.querySelector('#detailSignSpinner')?.classList.add('d-none');
         }
     });
 })();

@@ -108,7 +108,9 @@ $currentUserRole = strtoupper((string) ($authUser['rolename'] ?? ''));
                 </div>
                 <div class="d-flex gap-2">
                     <button type="button" class="btn btn-outline-secondary" id="vacationClearSignature">Limpiar</button>
-                    <button type="button" class="btn btn-primary" id="vacationSaveSignature">Firmar Documento</button>
+                    <button type="button" class="btn btn-primary" id="vacationSaveSignature">
+                        <span class="spinner-border spinner-border-sm me-2 d-none" role="status" aria-hidden="true" id="vacationSignSpinner"></span>Firmar Documento
+                    </button>
                 </div>
             </div>
         </div>
@@ -147,6 +149,10 @@ $currentUserRole = strtoupper((string) ($authUser['rolename'] ?? ''));
 
             return window.bootstrap.Modal.getOrCreateInstance(element);
         };
+
+        signModalEl?.addEventListener('shown.bs.modal', () => {
+            window.VacationSignaturePad?.init?.('vacationSignatureCanvas');
+        });
 
         const csrfToken = window.APP?.csrfToken || '';
         const notify = async (message, icon = 'warning') => {
@@ -197,9 +203,6 @@ $currentUserRole = strtoupper((string) ($authUser['rolename'] ?? ''));
                 }
 
                 currentRequestId = requestId;
-                if (window.VacationSignaturePad?.init) {
-                    window.VacationSignaturePad.init('vacationSignatureCanvas');
-                }
                 signModal.show();
                 return;
             }
@@ -288,21 +291,29 @@ $currentUserRole = strtoupper((string) ($authUser['rolename'] ?? ''));
                 return;
             }
 
-            const result = await fetchJson(window.APP.vacationSaveSignatureUrl, {
-                requestId: currentRequestId,
-                signature,
-                _csrf_token: csrfToken
-            });
+            saveButton.disabled = true;
+            saveButton.querySelector('#vacationSignSpinner')?.classList.remove('d-none');
 
-            if (String(result.code) !== '200') {
-                await notify(result.message || 'No fue posible guardar la firma.', 'error');
-                return;
+            try {
+                const result = await fetchJson(window.APP.vacationSaveSignatureUrl, {
+                    requestId: currentRequestId,
+                    signature,
+                    _csrf_token: csrfToken
+                });
+
+                if (String(result.code) !== '200') {
+                    await notify(result.message || 'No fue posible guardar la firma.', 'error');
+                    return;
+                }
+
+                const signModal = getModalInstance(signModalEl);
+                await notify('Firma guardada exitosamente.', 'success');
+                signModal?.hide();
+                window.location.reload();
+            } finally {
+                saveButton.disabled = false;
+                saveButton.querySelector('#vacationSignSpinner')?.classList.add('d-none');
             }
-
-            const signModal = getModalInstance(signModalEl);
-            await notify('Firma guardada exitosamente.', 'success');
-            signModal?.hide();
-            window.location.reload();
         });
     };
 
