@@ -12,7 +12,8 @@ final class Article
     public function __construct(
         public readonly string $ID,
         public readonly string $DESCRIPTION,
-        public readonly float $PRICE
+        public readonly float $PRICE,
+        public readonly string $NOTAS
     ) {
     }
 
@@ -24,7 +25,8 @@ final class Article
         return new self(
             (string) ($data['ID'] ?? ''),
             (string) ($data['DESCRIPTION'] ?? ''),
-            (float) ($data['PRICE'] ?? 0)
+            (float) ($data['PRICE'] ?? 0),
+            (string) ($data['NOTAS'] ?? '')
         );
     }
 }

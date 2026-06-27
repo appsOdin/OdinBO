@@ -554,6 +554,7 @@
         const detailId = document.getElementById('articleDetailId');
         const detailDescription = document.getElementById('articleDetailDescription');
         const detailPrice = document.getElementById('articleDetailPrice');
+        const detailNotes = document.getElementById('articleDetailNotes');
         const mainImage = document.getElementById('articleMainImage');
         const mainImageEmpty = document.getElementById('articleMainImageEmpty');
         const imageThumbs = document.getElementById('articleImageThumbs');
@@ -663,7 +664,7 @@
         };
 
         const renderArticleDetail = (articleId, detailPayload) => {
-            if (!detailModalEl || !detailId || !detailDescription || !detailPrice || !imageThumbs || !stocksTableBody || !detailSelected) {
+            if (!detailModalEl || !detailId || !detailDescription || !detailPrice || !detailNotes || !imageThumbs || !stocksTableBody || !detailSelected) {
                 return;
             }
 
@@ -676,6 +677,7 @@
             detailId.textContent = article.ID || '-';
             detailDescription.textContent = article.DESCRIPTION || '-';
             detailPrice.textContent = formatCurrency(article.PRICE || 0);
+            detailNotes.textContent = article.NOTAS || '-';
 
             imageThumbs.innerHTML = '';
             if (pictures.length === 0) {

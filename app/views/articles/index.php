@@ -117,6 +117,10 @@ $articles = $articles ?? [];
                                         <label class="form-label text-muted mb-1">Precio</label>
                                         <div class="fw-semibold" id="articleDetailPrice">-</div>
                                     </div>
+                                    <div class="col-12">
+                                        <label class="form-label text-muted mb-1">Notas</label>
+                                        <div class="fw-semibold" id="articleDetailNotes">-</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

@@ -68,7 +68,10 @@ $users = $users ?? [];
                                     <button type="button" class="btn btn-sm btn-outline-info btn-view-signers" data-request-id="<?= $id ?>">Ver Firmantes</button>
                                     <button type="button" class="btn btn-sm btn-outline-secondary btn-view-files" data-request-id="<?= $id ?>">Archivos</button>
                                 <?php endif; ?>
-                                <?php if (!in_array($stateKey, ['REJECTED', 'CANCELLED', 'SIGN'], true)): ?>
+                                <?php
+                                $startDateTs = strtotime((string) ($req['startDate'] ?? ''));
+                                $startDatePast = $startDateTs !== false && $startDateTs < strtotime(date('Y-m-d'));
+                                if ($stateKey !== 'REJECTED' && !$startDatePast): ?>
                                     <button type="button" class="btn btn-sm btn-danger btn-reject-vacation" data-request-id="<?= $id ?>">Rechazar</button>
                                 <?php endif; ?>
                             </div>

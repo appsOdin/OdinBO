@@ -70,6 +70,7 @@ final class ArticleController extends Controller
                     'ID' => $detail->Article->ID,
                     'DESCRIPTION' => $detail->Article->DESCRIPTION,
                     'PRICE' => $detail->Article->PRICE,
+                    'NOTAS' => $detail->Article->NOTAS,
                 ],
                 'Pictures' => array_map(static fn ($picture): array => [
                     'picture' => $picture->picture,

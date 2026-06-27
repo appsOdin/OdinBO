@@ -473,7 +473,7 @@ final class VacationRequestController extends Controller
 
     public function reject(Request $request): void
     {
-        if (!$this->hasRole(['ADMIN', 'USER'])) {
+        if (!$this->hasRole(['ADMIN'])) {
             $this->json(['code' => '403', 'message' => 'No tiene permisos para rechazar solicitudes', 'data' => null], 403);
             return;
         }
@@ -497,6 +497,30 @@ final class VacationRequestController extends Controller
 
         if (mb_strlen($rejectReason, 'UTF-8') > 500) {
             $this->json(['code' => '422', 'message' => 'El motivo no puede superar 500 caracteres', 'data' => null], 422);
+            return;
+        }
+
+        $detailResponse = ServiceFactory::vacationRequestService()->getDetail($requestId);
+        $detailHttpCode = (int) ($detailResponse['http_code'] ?? 0);
+        if ($detailHttpCode === 401) {
+            ServiceFactory::authService()->logout();
+            $this->json(['code' => '401', 'message' => 'Sesion expirada', 'data' => null], 401);
+            return;
+        }
+        if ($detailHttpCode !== 200 || !is_array($detailResponse['data'] ?? null)) {
+            $this->json(['code' => '422', 'message' => 'No fue posible verificar la solicitud', 'data' => null], 422);
+            return;
+        }
+        $detail = $detailResponse['data'];
+        $startDateRaw = (string) ($detail['startDate'] ?? '');
+        $startDateTs = $startDateRaw !== '' ? strtotime($startDateRaw) : false;
+        if ($startDateTs !== false && $startDateTs < strtotime(date('Y-m-d'))) {
+            $this->json(['code' => '422', 'message' => 'No se puede rechazar una solicitud cuya fecha de inicio ya paso', 'data' => null], 422);
+            return;
+        }
+        $stateKey = strtoupper((string) ($detail['stateKey'] ?? ''));
+        if ($stateKey === 'REJECTED') {
+            $this->json(['code' => '422', 'message' => 'La solicitud ya fue rechazada', 'data' => null], 422);
             return;
         }
 
