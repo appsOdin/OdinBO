@@ -1,0 +1,37 @@
+services:
+  odinbo:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: odinbo_frontend
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8080}:80"
+    environment:
+      # Application
+      APP_ENV:              ${APP_ENV:-production}
+      APP_DEBUG:            ${APP_DEBUG:-false}
+      APP_URL:              ${APP_URL:-http://localhost:8080}
+      APP_TIMEZONE:         ${APP_TIMEZONE:-America/Costa_Rica}
+      # API Backend
+      API_BASE_URL:         ${API_BASE_URL:-http://host.docker.internal}
+      TOKEN_REFRESH_MINUTES: ${TOKEN_REFRESH_MINUTES:-5}
+      # Session
+      SESSION_TIMEOUT:      ${SESSION_TIMEOUT:-60}
+      SESSION_NAME:         ${SESSION_NAME:-odinbo_session}
+      CSRF_TOKEN_TTL:       ${CSRF_TOKEN_TTL:-1800}
+      # HTTP
+      HTTP_TIMEOUT_SECONDS: ${HTTP_TIMEOUT_SECONDS:-20}
+    volumes:
+      # Persist logs and sessions outside the container
+      - odinbo_sessions:/var/www/html/storage/sessions
+      - odinbo_logs:/var/www/html/storage/logs
+      - odinbo_signatures:/var/www/html/storage/signatures
+    extra_hosts:
+      # Allows the container to reach services on the host machine (API backend)
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  odinbo_sessions:
+  odinbo_logs:
+  odinbo_signatures:

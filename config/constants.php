@@ -2,23 +2,32 @@
 
 declare(strict_types=1);
 
+// Helper: read env var or fall back to a default value.
+// Allows Docker / CI to override without touching this file.
+$_env = static function (string $key, mixed $default): mixed {
+    $value = getenv($key);
+    return ($value !== false && $value !== '') ? $value : $default;
+};
+
 const APP_NAME = 'OdinBO';
-const APP_ENV = 'local';
-const APP_DEBUG = true;
+define('APP_ENV',   $_env('APP_ENV',   'local'));
+define('APP_DEBUG', filter_var($_env('APP_DEBUG', true), FILTER_VALIDATE_BOOLEAN));
 
-const APP_URL = 'http://localhost:8080/OdinBO/public';
-const APP_TIMEZONE = 'America/Bogota';
+define('APP_URL',      rtrim((string) $_env('APP_URL',      'http://localhost:8080/OdinBO/public'), '/'));
+define('APP_TIMEZONE', (string) $_env('APP_TIMEZONE', 'America/Costa_Rica'));
 
-const API_BASE_URL = 'http://localhost';
-const TOKEN_REFRESH_MINUTES = 5;
-const SESSION_TIMEOUT = 60;
+define('API_BASE_URL',          rtrim((string) $_env('API_BASE_URL', 'http://localhost'), '/'));
+define('TOKEN_REFRESH_MINUTES', (int) $_env('TOKEN_REFRESH_MINUTES', 5));
+define('SESSION_TIMEOUT',       (int) $_env('SESSION_TIMEOUT',       60));
 
-const SESSION_NAME = 'odinbo_session';
-const CSRF_TOKEN_KEY = '_csrf_token';
-const CSRF_TOKEN_TTL = 1800;
+define('SESSION_NAME',    (string) $_env('SESSION_NAME',    'odinbo_session'));
+const CSRF_TOKEN_KEY =  '_csrf_token';
+define('CSRF_TOKEN_TTL', (int) $_env('CSRF_TOKEN_TTL', 1800));
 
-const HTTP_TIMEOUT_SECONDS = 20;
+define('HTTP_TIMEOUT_SECONDS', (int) $_env('HTTP_TIMEOUT_SECONDS', 20));
 const LOG_FILE = __DIR__ . '/../storage/logs/app.log';
+
+unset($_env);
 
 const MENU_OPTIONS_ADMIN = [
 	['label' => 'Dashboard', 'path' => 'dashboard'],
