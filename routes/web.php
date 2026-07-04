@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Controllers\AuthController;
 use App\Controllers\ArticleController;
 use App\Controllers\DashboardController;
+use App\Controllers\TraceController;
 use App\Controllers\UserController;
 use App\Controllers\VacationRequestController;
 use App\Middleware\AuthMiddleware;
@@ -40,4 +41,7 @@ return [
 
     ['method' => 'GET', 'path' => '/rrhh/solicitudes-para-firmar', 'handler' => [VacationRequestController::class, 'toSign'], 'middleware' => [AuthMiddleware::class]],
     ['method' => 'GET', 'path' => '/rrhh/vacaciones/descargar', 'handler' => [VacationRequestController::class, 'downloadFile'], 'middleware' => [AuthMiddleware::class]],
+
+    ['method' => 'GET',  'path' => '/admin/traces',      'handler' => [TraceController::class, 'index'], 'middleware' => [AuthMiddleware::class]],
+    ['method' => 'POST', 'path' => '/admin/traces/list', 'handler' => [TraceController::class, 'list'],  'middleware' => [AuthMiddleware::class]],
 ];

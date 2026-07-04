@@ -36,6 +36,17 @@ final class ApiService
     }
 
     /**
+     * GET request with a JSON body (some APIs use this pattern).
+     *
+     * @param array<string, mixed> $payload
+     * @return array<string, mixed>
+     */
+    public function getWithBody(string $endpoint, array $payload): array
+    {
+        return $this->request('GET', $endpoint, $payload);
+    }
+
+    /**
      * @param array<string, mixed> $payload
      * @return array<string, mixed>
      */
@@ -120,7 +131,9 @@ final class ApiService
             ]);
             return [
                 'code' => (string) $httpCode,
-                'message' => 'Invalid API response',
+                'message' => $httpCode === 401
+                    ? 'Sesion expirada. Inicia sesion nuevamente.'
+                    : 'Error de comunicacion con el servidor.',
                 'data' => null,
                 'http_code' => $httpCode,
             ];
@@ -298,9 +311,35 @@ final class ApiService
                 'body' => $responseBody,
                 'http_code' => $httpCode,
             ]);
+
+            $httpMessages = [
+                301 => 'Sesion expirada. Inicia sesion nuevamente.',
+                302 => 'Sesion expirada. Inicia sesion nuevamente.',
+                400 => 'Solicitud invalida.',
+                401 => 'Sesion expirada. Inicia sesion nuevamente.',
+                403 => 'Acceso denegado.',
+                404 => 'Recurso no encontrado.',
+                405 => 'Metodo no permitido en este endpoint.',
+                406 => 'Acceso fuera del horario laboral establecido.',
+                408 => 'La solicitud tardo demasiado. Intenta nuevamente.',
+                422 => 'Datos invalidos en la solicitud.',
+                429 => 'Demasiadas solicitudes. Intenta mas tarde.',
+                500 => 'Error interno del servidor. Intenta nuevamente.',
+                502 => 'El servidor no esta disponible. Intenta mas tarde.',
+                503 => 'Servicio no disponible. Intenta mas tarde.',
+            ];
+
+            $message = $httpMessages[$httpCode]
+                ?? ($httpCode >= 500 ? 'Error del servidor. Intenta nuevamente.' : 'Error de comunicacion con el servidor.');
+
+            $responseIsEmpty = trim((string) $responseBody) === '';
+            if (!$responseIsEmpty) {
+                $message = 'Error al interpretar la respuesta. ' . $message;
+            }
+
             return [
                 'code' => (string) $httpCode,
-                'message' => 'Invalid API response',
+                'message' => $message,
                 'data' => null,
                 'http_code' => $httpCode,
             ];

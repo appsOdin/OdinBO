@@ -9,7 +9,7 @@ const APP_DEBUG = true;
 const APP_URL = 'http://localhost:8080/OdinBO/public';
 const APP_TIMEZONE = 'America/Bogota';
 
-const API_BASE_URL = 'http://localhost:5104';
+const API_BASE_URL = 'http://localhost';
 const TOKEN_REFRESH_MINUTES = 5;
 const SESSION_TIMEOUT = 60;
 
@@ -24,6 +24,7 @@ const MENU_OPTIONS_ADMIN = [
 	['label' => 'Dashboard', 'path' => 'dashboard'],
 	['label' => 'Usuarios', 'path' => 'users'],
 	['label' => 'Articulos', 'path' => 'articles'],
+	['label' => 'Trace Logs', 'path' => 'admin/traces'],
 	[
 		'label' => 'RRHH',
 		'children' => [

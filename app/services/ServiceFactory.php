@@ -43,4 +43,9 @@ final class ServiceFactory
     {
         return new VacationRequestService(self::apiService());
     }
+
+    public static function traceService(): TraceService
+    {
+        return new TraceService(self::apiService());
+    }
 }
