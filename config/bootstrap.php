@@ -24,10 +24,23 @@ spl_autoload_register(static function (string $className): void {
 
     $relativeClass = substr($className, strlen($prefix));
     $relativePath = str_replace('\\', '/', $relativeClass) . '.php';
-    $fullPath = __DIR__ . '/../app/' . $relativePath;
 
+    // First try direct namespace-to-path mapping.
+    $fullPath = __DIR__ . '/../app/' . $relativePath;
     if (file_exists($fullPath)) {
         require_once $fullPath;
+        return;
+    }
+
+    // In this project, first-level app directories are lowercase (core, controllers, etc.).
+    $parts = explode('/', $relativePath);
+    if ($parts !== []) {
+        $parts[0] = strtolower($parts[0]);
+        $normalizedPath = __DIR__ . '/../app/' . implode('/', $parts);
+
+        if (file_exists($normalizedPath)) {
+            require_once $normalizedPath;
+        }
     }
 });
 
