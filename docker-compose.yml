@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: odinbo_frontend
+    container_name: odin_bo
     restart: unless-stopped
     ports:
       - "${APP_PORT:-8080}:80"
