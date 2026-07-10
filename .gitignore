@@ -1,0 +1,41 @@
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Runtime storage
+storage/
+
+# PHP dependencies (if Composer is used)
+vendor/
+
+# Frontend dependencies/build artifacts (if ever used)
+node_modules/
+dist/
+build/
+coverage/
+
+# IDE/editor
+.vscode/
+.idea/
+*.code-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Archives/backups
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.bak
+*.tmp

@@ -2,6 +2,44 @@
 
 declare(strict_types=1);
 
+// Load .env values for non-Docker executions.
+$envFile = __DIR__ . '/../.env';
+if (is_file($envFile) && is_readable($envFile)) {
+	$lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+	if (is_array($lines)) {
+		foreach ($lines as $line) {
+			$line = trim($line);
+			if ($line === '' || str_starts_with($line, '#')) {
+				continue;
+			}
+
+			$separatorPos = strpos($line, '=');
+			if ($separatorPos === false) {
+				continue;
+			}
+
+			$key = trim(substr($line, 0, $separatorPos));
+			$value = trim(substr($line, $separatorPos + 1));
+			if ($key === '') {
+				continue;
+			}
+
+			if (
+				(str_starts_with($value, '"') && str_ends_with($value, '"'))
+				|| (str_starts_with($value, "'") && str_ends_with($value, "'"))
+			) {
+				$value = substr($value, 1, -1);
+			}
+
+			if (getenv($key) === false) {
+				putenv($key . '=' . $value);
+				$_ENV[$key] = $value;
+				$_SERVER[$key] = $value;
+			}
+		}
+	}
+}
+
 // Helper: read env var or fall back to a default value.
 // Allows Docker / CI to override without touching this file.
 $_env = static function (string $key, mixed $default): mixed {

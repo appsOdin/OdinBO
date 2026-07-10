@@ -11,9 +11,37 @@ ini_set('display_errors', APP_DEBUG ? '1' : '0');
 
 date_default_timezone_set(APP_TIMEZONE);
 
+$sessionLifetime = max(60, SESSION_TIMEOUT * 60);
+// Keep a safe baseline so PHP GC does not remove session files before JWT expiration windows.
+$sessionLifetime = max($sessionLifetime, 12 * 60 * 60);
+ini_set('session.gc_maxlifetime', (string) $sessionLifetime);
+ini_set('session.cookie_lifetime', '0');
+
 session_name(SESSION_NAME);
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
+}
+
+// If auth expiration is already in session, align current request lifetime and session cookie to token exp.
+$authExp = (int) ($_SESSION['auth']['expires_at'] ?? 0);
+if ($authExp > time()) {
+    $remaining = max(60, $authExp - time());
+    $currentGc = (int) ini_get('session.gc_maxlifetime');
+    if ($remaining > $currentGc) {
+        ini_set('session.gc_maxlifetime', (string) $remaining);
+    }
+
+    if (!headers_sent() && session_id() !== '') {
+        $params = session_get_cookie_params();
+        setcookie(session_name(), session_id(), [
+            'expires' => $authExp,
+            'path' => (string) ($params['path'] ?? '/'),
+            'domain' => (string) ($params['domain'] ?? ''),
+            'secure' => (bool) ($params['secure'] ?? false),
+            'httponly' => (bool) ($params['httponly'] ?? true),
+            'samesite' => (string) ($params['samesite'] ?? 'Lax'),
+        ]);
+    }
 }
 
 spl_autoload_register(static function (string $className): void {

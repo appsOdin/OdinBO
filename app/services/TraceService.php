@@ -19,9 +19,11 @@ final class TraceService
      */
     public function getTrace(int $page, int $reg): array
     {
-        return $this->apiService->getWithBody('/api/Trace/GetTrace', [
-            'page' => $page,
-            'reg'  => $reg,
+        return $this->apiService->post('/api/Errtrace/GetTrace', [
+            'data' => [
+                'page' => $page,
+                'reg'  => $reg,
+            ],
         ]);
     }
 }

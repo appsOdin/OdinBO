@@ -17,13 +17,16 @@ final class SessionManager
     public function storeAuth(array $userData): void
     {
         $token = (string) ($userData['token'] ?? '');
+        $expiresAt = $this->resolveExpiresAtFromToken($token);
         $_SESSION[self::KEY_AUTH] = [
             'id' => $userData['id'],
             'username' => $userData['username'],
             'token' => $token,
             'rolename' => $userData['rolename'],
-            'expires_at' => $this->resolveExpiresAtFromToken($token),
+            'expires_at' => $expiresAt,
         ];
+
+        $this->syncLifetimeWithTokenExp($expiresAt);
     }
 
     public function clearAuth(): void
@@ -54,8 +57,11 @@ final class SessionManager
             return;
         }
 
+        $expiresAt = $this->resolveExpiresAtFromToken($token);
         $_SESSION[self::KEY_AUTH]['token'] = $token;
-        $_SESSION[self::KEY_AUTH]['expires_at'] = $this->resolveExpiresAtFromToken($token);
+        $_SESSION[self::KEY_AUTH]['expires_at'] = $expiresAt;
+
+        $this->syncLifetimeWithTokenExp($expiresAt);
     }
 
     /**
@@ -118,5 +124,32 @@ final class SessionManager
         }
 
         return $expiresAt;
+    }
+
+    private function syncLifetimeWithTokenExp(int $expiresAt): void
+    {
+        if ($expiresAt <= time()) {
+            return;
+        }
+
+        $remaining = max(60, $expiresAt - time());
+        $currentGc = (int) ini_get('session.gc_maxlifetime');
+        if ($remaining > $currentGc) {
+            ini_set('session.gc_maxlifetime', (string) $remaining);
+        }
+
+        if (headers_sent() || session_id() === '') {
+            return;
+        }
+
+        $params = session_get_cookie_params();
+        setcookie(session_name(), session_id(), [
+            'expires' => $expiresAt,
+            'path' => (string) ($params['path'] ?? '/'),
+            'domain' => (string) ($params['domain'] ?? ''),
+            'secure' => (bool) ($params['secure'] ?? false),
+            'httponly' => (bool) ($params['httponly'] ?? true),
+            'samesite' => (string) ($params['samesite'] ?? 'Lax'),
+        ]);
     }
 }
