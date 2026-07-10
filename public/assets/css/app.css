@@ -1,38 +1,38 @@
 :root {
-    --primary-color: #0f766e;
-    --accent-color: #14b8a6;
-    --button-color: #0ea5e9;
-    --button-hover-color: #0284c7;
-    --button-active-color: #0369a1;
-    --text-main: #0f172a;
-    --bg-soft: #f0fdfa;
-    --bg-strong: #115e59;
-    --page-gradient-start: #f5fffd;
-    --page-gradient-end: #dcf7f2;
-    --topbar-bg: rgba(255, 255, 255, 0.72);
-    --sidebar-brand-text: #d6f6ef;
-    --sidebar-link-text: #ecfdf9;
-    --sidebar-link-hover-bg: rgba(255, 255, 255, 0.2);
-    --link-hover-color: #0f766e;
+    --primary-color: #fc6c26;
+    --accent-color: #fff4d6;
+    --button-color: #fc6c26;
+    --button-hover-color: #e85f1f;
+    --button-active-color: #cf5219;
+    --text-main: #2f2018;
+    --bg-soft: #fff4d6;
+    --bg-strong: #fc6c26;
+    --page-gradient-start: #fff4d6;
+    --page-gradient-end: #ffe9c2;
+    --topbar-bg: rgba(255, 244, 214, 0.92);
+    --sidebar-brand-text: #fff4d6;
+    --sidebar-link-text: #fff4d6;
+    --sidebar-link-hover-bg: rgba(255, 244, 214, 0.2);
+    --link-hover-color: #cf5219;
     --auth-overlay-opacity: 0.28;
 }
 
 :root[data-theme='flat'] {
-    --primary-color: #2563eb;
-    --accent-color: #0ea5e9;
-    --button-color: #1d4ed8;
-    --button-hover-color: #1e40af;
-    --button-active-color: #1e3a8a;
-    --text-main: #1f2937;
-    --bg-soft: #f3f4f6;
-    --bg-strong: #1e3a8a;
-    --page-gradient-start: #f8fafc;
-    --page-gradient-end: #eef2ff;
-    --topbar-bg: #ffffff;
-    --sidebar-brand-text: #dbeafe;
-    --sidebar-link-text: #dbeafe;
-    --sidebar-link-hover-bg: rgba(59, 130, 246, 0.24);
-    --link-hover-color: #1e40af;
+    --primary-color: #fc6c26;
+    --accent-color: #fff4d6;
+    --button-color: #fc6c26;
+    --button-hover-color: #e85f1f;
+    --button-active-color: #cf5219;
+    --text-main: #2f2018;
+    --bg-soft: #fff4d6;
+    --bg-strong: #fc6c26;
+    --page-gradient-start: #fff4d6;
+    --page-gradient-end: #ffe9c2;
+    --topbar-bg: #fff4d6;
+    --sidebar-brand-text: #fff4d6;
+    --sidebar-link-text: #fff4d6;
+    --sidebar-link-hover-bg: rgba(255, 244, 214, 0.2);
+    --link-hover-color: #cf5219;
     --auth-overlay-opacity: 0;
 }
 

@@ -44,7 +44,7 @@ $flashMessages = $flashMessages ?? [];
                     <input type="text" class="form-control" id="username" name="username" value="<?= old('username') ?>" required>
                 </div>
                 <div class="mb-4">
-                    <label class="form-label" for="password">Contrasena</label>
+                    <label class="form-label" for="password">Contraseña</label>
                     <input type="password" class="form-control" id="password" name="password" required>
                 </div>
                 <button type="submit" class="btn btn-primary w-100">Ingresar</button>

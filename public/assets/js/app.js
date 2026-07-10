@@ -308,10 +308,11 @@
         const themeSelect = document.getElementById('themeSelect');
         const root = document.documentElement;
         const storageKey = 'odinbo-theme';
+        const defaultTheme = 'flat';
         const allowedThemes = new Set(['default', 'flat', 'dark']);
 
         const applyTheme = (theme) => {
-            const selected = allowedThemes.has(theme) ? theme : 'default';
+            const selected = allowedThemes.has(theme) ? theme : defaultTheme;
             if (selected === 'default') {
                 delete root.dataset.theme;
             } else {
@@ -320,13 +321,13 @@
             return selected;
         };
 
-        const savedTheme = localStorage.getItem(storageKey) || 'default';
+        const savedTheme = localStorage.getItem(storageKey) || defaultTheme;
         const appliedTheme = applyTheme(savedTheme);
 
         if (themeSelect instanceof HTMLSelectElement) {
             themeSelect.value = appliedTheme;
             themeSelect.addEventListener('change', (event) => {
-                const value = event.target instanceof HTMLSelectElement ? event.target.value : 'default';
+                const value = event.target instanceof HTMLSelectElement ? event.target.value : defaultTheme;
                 const normalized = applyTheme(value);
                 localStorage.setItem(storageKey, normalized);
             });
