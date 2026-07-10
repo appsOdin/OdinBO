@@ -16,8 +16,15 @@ $collapseIndex = 0;
 ?>
 <aside class="sidebar" id="sidebarNav">
     <div class="sidebar-brand px-3 py-4">
-        <h5 class="m-0">OdinBO</h5>
-        <small>Panel de Control</small>
+        <div class="d-flex align-items-start justify-content-between gap-2">
+            <div>
+                <h5 class="m-0">OdinBO</h5>
+                <small>Panel de Control</small>
+            </div>
+            <button class="btn btn-sm btn-outline-light d-lg-none sidebar-close-btn" id="btnCloseSidebar" type="button" aria-label="Cerrar menu lateral">
+                Cerrar
+            </button>
+        </div>
     </div>
     <nav class="sidebar-nav px-2">
         <?php foreach ($menuOptions as $item): ?>

@@ -99,6 +99,19 @@ body {
     color: var(--sidebar-brand-text);
 }
 
+.sidebar-close-btn {
+    line-height: 1;
+    border-color: rgba(255, 255, 255, 0.65);
+    color: #fff;
+}
+
+.sidebar-close-btn:hover,
+.sidebar-close-btn:focus {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(255, 255, 255, 0.85);
+}
+
 .sidebar-nav {
     display: flex;
     flex-direction: column;
@@ -380,6 +393,8 @@ a:hover {
         z-index: 1040;
         top: 0;
         bottom: 0;
+        left: 0;
+        max-width: 280px;
         transform: translateX(-100%);
     }
 

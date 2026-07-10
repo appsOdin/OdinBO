@@ -295,12 +295,43 @@
     const initSidebar = () => {
         const toggleButton = document.getElementById('btnToggleSidebar');
         const sidebar = document.getElementById('sidebarNav');
+        const closeButton = document.getElementById('btnCloseSidebar');
         if (!toggleButton || !sidebar) {
             return;
         }
 
+        const closeSidebar = () => {
+            sidebar.classList.remove('show');
+        };
+
         toggleButton.addEventListener('click', () => {
             sidebar.classList.toggle('show');
+        });
+
+        if (closeButton) {
+            closeButton.addEventListener('click', closeSidebar);
+        }
+
+        document.addEventListener('click', (event) => {
+            if (!(event.target instanceof Element)) {
+                return;
+            }
+
+            const isMobile = window.matchMedia('(max-width: 991.98px)').matches;
+            const clickedInsideSidebar = sidebar.contains(event.target);
+            const clickedToggle = toggleButton.contains(event.target);
+
+            if (isMobile && sidebar.classList.contains('show') && !clickedInsideSidebar && !clickedToggle) {
+                closeSidebar();
+            }
+        });
+
+        sidebar.querySelectorAll('a').forEach((link) => {
+            link.addEventListener('click', () => {
+                if (window.matchMedia('(max-width: 991.98px)').matches) {
+                    closeSidebar();
+                }
+            });
         });
     };
 
