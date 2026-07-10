@@ -14,7 +14,7 @@ services:
       APP_URL:              ${APP_URL:-http://localhost:8080}
       APP_TIMEZONE:         ${APP_TIMEZONE:-America/Costa_Rica}
       # API Backend
-      API_BASE_URL:         ${API_BASE_URL:-http://host.docker.internal}
+      API_BASE_URL:         ${API_BASE_URL:-http://odin-api:8080}
       TOKEN_REFRESH_MINUTES: ${TOKEN_REFRESH_MINUTES:-5}
       # Session
       SESSION_TIMEOUT:      ${SESSION_TIMEOUT:-60}
@@ -30,6 +30,12 @@ services:
     extra_hosts:
       # Allows the container to reach services on the host machine (API backend)
       - "host.docker.internal:host-gateway"
+    networks:
+      - odin-network
+
+networks:
+  odin-network:
+    driver: bridge
 
 volumes:
   odinbo_sessions:
