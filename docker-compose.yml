@@ -1,5 +1,6 @@
 services:
   odin-bo:
+    image: odin-bo:latest
     build:
       context: .
       dockerfile: Dockerfile
