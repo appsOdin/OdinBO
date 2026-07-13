@@ -15,7 +15,8 @@ $appJsVersion = is_file($appJsFile) ? (string) filemtime($appJsFile) : (string) 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($title ?? APP_NAME, ENT_QUOTES, 'UTF-8') ?></title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="icon" type="image/png" href="<?= base_url('assets/img/radiator.png') ?>">
+    <link rel="stylesheet" href="<?= base_url('assets/css/bootstrap.min.css') ?>">
     <script>
     (function () {
         var savedTheme = localStorage.getItem('odinbo-theme');
@@ -201,7 +202,7 @@ window.APP = {
     tracesListUrl: '<?= base_url('admin/traces/list') ?>'
 };
 </script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<script src="<?= base_url('assets/js/bootstrap.bundle.min.js') ?>"></script>
 <script src="<?= base_url('assets/js/sweetalert.js') ?>"></script>
 <script src="<?= base_url('assets/js/app.js?v=' . urlencode($appJsVersion)) ?>"></script>
 </body>
