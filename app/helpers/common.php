@@ -16,7 +16,7 @@ if (!function_exists('detected_base_path')) {
 }
 
 if (!function_exists('detected_origin')) {
-    function detected_origin(): string
+    function detected_scheme(): string
     {
         $scheme = 'http';
 
@@ -43,9 +43,25 @@ if (!function_exists('detected_origin')) {
             $scheme = 'https';
         }
 
+        return $scheme;
+    }
+}
+
+if (!function_exists('detected_origin')) {
+    function detected_origin(): string
+    {
+        $scheme = detected_scheme();
+
         $host = (string) ($_SERVER['HTTP_HOST'] ?? 'localhost');
 
         return $scheme . '://' . $host;
+    }
+}
+
+if (!function_exists('is_https_request')) {
+    function is_https_request(): bool
+    {
+        return detected_scheme() === 'https';
     }
 }
 

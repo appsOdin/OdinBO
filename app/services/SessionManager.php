@@ -147,7 +147,7 @@ final class SessionManager
             'expires' => $expiresAt,
             'path' => (string) ($params['path'] ?? '/'),
             'domain' => (string) ($params['domain'] ?? ''),
-            'secure' => (bool) ($params['secure'] ?? false),
+            'secure' => is_https_request(),
             'httponly' => (bool) ($params['httponly'] ?? true),
             'samesite' => (string) ($params['samesite'] ?? 'Lax'),
         ]);

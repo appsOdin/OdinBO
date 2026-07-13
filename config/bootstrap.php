@@ -11,11 +11,21 @@ ini_set('display_errors', APP_DEBUG ? '1' : '0');
 
 date_default_timezone_set(APP_TIMEZONE);
 
+require_once __DIR__ . '/../app/helpers/common.php';
+
 $sessionLifetime = max(60, SESSION_TIMEOUT * 60);
 // Keep a safe baseline so PHP GC does not remove session files before JWT expiration windows.
 $sessionLifetime = max($sessionLifetime, 12 * 60 * 60);
 ini_set('session.gc_maxlifetime', (string) $sessionLifetime);
 ini_set('session.cookie_lifetime', '0');
+session_set_cookie_params([
+    'lifetime' => 0,
+    'path' => '/',
+    'domain' => '',
+    'secure' => is_https_request(),
+    'httponly' => true,
+    'samesite' => 'Lax',
+]);
 
 session_name(SESSION_NAME);
 if (session_status() !== PHP_SESSION_ACTIVE) {
@@ -37,7 +47,7 @@ if ($authExp > time()) {
             'expires' => $authExp,
             'path' => (string) ($params['path'] ?? '/'),
             'domain' => (string) ($params['domain'] ?? ''),
-            'secure' => (bool) ($params['secure'] ?? false),
+            'secure' => is_https_request(),
             'httponly' => (bool) ($params['httponly'] ?? true),
             'samesite' => (string) ($params['samesite'] ?? 'Lax'),
         ]);
@@ -71,8 +81,6 @@ spl_autoload_register(static function (string $className): void {
         }
     }
 });
-
-require_once __DIR__ . '/../app/helpers/common.php';
 
 set_exception_handler(static function (Throwable $exception): void {
     Logger::error('Unhandled exception', [
