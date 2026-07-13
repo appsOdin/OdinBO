@@ -18,7 +18,31 @@ if (!function_exists('detected_base_path')) {
 if (!function_exists('detected_origin')) {
     function detected_origin(): string
     {
-        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $scheme = 'http';
+
+        // Prioriza encabezados de proxy reverso para ambientes con TLS terminado antes de PHP.
+        if (!empty($_SERVER['HTTP_X_FORWARDED_PROTO'])) {
+            $forwardedProto = strtolower(trim((string) $_SERVER['HTTP_X_FORWARDED_PROTO']));
+            $forwardedProto = explode(',', $forwardedProto)[0] ?? $forwardedProto;
+            $forwardedProto = trim($forwardedProto);
+
+            if ($forwardedProto === 'https' || $forwardedProto === 'http') {
+                $scheme = $forwardedProto;
+            }
+        } elseif (!empty($_SERVER['HTTP_FORWARDED'])) {
+            $forwarded = strtolower((string) $_SERVER['HTTP_FORWARDED']);
+            if (preg_match('/proto=(https|http)/', $forwarded, $matches) === 1) {
+                $scheme = $matches[1];
+            }
+        } elseif (!empty($_SERVER['REQUEST_SCHEME'])) {
+            $requestScheme = strtolower((string) $_SERVER['REQUEST_SCHEME']);
+            if ($requestScheme === 'https' || $requestScheme === 'http') {
+                $scheme = $requestScheme;
+            }
+        } elseif (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
+            $scheme = 'https';
+        }
+
         $host = (string) ($_SERVER['HTTP_HOST'] ?? 'localhost');
 
         return $scheme . '://' . $host;
