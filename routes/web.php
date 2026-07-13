@@ -19,7 +19,9 @@ return [
     ['method' => 'GET', 'path' => '/dashboard', 'handler' => [DashboardController::class, 'index'], 'middleware' => [AuthMiddleware::class]],
 
     ['method' => 'GET', 'path' => '/users', 'handler' => [UserController::class, 'index'], 'middleware' => [AuthMiddleware::class]],
+    ['method' => 'GET', 'path' => '/users/change-password', 'handler' => [UserController::class, 'changePassword'], 'middleware' => [AuthMiddleware::class]],
     ['method' => 'GET', 'path' => '/users/list', 'handler' => [UserController::class, 'list'], 'middleware' => [AuthMiddleware::class]],
+    ['method' => 'POST', 'path' => '/users/update-password', 'handler' => [UserController::class, 'updatePassword'], 'middleware' => [AuthMiddleware::class]],
     ['method' => 'POST', 'path' => '/users/store', 'handler' => [UserController::class, 'store'], 'middleware' => [AuthMiddleware::class]],
     ['method' => 'POST', 'path' => '/users/update', 'handler' => [UserController::class, 'update'], 'middleware' => [AuthMiddleware::class]],
 

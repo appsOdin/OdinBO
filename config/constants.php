@@ -69,6 +69,7 @@ unset($_env);
 
 const MENU_OPTIONS_ADMIN = [
 	['label' => 'Dashboard', 'path' => 'dashboard'],
+	['label' => 'Cambiar contrasena', 'path' => 'users/change-password'],
 	['label' => 'Usuarios', 'path' => 'users'],
 	['label' => 'Articulos', 'path' => 'articles'],
 	['label' => 'Trace Logs', 'path' => 'admin/traces'],
@@ -84,6 +85,7 @@ const MENU_OPTIONS_ADMIN = [
 
 const MENU_OPTIONS_USER = [
 	['label' => 'Dashboard', 'path' => 'dashboard'],
+	['label' => 'Cambiar contrasena', 'path' => 'users/change-password'],
 	['label' => 'Articulos', 'path' => 'articles'],
 	/*[
 		'label' => 'RRHH',
@@ -96,6 +98,7 @@ const MENU_OPTIONS_USER = [
 
 const MENU_OPTIONS_SUBSCRIBER = [
 	['label' => 'Dashboard', 'path' => 'dashboard'],
+	['label' => 'Cambiar contrasena', 'path' => 'users/change-password'],
 	[
 		'label' => 'RRHH',
 		'children' => [

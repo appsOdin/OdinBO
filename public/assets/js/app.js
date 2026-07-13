@@ -1104,11 +1104,58 @@
         renderRows();
     };
 
+    const initChangePasswordModule = () => {
+        const form = document.getElementById('changePasswordForm');
+        if (!(form instanceof HTMLFormElement)) {
+            return;
+        }
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const formData = Object.fromEntries(new FormData(form).entries());
+            const oldPassword = String(formData.oldPassword || '').trim();
+            const newPassword = String(formData.newPassword || '').trim();
+            const confirmPassword = String(formData.confirmPassword || '').trim();
+
+            if (oldPassword === '' || newPassword === '') {
+                showToast('danger', 'Contrasena actual y nueva son requeridas');
+                return;
+            }
+
+            if (newPassword.length < 8) {
+                showToast('danger', 'La nueva contrasena debe tener al menos 8 caracteres');
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                showToast('danger', 'La confirmacion de contrasena no coincide');
+                return;
+            }
+
+            const payload = {
+                _csrf_token: formData._csrf_token || '',
+                oldPassword,
+                newPassword,
+            };
+
+            const result = await fetchJson(window.APP.usersUpdatePasswordUrl, payload);
+            if (String(result.code) === '200') {
+                showToast('success', result.data || result.message || 'Contrasena actualizada exitosamente');
+                form.reset();
+                return;
+            }
+
+            showToast('danger', result.message || 'No fue posible actualizar la contrasena');
+        });
+    };
+
     document.addEventListener('DOMContentLoaded', () => {
         initTheme();
         initSidebar();
         consumeFlashMessages();
         initUsersModule();
         initArticlesModule();
+        initChangePasswordModule();
     });
 })();

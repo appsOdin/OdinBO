@@ -191,6 +191,7 @@ window.APP = {
     usersListUrl: '<?= base_url('users/list') ?>',
     usersStoreUrl: '<?= base_url('users/store') ?>',
     usersUpdateUrl: '<?= base_url('users/update') ?>',
+    usersUpdatePasswordUrl: '<?= base_url('users/update-password') ?>',
     articlesListUrl: '<?= base_url('articles/list') ?>',
     articlesDetailUrl: '<?= base_url('articles/detail') ?>',
     vacationGetSignersUrl: '<?= base_url('rrhh/solicitudes-vacaciones/signers') ?>',

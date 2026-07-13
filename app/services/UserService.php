@@ -38,4 +38,13 @@ final class UserService
     {
         return $this->apiService->put('/api/User/UpdateUser', $payload);
     }
+
+    /**
+     * @param array<string, mixed> $payload
+     * @return array<string, mixed>
+     */
+    public function updatePassword(array $payload): array
+    {
+        return $this->apiService->post('/api/User/UpdatePassword', $payload);
+    }
 }

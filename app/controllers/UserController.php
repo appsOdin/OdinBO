@@ -15,6 +15,16 @@ use App\Services\ServiceFactory;
  */
 final class UserController extends Controller
 {
+    public function changePassword(Request $request): void
+    {
+        $this->view('users/change-password', [
+            'title' => 'Cambiar contrasena',
+            'authUser' => ServiceFactory::sessionManager()->getUser(),
+            'csrfToken' => get_csrf_token(),
+            'flashMessages' => consume_flash(),
+        ]);
+    }
+
     public function index(Request $request): void
     {
         $response = ServiceFactory::userService()->getAllUsers();
@@ -86,6 +96,37 @@ final class UserController extends Controller
 
         unset($payload['_csrf_token']);
         $response = ServiceFactory::userService()->updateUser($payload);
+        $this->json($response);
+    }
+
+    public function updatePassword(Request $request): void
+    {
+        $payload = [
+            '_csrf_token' => (string) $request->input('_csrf_token', ''),
+            'oldPassword' => (string) $request->input('oldPassword', ''),
+            'newPassword' => (string) $request->input('newPassword', ''),
+        ];
+
+        if (!validate_csrf_token((string) ($payload['_csrf_token'] ?? ''))) {
+            $this->json(['code' => '403', 'message' => 'Token CSRF invalido'], 403);
+        }
+
+        $oldPassword = trim((string) ($payload['oldPassword'] ?? ''));
+        $newPassword = trim((string) ($payload['newPassword'] ?? ''));
+
+        if ($oldPassword === '' || $newPassword === '') {
+            $this->json(['code' => '422', 'message' => 'Contrasena actual y nueva son requeridas.'], 422);
+        }
+
+        if (strlen($newPassword) < 8) {
+            $this->json(['code' => '422', 'message' => 'La nueva contrasena debe tener al menos 8 caracteres.'], 422);
+        }
+
+        unset($payload['_csrf_token']);
+        $payload['oldPassword'] = $oldPassword;
+        $payload['newPassword'] = $newPassword;
+
+        $response = ServiceFactory::userService()->updatePassword($payload);
         $this->json($response);
     }
 
