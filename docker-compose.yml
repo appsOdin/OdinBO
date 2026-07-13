@@ -36,7 +36,8 @@ services:
 
 networks:
   odin-network:
-    driver: bridge
+    external: true
+    name: odin-api_odin-network
 
 volumes:
   odinbo_sessions:
