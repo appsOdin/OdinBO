@@ -24,7 +24,7 @@ $articles = $articles ?? [];
         </form>
 
         <div class="table-responsive">
-            <table class="table align-middle" id="articlesTable">
+            <table class="table align-middle w-100" id="articlesTable">
                 <thead>
                 <tr>
                     <th>ID</th>
@@ -40,10 +40,10 @@ $articles = $articles ?? [];
                         data-description="<?= htmlspecialchars($article->DESCRIPTION, ENT_QUOTES, 'UTF-8') ?>"
                         data-price="<?= htmlspecialchars((string) $article->PRICE, ENT_QUOTES, 'UTF-8') ?>"
                     >
-                        <td><?= htmlspecialchars($article->ID, ENT_QUOTES, 'UTF-8') ?></td>
-                        <td><?= htmlspecialchars($article->DESCRIPTION, ENT_QUOTES, 'UTF-8') ?></td>
-                        <td><?= htmlspecialchars(number_format($article->PRICE, 2, '.', ','), ENT_QUOTES, 'UTF-8') ?></td>
-                        <td>
+                        <td data-label="ID"><?= htmlspecialchars($article->ID, ENT_QUOTES, 'UTF-8') ?></td>
+                        <td data-label="Descripcion"><?= htmlspecialchars($article->DESCRIPTION, ENT_QUOTES, 'UTF-8') ?></td>
+                        <td data-label="Precio"><?= htmlspecialchars(number_format($article->PRICE, 2, '.', ','), ENT_QUOTES, 'UTF-8') ?></td>
+                        <td data-label="Accion">
                             <button class="btn btn-sm btn-outline-primary btn-article-detail" type="button">Detalle</button>
                         </td>
                     </tr>

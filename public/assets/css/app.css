@@ -234,6 +234,23 @@ body {
     backdrop-filter: blur(6px);
 }
 
+.topbar-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    min-width: 0;
+}
+
+.topbar-user-badge {
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.topbar-logout-btn {
+    white-space: nowrap;
+}
+
 .stat-card {
     border-radius: 16px;
 }
@@ -387,6 +404,11 @@ a:hover {
     object-fit: contain;
 }
 
+#articleDetailModal,
+#articleImageModal {
+    z-index: 1060;
+}
+
 @media (max-width: 991.98px) {
     .sidebar {
         position: fixed;
@@ -408,6 +430,28 @@ a:hover {
 }
 
 @media (max-width: 575.98px) {
+    .topbar .container-fluid {
+        gap: 0.5rem;
+    }
+
+    .theme-select {
+        min-width: 112px;
+        max-width: 120px;
+    }
+
+    .topbar-actions {
+        gap: 0.4rem !important;
+    }
+
+    .topbar-user-badge {
+        max-width: 110px;
+        font-size: 0.78rem;
+    }
+
+    .topbar-logout-btn {
+        padding-inline: 0.55rem;
+    }
+
     body {
         font-size: 0.92rem;
     }
@@ -461,6 +505,55 @@ a:hover {
         font-size: 0.8rem;
     }
 
+    #articlesTable {
+        width: 100%;
+        min-width: 100%;
+    }
+
+    #articlesTable thead {
+        display: none;
+    }
+
+    #articlesTable,
+    #articlesTable tbody,
+    #articlesTable tr,
+    #articlesTable td {
+        display: block;
+        width: 100%;
+    }
+
+    #articlesTable tr {
+        border: 1px solid rgba(15, 23, 42, 0.12);
+        border-radius: 10px;
+        margin-bottom: 0.6rem;
+        background: rgba(255, 255, 255, 0.92);
+        padding: 0.35rem 0.45rem;
+    }
+
+    #articlesTable td {
+        border: 0;
+        padding: 0.36rem 0.12rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.55rem;
+    }
+
+    #articlesTable td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: #334155;
+        flex: 0 0 42%;
+    }
+
+    #articlesTable td:last-child {
+        padding-top: 0.5rem;
+    }
+
+    #articlesTable .btn-article-detail {
+        width: 100%;
+    }
+
     #articlesTable th,
     #articlesTable td,
     #articleStocksTable th,
@@ -486,5 +579,14 @@ a:hover {
 
     .signature-canvas {
         min-height: 180px;
+    }
+
+    :root[data-theme='dark'] #articlesTable tr {
+        background: #0f172a;
+        border-color: rgba(148, 163, 184, 0.24);
+    }
+
+    :root[data-theme='dark'] #articlesTable td::before {
+        color: #cbd5e1;
     }
 }

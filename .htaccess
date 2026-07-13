@@ -3,9 +3,15 @@ RewriteRule ^$ public/ [L]
 RewriteRule (.*) public/$1 [L]
 
 <IfModule mod_headers.c>
+	SetEnvIfNoCase X-Forwarded-Proto "^https$" is_https=1
+	Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains" env=is_https
+	Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains" "expr=%{HTTPS} == 'on'"
+	Header set X-Content-Type-Options "nosniff"
 	Header always set X-Content-Type-Options "nosniff"
 	Header always set X-Frame-Options "SAMEORIGIN"
 	Header always set Referrer-Policy "strict-origin-when-cross-origin"
 	Header always set Permissions-Policy "geolocation=(), microphone=(), camera=(), payment=(), usb=()"
-	Header always set Content-Security-Policy "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; font-src 'self' data:; img-src 'self' data:; connect-src 'self' https://cdn.jsdelivr.net; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests; block-all-mixed-content;"
+	Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data:; connect-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests; block-all-mixed-content;"
+	Header always set Cross-Origin-Resource-Policy "same-origin"
+	Header always set Cross-Origin-Opener-Policy "same-origin"
 </IfModule>

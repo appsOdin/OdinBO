@@ -768,6 +768,7 @@
         const stocksTableBody = document.getElementById('articleStocksTableBody');
 
         let selectedImageDataUri = '';
+        let reopenDetailAfterImageClose = false;
 
         const state = {
             search: '',
@@ -784,10 +785,10 @@
 
             return `
                 <tr data-id="${id}" data-description="${description}" data-price="${escapeHtml(String(item.PRICE || 0))}">
-                    <td>${id}</td>
-                    <td>${description}</td>
-                    <td>${price}</td>
-                    <td><button class="btn btn-sm btn-outline-primary btn-article-detail" type="button">Detalle</button></td>
+                    <td data-label="ID">${id}</td>
+                    <td data-label="Descripcion">${description}</td>
+                    <td data-label="Precio">${price}</td>
+                    <td data-label="Accion"><button class="btn btn-sm btn-outline-primary btn-article-detail" type="button">Detalle</button></td>
                 </tr>
             `;
         };
@@ -1060,13 +1061,42 @@
             await loadArticleDetail(articleId);
         });
 
-        expandImageButton?.addEventListener('click', () => {
+        const showImageModal = () => {
             if (!imageModalEl || !expandedImage || selectedImageDataUri === '') {
                 return;
             }
 
             expandedImage.src = selectedImageDataUri;
             bootstrap.Modal.getOrCreateInstance(imageModalEl).show();
+        };
+
+        expandImageButton?.addEventListener('click', () => {
+            if (!imageModalEl || !expandedImage || selectedImageDataUri === '') {
+                return;
+            }
+
+            if (detailModalEl && detailModalEl.classList.contains('show')) {
+                reopenDetailAfterImageClose = true;
+                detailModalEl.addEventListener('hidden.bs.modal', showImageModal, { once: true });
+                bootstrap.Modal.getOrCreateInstance(detailModalEl).hide();
+                return;
+            }
+
+            reopenDetailAfterImageClose = false;
+            showImageModal();
+        });
+
+        imageModalEl?.addEventListener('hidden.bs.modal', () => {
+            if (expandedImage) {
+                expandedImage.removeAttribute('src');
+            }
+
+            if (!reopenDetailAfterImageClose || !detailModalEl) {
+                return;
+            }
+
+            reopenDetailAfterImageClose = false;
+            bootstrap.Modal.getOrCreateInstance(detailModalEl).show();
         });
 
         state.allRows = parseInitialRows();

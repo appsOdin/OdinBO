@@ -6,9 +6,9 @@ storage/logs/*
 storage/sessions/*
 storage/signatures/*
 .docker/*
-!.docker/apache/
-!.docker/apache/vhost.conf
-!.docker/php/
-!.docker/php/php.ini
+!.docker/apache
+!.docker/apache/**
+!.docker/php
+!.docker/php/**
 docker-compose.yml
 Dockerfile
