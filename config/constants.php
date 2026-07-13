@@ -85,13 +85,13 @@ const MENU_OPTIONS_ADMIN = [
 const MENU_OPTIONS_USER = [
 	['label' => 'Dashboard', 'path' => 'dashboard'],
 	['label' => 'Articulos', 'path' => 'articles'],
-	[
+	/*[
 		'label' => 'RRHH',
 		'children' => [
 			['label' => 'Solicitud de vacaciones', 'path' => 'rrhh/solicitud-vacaciones'],
 			['label' => 'Para Firmar', 'path' => 'rrhh/solicitudes-para-firmar'],
 		],
-	],
+	],*/
 ];
 
 const MENU_OPTIONS_SUBSCRIBER = [
