@@ -11,6 +11,10 @@
                     <input type="hidden" name="_csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
                     <div class="row g-3">
                         <div class="col-md-6">
+                            <label class="form-label">Identificacion</label>
+                            <input type="text" class="form-control" name="id" maxlength="20" required>
+                        </div>
+                        <div class="col-md-6">
                             <label class="form-label">Nombre</label>
                             <input type="text" class="form-control" name="name" required>
                         </div>

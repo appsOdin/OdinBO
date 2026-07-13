@@ -96,7 +96,7 @@ final class UserController extends Controller
     {
         return [
             '_csrf_token' => (string) $request->input('_csrf_token', ''),
-            'id' => (string) $request->input('id', ''),
+            'id' => sanitize_text((string) $request->input('id', '')),
             'name' => sanitize_text((string) $request->input('name', '')),
             'lastname' => sanitize_text((string) $request->input('lastname', '')),
             'username' => sanitize_text((string) $request->input('username', '')),
@@ -118,6 +118,7 @@ final class UserController extends Controller
     {
         $validator = new Validator();
         $validator
+            ->required('id', (string) $payload['id'], 'Identificacion')
             ->required('name', (string) $payload['name'], 'Nombre')
             ->required('lastname', (string) $payload['lastname'], 'Apellido')
             ->required('username', (string) $payload['username'], 'Usuario')

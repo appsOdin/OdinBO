@@ -37,8 +37,23 @@ final class AuthService
         }
 
         $token = (string) ($data['token'] ?? ($data['Token'] ?? ''));
-        $id = (string) ($data['id'] ?? ($data['Id'] ?? ''));
-        $user = (string) ($data['username'] ?? ($data['userName'] ?? ($data['Username'] ?? '')));
+        $claims = $this->extractTokenClaims($token);
+
+        $id = (string) ($data['id'] ?? ($data['Id'] ?? ($data['userId'] ?? ($data['UserId'] ?? ''))));
+        if ($id === '' && is_array($claims)) {
+            $id = (string) ($claims['id'] ?? ($claims['Id'] ?? ($claims['sub'] ?? '')));
+        }
+
+        $user = (string) ($data['username'] ?? ($data['userName'] ?? ($data['Username'] ?? ($data['name'] ?? ($data['Name'] ?? '')))));
+        if ($user === '' && is_array($claims)) {
+            $user = (string) ($claims['username']
+                ?? ($claims['userName']
+                ?? ($claims['Username']
+                ?? ($claims['name']
+                ?? ($claims['Name']
+                ?? ($claims['sub'] ?? ''))))));
+        }
+
         $rolename = strtoupper(trim($this->extractRoleNameFromToken($token)));
 
         if ($rolename === '') {
@@ -73,13 +88,27 @@ final class AuthService
 
     private function extractRoleNameFromToken(string $token): string
     {
-        if ($token === '') {
+        $claims = $this->extractTokenClaims($token);
+        if (!is_array($claims)) {
             return '';
+        }
+
+        $role = $claims['rolename'] ?? ($claims['roleName'] ?? ($claims['RoleName'] ?? ''));
+        return is_string($role) ? $role : '';
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function extractTokenClaims(string $token): ?array
+    {
+        if ($token === '') {
+            return null;
         }
 
         $parts = explode('.', $token);
         if (count($parts) < 2) {
-            return '';
+            return null;
         }
 
         $payload = strtr($parts[1], '-_', '+/');
@@ -90,16 +119,11 @@ final class AuthService
 
         $decoded = base64_decode($payload, true);
         if ($decoded === false) {
-            return '';
+            return null;
         }
 
         $claims = json_decode($decoded, true);
-        if (!is_array($claims)) {
-            return '';
-        }
-
-        $role = $claims['rolename'] ?? ($claims['roleName'] ?? ($claims['RoleName'] ?? ''));
-        return is_string($role) ? $role : '';
+        return is_array($claims) ? $claims : null;
     }
 
     public function logout(): void
