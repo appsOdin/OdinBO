@@ -15,6 +15,17 @@ use App\Services\ServiceFactory;
  */
 final class UserController extends Controller
 {
+    /**
+     * @param array<int, string> $allowedRoles
+     */
+    private function hasRole(array $allowedRoles): bool
+    {
+        $user = ServiceFactory::sessionManager()->getUser();
+        $rolename = strtoupper(trim((string) ($user['rolename'] ?? '')));
+
+        return in_array($rolename, $allowedRoles, true);
+    }
+
     public function changePassword(Request $request): void
     {
         $this->view('users/change-password', [
@@ -27,6 +38,18 @@ final class UserController extends Controller
 
     public function index(Request $request): void
     {
+        if (!$this->hasRole(['SUPER'])) {
+            $this->view('users/index', [
+                'title' => 'Usuarios',
+                'users' => [],
+                'apiHttpCode' => 403,
+                'authUser' => ServiceFactory::sessionManager()->getUser(),
+                'csrfToken' => get_csrf_token(),
+                'flashMessages' => consume_flash(),
+            ]);
+            return;
+        }
+
         $response = ServiceFactory::userService()->getAllUsers();
         $apiHttpCode = (int) ($response['http_code'] ?? 200);
 
@@ -52,12 +75,22 @@ final class UserController extends Controller
 
     public function list(Request $request): void
     {
+        if (!$this->hasRole(['SUPER'])) {
+            $this->json(['code' => '403', 'message' => 'No tiene permisos', 'data' => null], 403);
+            return;
+        }
+
         $response = ServiceFactory::userService()->getAllUsers();
         $this->json($response);
     }
 
     public function store(Request $request): void
     {
+        if (!$this->hasRole(['SUPER'])) {
+            $this->json(['code' => '403', 'message' => 'No tiene permisos', 'data' => null], 403);
+            return;
+        }
+
         $payload = $this->sanitizePayload($request, false);
 
         if (!validate_csrf_token((string) ($payload['_csrf_token'] ?? ''))) {
@@ -76,6 +109,11 @@ final class UserController extends Controller
 
     public function update(Request $request): void
     {
+        if (!$this->hasRole(['SUPER'])) {
+            $this->json(['code' => '403', 'message' => 'No tiene permisos', 'data' => null], 403);
+            return;
+        }
+
         $payload = $this->sanitizePayload($request, true);
 
         if (!validate_csrf_token((string) ($payload['_csrf_token'] ?? ''))) {

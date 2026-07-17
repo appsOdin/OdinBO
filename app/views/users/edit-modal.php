@@ -36,7 +36,7 @@
                             <select class="form-select" name="roleid" id="edit_roleid" required>
                                 <option value="1">ADMIN</option>
                                 <option value="2">USER</option>
-                                <option value="3">SUBSCRIBER</option>
+                                <option value="3">SUPER</option>
                             </select>
                         </div>
                         <div class="col-md-3">

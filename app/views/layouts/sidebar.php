@@ -1,9 +1,9 @@
 <?php
 $rolename = (string) ($authUser['rolename'] ?? '');
 $menuOptions = match ($rolename) {
-    'ADMIN' => MENU_OPTIONS_ADMIN,
+    'SUPER' => MENU_OPTIONS_SUPER,
     'USER' => MENU_OPTIONS_USER,
-    'SUBSCRIBER' => MENU_OPTIONS_SUBSCRIBER,
+    'ADMIN' => MENU_OPTIONS_ADMIN,
     default => MENU_OPTIONS_USER,
 };
 $currentUri = $_SERVER['REQUEST_URI'] ?? '';

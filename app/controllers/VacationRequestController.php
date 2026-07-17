@@ -39,7 +39,7 @@ final class VacationRequestController extends Controller
 
     public function all(Request $request): void
     {
-        if (!$this->hasRole(['ADMIN'])) {
+        if (!$this->hasRole(['ADMIN', 'SUPER'])) {
             $this->view('vacations/all', [
                 'title' => 'Solicitudes de vacaciones',
                 'requests' => [],
@@ -210,7 +210,7 @@ final class VacationRequestController extends Controller
 
     public function signers(Request $request): void
     {
-        if (!$this->hasRole(['ADMIN', 'USER'])) {
+        if (!$this->hasRole(['ADMIN', 'SUPER', 'USER'])) {
             $this->json(['code' => '403', 'message' => 'No tiene permisos', 'data' => null], 403);
             return;
         }
@@ -249,7 +249,7 @@ final class VacationRequestController extends Controller
 
     public function addSigners(Request $request): void
     {
-        if (!$this->hasRole(['ADMIN'])) {
+        if (!$this->hasRole(['ADMIN', 'SUPER'])) {
             $this->json(['code' => '403', 'message' => 'No tiene permisos', 'data' => null], 403);
             return;
         }
@@ -377,7 +377,7 @@ final class VacationRequestController extends Controller
 
     public function toSign(Request $request): void
     {
-        if (!$this->hasRole(['ADMIN', 'USER'])) {
+        if (!$this->hasRole(['ADMIN', 'SUPER', 'USER'])) {
             $this->view('vacations/to-sign', [
                 'title' => 'Solicitudes para firmar',
                 'requests' => [],
@@ -508,7 +508,7 @@ final class VacationRequestController extends Controller
 
     public function reject(Request $request): void
     {
-        if (!$this->hasRole(['ADMIN'])) {
+        if (!$this->hasRole(['ADMIN', 'SUPER'])) {
             $this->json(['code' => '403', 'message' => 'No tiene permisos para rechazar solicitudes', 'data' => null], 403);
             return;
         }

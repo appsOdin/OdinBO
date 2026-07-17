@@ -9,7 +9,9 @@ $currentUserRole = strtoupper((string) ($authUser['rolename'] ?? ''));
         <h2 class="fw-semibold mb-1">Mis Solicitudes de Vacaciones</h2>
         <p class="text-muted m-0">Gestiona tus solicitudes y firma cuando corresponda.</p>
     </div>
-    <a href="<?= base_url('rrhh/solicitud-vacaciones/crear') ?>" class="btn btn-primary">Nueva Solicitud</a>
+    <?php if (in_array($currentUserRole, ['ADMIN', 'SUPER'], true)): ?>
+        <a href="<?= base_url('rrhh/solicitud-vacaciones/crear') ?>" class="btn btn-primary">Nueva Solicitud</a>
+    <?php endif; ?>
 </section>
 
 <div class="card border-0 shadow-sm vacation-card mb-3">
@@ -80,7 +82,7 @@ $currentUserRole = strtoupper((string) ($authUser['rolename'] ?? ''));
                                     <?php elseif ($stateKey === 'TOSIGNED'): ?>
                                         <button type="button" class="btn btn-sm btn-outline-secondary btn-view-files" data-request-id="<?= $id ?>">Archivos</button>
                                     <?php endif; ?>
-                                    <?php if ($isOwner && !in_array($stateKey, ['REJECTED', 'CANCELLED', 'SIGN'], true) && in_array(strtoupper($currentUserRole), ['ADMIN', 'USER'], true)): ?>
+                                    <?php if ($isOwner && !in_array($stateKey, ['REJECTED', 'CANCELLED', 'SIGN'], true) && in_array($currentUserRole, ['ADMIN', 'SUPER'], true)): ?>
                                         <button type="button" class="btn btn-sm btn-danger btn-reject-vacation" data-request-id="<?= $id ?>">Rechazar</button>
                                     <?php endif; ?>
                                 </div>

@@ -7,7 +7,7 @@ $users = $users ?? [];
 <section class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
     <div>
         <h2 class="fw-semibold mb-1">Solicitudes de Vacaciones</h2>
-        <p class="text-muted m-0">Listado general para Administrador y Usuario.</p>
+        <p class="text-muted m-0">Listado general para administradores y super usuarios.</p>
     </div>
     <a href="<?= base_url('rrhh/solicitud-vacaciones/crear') ?>" class="btn btn-primary">Nueva Solicitud</a>
 </section>

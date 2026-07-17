@@ -48,7 +48,7 @@ $users = $users ?? [];
                         data-username="<?= htmlspecialchars($user->username, ENT_QUOTES, 'UTF-8') ?>"
                         data-email="<?= htmlspecialchars($user->email, ENT_QUOTES, 'UTF-8') ?>"
                         data-role="<?= htmlspecialchars($user->rolename, ENT_QUOTES, 'UTF-8') ?>"
-                        data-roleid="<?= $user->rolename === 'ADMIN' ? 1 : ($user->rolename === 'USER' ? 2 : 3) ?>"
+                        data-roleid="<?= $user->rolename === 'ADMIN' ? 1 : ($user->rolename === 'USER' ? 2 : ($user->rolename === 'SUPER' ? 3 : 2)) ?>"
                         data-state="<?= $user->state ?>"
                         data-start-time="<?= htmlspecialchars($workingStart, ENT_QUOTES, 'UTF-8') ?>"
                         data-end-time="<?= htmlspecialchars($workingEnd, ENT_QUOTES, 'UTF-8') ?>"

@@ -96,7 +96,7 @@ $ownerSignatureSrc = $buildSignatureSrc($ownerSignatureRaw);
         <?php endif; ?>
         <?php
         $authRolename = strtoupper((string) ($authUser['rolename'] ?? ''));
-        $canReject = ($isOwner || $authRolename === 'ADMIN') && in_array($authRolename, ['ADMIN', 'USER'], true) && !in_array($stateKey, ['REJECTED', 'CANCELLED', 'SIGN'], true);
+        $canReject = ($isOwner || in_array($authRolename, ['ADMIN', 'SUPER'], true)) && in_array($authRolename, ['ADMIN', 'SUPER'], true) && !in_array($stateKey, ['REJECTED', 'CANCELLED', 'SIGN'], true);
         ?>
         <?php if ($canReject): ?>
             <button type="button" class="btn btn-danger btn-reject-vacation" data-request-id="<?= $id ?>">Rechazar</button>

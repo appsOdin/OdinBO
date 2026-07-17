@@ -18,7 +18,9 @@ final class AuthController extends Controller
     {
         $sessionManager = ServiceFactory::sessionManager();
         if ($sessionManager->isAuthenticated()) {
-            $this->redirect('/dashboard');
+            $user = $sessionManager->getUser();
+            $rolename = strtoupper(trim((string) ($user['rolename'] ?? '')));
+            $this->redirect($this->homePathForRole($rolename));
         }
 
         $this->view('login', [
@@ -64,7 +66,9 @@ final class AuthController extends Controller
 
         clear_old();
         flash('success', 'Bienvenido al sistema.');
-        $this->redirect('/dashboard');
+        $user = ServiceFactory::sessionManager()->getUser();
+        $rolename = strtoupper(trim((string) ($user['rolename'] ?? '')));
+        $this->redirect($this->homePathForRole($rolename));
     }
 
     public function logout(Request $request): void
@@ -78,5 +82,10 @@ final class AuthController extends Controller
         ServiceFactory::authService()->logout();
         flash('success', 'Sesion cerrada correctamente.');
         $this->redirect('/login');
+    }
+
+    private function homePathForRole(string $rolename): string
+    {
+        return $rolename === 'USER' ? '/rrhh/solicitud-vacaciones' : '/dashboard';
     }
 }

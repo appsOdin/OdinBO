@@ -9,7 +9,7 @@ use App\Core\Request;
 use App\Services\ServiceFactory;
 
 /**
- * Trace log viewer — ADMIN only.
+ * Trace log viewer — ADMIN and SUPER.
  */
 final class TraceController extends Controller
 {
@@ -83,6 +83,6 @@ final class TraceController extends Controller
     {
         $user     = ServiceFactory::sessionManager()->getUser();
         $rolename = strtoupper(trim((string) ($user['rolename'] ?? '')));
-        return $rolename === 'ADMIN';
+        return in_array($rolename, ['ADMIN', 'SUPER'], true);
     }
 }
