@@ -70,7 +70,9 @@ final class AuthMiddleware
             $allowed = [
                 'POST /logout',
                 'GET /rrhh/solicitud-vacaciones',
+                'GET /rrhh/solicitud-vacaciones/crear',
                 'GET /rrhh/solicitud-vacaciones/detalle',
+                'POST /rrhh/solicitud-vacaciones/store',
                 'GET /rrhh/solicitudes-para-firmar',
                 'GET /rrhh/vacaciones/descargar',
                 'POST /rrhh/solicitudes-vacaciones/files',

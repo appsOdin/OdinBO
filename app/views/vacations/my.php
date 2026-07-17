@@ -9,7 +9,7 @@ $currentUserRole = strtoupper((string) ($authUser['rolename'] ?? ''));
         <h2 class="fw-semibold mb-1">Mis Solicitudes de Vacaciones</h2>
         <p class="text-muted m-0">Gestiona tus solicitudes y firma cuando corresponda.</p>
     </div>
-    <?php if (in_array($currentUserRole, ['ADMIN', 'SUPER'], true)): ?>
+    <?php if (in_array($currentUserRole, ['USER', 'ADMIN', 'SUPER'], true)): ?>
         <a href="<?= base_url('rrhh/solicitud-vacaciones/crear') ?>" class="btn btn-primary">Nueva Solicitud</a>
     <?php endif; ?>
 </section>
