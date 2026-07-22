@@ -200,6 +200,7 @@ window.APP = {
     vacationSaveSignatureUrl: '<?= base_url('rrhh/solicitud-vacaciones/save-signature') ?>',
     vacationDownloadFileUrl: '<?= base_url('rrhh/vacaciones/descargar') ?>',
     vacationRejectUrl: '<?= base_url('rrhh/solicitud-vacaciones/reject') ?>',
+    vacationReportListUrl: '<?= base_url('reportes/vacaciones/list') ?>',
     tracesListUrl: '<?= base_url('admin/traces/list') ?>'
 };
 </script>

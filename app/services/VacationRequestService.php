@@ -38,6 +38,14 @@ final class VacationRequestService
     /**
      * @return array<string, mixed>
      */
+    public function getAllSigners(): array
+    {
+        return $this->apiService->get('/api/VacationRequest/GetAllSigners');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
     public function getMy(): array
     {
         return $this->apiService->get('/api/VacationRequest/GetMy');
@@ -109,11 +117,28 @@ final class VacationRequestService
     /**
      * @return array<string, mixed>
      */
-    public function reject(int $requestId, string $rejectReason): array
+    public function getRequestVacation(string $identification = ''): array
+    {
+        $normalizedIdentification = trim($identification);
+        $endpoint = '/api/VacationRequest/GetRequest_Vacation';
+
+        if ($normalizedIdentification === '') {
+            return $this->apiService->get($endpoint);
+        }
+
+        return $this->apiService->get($endpoint . '/' . rawurlencode($normalizedIdentification));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function reject(int $requestId, ?string $rejectReason, string $state, ?string $sing): array
     {
         return $this->apiService->post('/api/VacationRequest/Reject', [
             'requestId' => $requestId,
             'rejectReason' => $rejectReason,
+            'state' => $state,
+            'sing' => $sing,
         ]);
     }
 

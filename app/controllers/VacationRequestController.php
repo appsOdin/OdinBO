@@ -64,14 +64,10 @@ final class VacationRequestController extends Controller
 
         $requests = $apiHttpCode === 200 && is_array($vacationResponse['data'] ?? null) ? $vacationResponse['data'] : [];
 
-        $usersResponse = ServiceFactory::userService()->getAllUsers();
-        $usersRows = is_array($usersResponse['data'] ?? null) ? $usersResponse['data'] : [];
+        $signersResponse = ServiceFactory::vacationRequestService()->getAllSigners();
+        $usersRows = is_array($signersResponse['data'] ?? null) ? $signersResponse['data'] : [];
         $users = array_values(array_filter($usersRows, static function ($user): bool {
-            if (!is_array($user)) {
-                return false;
-            }
-
-            return (int) ($user['state'] ?? 0) === 1;
+            return is_array($user);
         }));
 
         $this->view('vacations/all', [
@@ -417,6 +413,115 @@ final class VacationRequestController extends Controller
         ]);
     }
 
+    public function calendar(Request $request): void
+    {
+        if (!$this->hasRole(['ADMIN', 'SUPER'])) {
+            $this->view('vacations/calendar', [
+                'title' => 'Calendario de vacaciones',
+                'entries' => [],
+                'apiHttpCode' => 403,
+                'authUser' => ServiceFactory::sessionManager()->getUser(),
+                'csrfToken' => get_csrf_token(),
+                'flashMessages' => consume_flash(),
+            ]);
+            return;
+        }
+
+        $response = ServiceFactory::vacationRequestService()->getRequestVacation('');
+        $apiHttpCode = (int) ($response['http_code'] ?? 200);
+
+        if ($apiHttpCode === 401 || $apiHttpCode === 406) {
+            ServiceFactory::authService()->logout();
+            flash('danger', (string) ($response['message'] ?? 'Sesion expirada.'));
+            $this->redirect('/login');
+            return;
+        }
+
+        $rows = $apiHttpCode === 200 && is_array($response['data'] ?? null) ? $response['data'] : [];
+        $entries = array_values(array_filter($rows, static function ($row): bool {
+            return is_array($row);
+        }));
+
+        $this->view('vacations/calendar', [
+            'title' => 'Calendario de vacaciones',
+            'entries' => $entries,
+            'apiHttpCode' => $apiHttpCode,
+            'authUser' => ServiceFactory::sessionManager()->getUser(),
+            'csrfToken' => get_csrf_token(),
+            'flashMessages' => consume_flash(),
+        ]);
+    }
+
+    public function vacationReport(Request $request): void
+    {
+        if (!$this->hasRole(['ADMIN', 'SUPER'])) {
+            $this->view('reports/vacations', [
+                'title' => 'Reporte de vacaciones',
+                'rows' => [],
+                'signers' => [],
+                'apiHttpCode' => 403,
+                'authUser' => ServiceFactory::sessionManager()->getUser(),
+                'csrfToken' => get_csrf_token(),
+                'flashMessages' => consume_flash(),
+            ]);
+            return;
+        }
+
+        $signersResponse = ServiceFactory::vacationRequestService()->getAllSigners();
+        $signersHttpCode = (int) ($signersResponse['http_code'] ?? 200);
+        if ($signersHttpCode === 401 || $signersHttpCode === 406) {
+            ServiceFactory::authService()->logout();
+            flash('danger', (string) ($signersResponse['message'] ?? 'Sesion expirada.'));
+            $this->redirect('/login');
+            return;
+        }
+
+        $signersRows = is_array($signersResponse['data'] ?? null) ? $signersResponse['data'] : [];
+        $signers = array_values(array_filter($signersRows, static function ($row): bool {
+            return is_array($row);
+        }));
+
+        $this->view('reports/vacations', [
+            'title' => 'Reporte de vacaciones',
+            'rows' => [],
+            'signers' => $signers,
+            'apiHttpCode' => 200,
+            'authUser' => ServiceFactory::sessionManager()->getUser(),
+            'csrfToken' => get_csrf_token(),
+            'flashMessages' => consume_flash(),
+        ]);
+    }
+
+    public function vacationReportList(Request $request): void
+    {
+        if (!$this->hasRole(['ADMIN', 'SUPER'])) {
+            $this->json(['code' => '403', 'message' => 'No tiene permisos', 'data' => null], 403);
+            return;
+        }
+
+        if (!validate_csrf_token((string) $request->input('_csrf_token', ''))) {
+            $this->json(['code' => '403', 'message' => 'Token CSRF invalido', 'data' => null], 403);
+            return;
+        }
+
+        $identification = sanitize_text((string) $request->input('identification', ''));
+        if ($identification !== '' && !preg_match('/^[A-Za-z0-9_-]{1,50}$/', $identification)) {
+            $this->json(['code' => '422', 'message' => 'Identificacion invalida', 'data' => null], 422);
+            return;
+        }
+
+        $response = ServiceFactory::vacationRequestService()->getRequestVacation($identification);
+        $httpCode = (int) ($response['http_code'] ?? 200);
+
+        if ($httpCode === 401) {
+            ServiceFactory::authService()->logout();
+            $this->json(['code' => '401', 'message' => 'Sesion expirada', 'data' => null], 401);
+            return;
+        }
+
+        $this->json($response, $httpCode >= 100 ? $httpCode : 200);
+    }
+
     public function detail(Request $request): void
     {
         $requestId = (int) $request->query('id', 0);
@@ -508,8 +613,24 @@ final class VacationRequestController extends Controller
 
     public function reject(Request $request): void
     {
-        if (!$this->hasRole(['ADMIN', 'SUPER'])) {
-            $this->json(['code' => '403', 'message' => 'No tiene permisos para rechazar solicitudes', 'data' => null], 403);
+        $state = strtoupper(trim((string) $request->input('state', 'REJECTED')));
+        $rejectReason = trim((string) $request->input('rejectReason', ''));
+        $sing = trim((string) $request->input('sing', ''));
+
+        $allowedStates = ['REJECTED', 'ANNULLED', 'ANNULLED_APPROVED'];
+        if (!in_array($state, $allowedStates, true)) {
+            $this->json(['code' => '422', 'message' => 'Estado invalido', 'data' => null], 422);
+            return;
+        }
+
+        $rolesByState = [
+            'REJECTED' => ['ADMIN', 'SUPER'],
+            'ANNULLED' => ['ADMIN', 'SUPER', 'USER'],
+            'ANNULLED_APPROVED' => ['ADMIN', 'SUPER'],
+        ];
+
+        if (!$this->hasRole($rolesByState[$state])) {
+            $this->json(['code' => '403', 'message' => 'No tiene permisos para ejecutar esta accion', 'data' => null], 403);
             return;
         }
 
@@ -524,15 +645,43 @@ final class VacationRequestController extends Controller
             return;
         }
 
-        $rejectReason = trim((string) $request->input('rejectReason', ''));
-        if ($rejectReason === '') {
-            $this->json(['code' => '422', 'message' => 'El motivo del rechazo es obligatorio', 'data' => null], 422);
-            return;
+        if (in_array($state, ['REJECTED', 'ANNULLED'], true)) {
+            if ($rejectReason === '') {
+                $message = $state === 'ANNULLED'
+                    ? 'El motivo de la anulacion es obligatorio'
+                    : 'El motivo del rechazo es obligatorio';
+                $this->json(['code' => '422', 'message' => $message, 'data' => null], 422);
+                return;
+            }
+
+            if (mb_strlen($rejectReason, 'UTF-8') > 200) {
+                $this->json(['code' => '422', 'message' => 'El motivo no puede superar 200 caracteres', 'data' => null], 422);
+                return;
+            }
+        } else {
+            $rejectReason = '';
         }
 
-        if (mb_strlen($rejectReason, 'UTF-8') > 200) {
-            $this->json(['code' => '422', 'message' => 'El motivo no puede superar 200 caracteres', 'data' => null], 422);
-            return;
+        if ($state === 'ANNULLED') {
+            if (!preg_match('/^data:image\/png;base64,/', $sing)) {
+                $this->json(['code' => '422', 'message' => 'Formato de firma invalido', 'data' => null], 422);
+                return;
+            }
+
+            $base64 = substr($sing, strlen('data:image/png;base64,'));
+            $binary = base64_decode($base64, true);
+
+            if ($binary === false || strlen($binary) < 100) {
+                $this->json(['code' => '422', 'message' => 'Firma vacia o invalida', 'data' => null], 422);
+                return;
+            }
+
+            if (strlen($binary) > 2 * 1024 * 1024) {
+                $this->json(['code' => '422', 'message' => 'La firma supera el tamano permitido (2 MB)', 'data' => null], 422);
+                return;
+            }
+        } else {
+            $sing = '';
         }
 
         $detailResponse = ServiceFactory::vacationRequestService()->getDetail($requestId);
@@ -550,20 +699,41 @@ final class VacationRequestController extends Controller
             $this->json(['code' => '422', 'message' => 'No fue posible verificar la solicitud', 'data' => null], 422);
             return;
         }
+
         $detail = $detailResponse['data'];
         $startDateRaw = (string) ($detail['startDate'] ?? '');
         $startDateTs = $startDateRaw !== '' ? strtotime($startDateRaw) : false;
-        if ($startDateTs !== false && $startDateTs < strtotime(date('Y-m-d'))) {
-            $this->json(['code' => '422', 'message' => 'No se puede rechazar una solicitud cuya fecha de inicio ya paso', 'data' => null], 422);
+
+        if (in_array($state, ['REJECTED', 'ANNULLED'], true) && $startDateTs !== false && $startDateTs < strtotime(date('Y-m-d'))) {
+            $message = $state === 'ANNULLED'
+                ? 'No se puede anular una solicitud cuya fecha de inicio ya paso'
+                : 'No se puede rechazar una solicitud cuya fecha de inicio ya paso';
+            $this->json(['code' => '422', 'message' => $message, 'data' => null], 422);
             return;
         }
+
         $stateKey = strtoupper((string) ($detail['stateKey'] ?? ''));
-        if ($stateKey === 'REJECTED') {
+        if ($state === 'REJECTED' && $stateKey === 'REJECTED') {
             $this->json(['code' => '422', 'message' => 'La solicitud ya fue rechazada', 'data' => null], 422);
             return;
         }
 
-        $response = ServiceFactory::vacationRequestService()->reject($requestId, $rejectReason);
+        if ($state === 'ANNULLED' && $stateKey === 'ANNULLED') {
+            $this->json(['code' => '422', 'message' => 'La solicitud ya fue anulada', 'data' => null], 422);
+            return;
+        }
+
+        if ($state === 'ANNULLED_APPROVED' && $stateKey !== 'ANNULLED') {
+            $this->json(['code' => '422', 'message' => 'Solo se pueden aprobar anulaciones en estado ANULADA', 'data' => null], 422);
+            return;
+        }
+
+        $response = ServiceFactory::vacationRequestService()->reject(
+            $requestId,
+            $rejectReason !== '' ? $rejectReason : null,
+            $state,
+            $sing !== '' ? $sing : null
+        );
         $httpCode = (int) ($response['http_code'] ?? 0);
 
         if ($httpCode === 401) {
@@ -572,8 +742,13 @@ final class VacationRequestController extends Controller
             return;
         }
 
-        if ($httpCode >= 200 && $httpCode < 300) {
-            $message = (string) ($response['data'] ?? ($response['message'] ?? 'Solicitud rechazada exitosamente'));
+        if ($httpCode >= 200 && $httpCode < 300 && (string) ($response['code'] ?? '200') === '200') {
+            $defaultMessage = match ($state) {
+                'ANNULLED' => 'Solicitud anulada exitosamente',
+                'ANNULLED_APPROVED' => 'Anulacion aprobada exitosamente',
+                default => 'Solicitud rechazada exitosamente',
+            };
+            $message = (string) ($response['data'] ?? ($response['message'] ?? $defaultMessage));
             $this->json(['code' => '200', 'success' => true, 'message' => $message]);
             return;
         }

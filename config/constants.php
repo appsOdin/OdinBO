@@ -5,7 +5,7 @@ declare(strict_types=1);
 const APP_NAME = 'OdinBO';
 define('APP_ENV', 'local');
 define('APP_DEBUG', true);
-define('APP_URL', 'http://localhost:8080/OdinBO/public');
+define('APP_URL', 'http://localhost:8181/OdinBO/public');
 define('APP_TIMEZONE', 'America/Costa_Rica');
 
 $apiBaseUrl = getenv('API_BASE_URL');
@@ -29,9 +29,16 @@ const MENU_OPTIONS_SUPER = [
 	[
 		'label' => 'RRHH',
 		'children' => [
-			['label' => 'Solicitud de vacaciones', 'path' => 'rrhh/solicitud-vacaciones'],
+			['label' => 'Mis solicitudes', 'path' => 'rrhh/solicitud-vacaciones'],
 			['label' => 'Todas las solicitudes', 'path' => 'rrhh/solicitudes-vacaciones'],
+			['label' => 'Calendario de vacaciones', 'path' => 'rrhh/calendario-vacaciones'],
 			['label' => 'Para Firmar', 'path' => 'rrhh/solicitudes-para-firmar'],
+		],
+	],
+	[
+		'label' => 'Reportes',
+		'children' => [
+			['label' => 'Reporte de vacaciones', 'path' => 'reportes/vacaciones'],
 		],
 	],
 ];
@@ -44,8 +51,15 @@ const MENU_OPTIONS_ADMIN = [
 		'label' => 'RRHH',
 		'children' => [
 			['label' => 'Todas las solicitudes', 'path' => 'rrhh/solicitudes-vacaciones'],
-			['label' => 'Solicitud de vacaciones', 'path' => 'rrhh/solicitud-vacaciones'],
+			['label' => 'Mis solicitudes', 'path' => 'rrhh/solicitud-vacaciones'],
+			['label' => 'Calendario de vacaciones', 'path' => 'rrhh/calendario-vacaciones'],
 			['label' => 'Para Firmar', 'path' => 'rrhh/solicitudes-para-firmar'],
+		],
+	],
+	[
+		'label' => 'Reportes',
+		'children' => [
+			['label' => 'Reporte de vacaciones', 'path' => 'reportes/vacaciones'],
 		],
 	],
 ];
@@ -57,7 +71,7 @@ const MENU_OPTIONS_USER= [
 	[
 		'label' => 'RRHH',
 		'children' => [
-			['label' => 'Solicitud de vacaciones', 'path' => 'rrhh/solicitud-vacaciones'],
+			['label' => 'Mis solicitudes', 'path' => 'rrhh/solicitud-vacaciones'],
 			['label' => 'Para Firmar', 'path' => 'rrhh/solicitudes-para-firmar'],
 		],
 	],

@@ -77,6 +77,7 @@ final class AuthMiddleware
                 'GET /rrhh/vacaciones/descargar',
                 'POST /rrhh/solicitudes-vacaciones/files',
                 'POST /rrhh/solicitud-vacaciones/save-signature',
+                'POST /rrhh/solicitud-vacaciones/reject',
             ];
 
             return in_array($routeKey, $allowed, true);

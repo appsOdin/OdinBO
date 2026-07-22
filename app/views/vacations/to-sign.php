@@ -96,7 +96,7 @@ $pendingCount = count($requests);
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <div class="modal-body">
-                <p class="text-muted mb-3">Dibuja tu firma en el area de abajo y luego presiona "Firmar Documento".</p>
+                <p class="text-muted mb-3">Dibuja tu firma similar a la cédula en el area de abajo y luego presiona "Firmar Documento".</p>
                 <div class="signature-pad-wrapper mb-3">
                     <canvas id="toSignCanvas" class="signature-canvas" aria-label="Area de firma"></canvas>
                 </div>

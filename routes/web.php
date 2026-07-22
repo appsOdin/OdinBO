@@ -40,9 +40,13 @@ return [
     ['method' => 'POST', 'path' => '/rrhh/solicitudes-vacaciones/signers', 'handler' => [VacationRequestController::class, 'signers'], 'middleware' => [AuthMiddleware::class]],
     ['method' => 'POST', 'path' => '/rrhh/solicitudes-vacaciones/files', 'handler' => [VacationRequestController::class, 'files'], 'middleware' => [AuthMiddleware::class]],
     ['method' => 'POST', 'path' => '/rrhh/solicitudes-vacaciones/add-signers', 'handler' => [VacationRequestController::class, 'addSigners'], 'middleware' => [AuthMiddleware::class]],
+    ['method' => 'GET', 'path' => '/rrhh/calendario-vacaciones', 'handler' => [VacationRequestController::class, 'calendar'], 'middleware' => [AuthMiddleware::class]],
 
     ['method' => 'GET', 'path' => '/rrhh/solicitudes-para-firmar', 'handler' => [VacationRequestController::class, 'toSign'], 'middleware' => [AuthMiddleware::class]],
     ['method' => 'GET', 'path' => '/rrhh/vacaciones/descargar', 'handler' => [VacationRequestController::class, 'downloadFile'], 'middleware' => [AuthMiddleware::class]],
+
+    ['method' => 'GET', 'path' => '/reportes/vacaciones', 'handler' => [VacationRequestController::class, 'vacationReport'], 'middleware' => [AuthMiddleware::class]],
+    ['method' => 'POST', 'path' => '/reportes/vacaciones/list', 'handler' => [VacationRequestController::class, 'vacationReportList'], 'middleware' => [AuthMiddleware::class]],
 
     ['method' => 'GET',  'path' => '/admin/traces',      'handler' => [TraceController::class, 'index'], 'middleware' => [AuthMiddleware::class]],
     ['method' => 'POST', 'path' => '/admin/traces/list', 'handler' => [TraceController::class, 'list'],  'middleware' => [AuthMiddleware::class]],

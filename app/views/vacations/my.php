@@ -1,7 +1,6 @@
 <?php
 /** @var array<int, array<string, mixed>> $requests */
 $requests = $requests ?? [];
-$currentUserId = (string) ($authUser['id'] ?? '');
 $currentUserRole = strtoupper((string) ($authUser['rolename'] ?? ''));
 ?>
 <section class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
@@ -45,12 +44,13 @@ $currentUserRole = strtoupper((string) ($authUser['rolename'] ?? ''));
                             'APPROVED' => '<span class="badge text-bg-success">Aprobado</span>',
                             'SIGN' => '<span class="badge text-bg-success">Firmada</span>',
                             'REJECTED' => '<span class="badge text-bg-danger">Rechazado</span>',
+                            'ANNULLED' => '<span class="badge text-bg-dark">Anulada</span>',
+                            'ANNULLED_APPROVED' => '<span class="badge text-bg-primary">Anulacion Aprobada</span>',
                             default => '<span class="badge text-bg-secondary">' . htmlspecialchars($stateName, ENT_QUOTES, 'UTF-8') . '</span>',
                         };
                         $requestType = isset($req['requestType']) && $req['requestType'] !== null ? (int) $req['requestType'] : null;
                         $quantityLabel = $requestType === 1 ? 'h' : ($requestType === 0 ? 'd' : '');
                         $typeLabel = $requestType === 1 ? 'Permiso' : ($requestType === 0 ? 'Vacaciones' : null);
-                        $isOwner = (string) ($req['userId'] ?? '') === $currentUserId;
                         ?>
                         <tr>
                             <td><?= $id ?></td>
@@ -69,7 +69,7 @@ $currentUserRole = strtoupper((string) ($authUser['rolename'] ?? ''));
                             <td>
                                 <div class="d-flex flex-wrap gap-2 vacation-actions">
                                     <a href="<?= base_url('rrhh/solicitud-vacaciones/detalle?id=' . $id) ?>" class="btn btn-sm btn-outline-primary">Ver Detalle</a>
-                                    <?php if ($isOwner && $stateKey === 'APPROVED'): ?>
+                                    <?php if ($stateKey === 'APPROVED'): ?>
                                         <button type="button" class="btn btn-sm btn-success btn-sign-request" data-request-id="<?= $id ?>">Firmar</button>
                                         <button type="button" class="btn btn-sm btn-outline-secondary btn-view-files" data-request-id="<?= $id ?>">Archivos</button>
                                         <small class="text-success">Todos firmaron. Ahora puedes firmar tu.</small>
@@ -82,8 +82,8 @@ $currentUserRole = strtoupper((string) ($authUser['rolename'] ?? ''));
                                     <?php elseif ($stateKey === 'TOSIGNED'): ?>
                                         <button type="button" class="btn btn-sm btn-outline-secondary btn-view-files" data-request-id="<?= $id ?>">Archivos</button>
                                     <?php endif; ?>
-                                    <?php if ($isOwner && !in_array($stateKey, ['REJECTED', 'CANCELLED', 'SIGN'], true) && in_array($currentUserRole, ['ADMIN', 'SUPER'], true)): ?>
-                                        <button type="button" class="btn btn-sm btn-danger btn-reject-vacation" data-request-id="<?= $id ?>">Rechazar</button>
+                                    <?php if ($stateKey !== 'ANNULLED_APPROVED' && $stateKey !== 'REJECTED'): ?>
+                                        <button type="button" class="btn btn-sm btn-outline-danger btn-annul-vacation" data-request-id="<?= $id ?>">Anular</button>
                                     <?php endif; ?>
                                 </div>
                             </td>
@@ -139,9 +139,14 @@ $currentUserRole = strtoupper((string) ($authUser['rolename'] ?? ''));
     const initVacationMyModule = () => {
         const signModalEl = document.getElementById('vacationSignModal');
         const filesModalEl = document.getElementById('vacationMyFilesModal');
+        const annulModalEl = document.getElementById('annulVacationModal');
         const filesBody = document.getElementById('vacationMyFilesBody');
         const saveButton = document.getElementById('vacationSaveSignature');
         const clearButton = document.getElementById('vacationClearSignature');
+        const annulConfirmBtn = document.getElementById('confirmAnnulBtn');
+        const annulClearBtn = document.getElementById('annulClearSignature');
+        const annulReasonInput = document.getElementById('annulReason');
+        const annulRequestIdInput = document.getElementById('annulRequestId');
         let currentRequestId = 0;
 
         const getModalInstance = (element) => {
@@ -154,6 +159,10 @@ $currentUserRole = strtoupper((string) ($authUser['rolename'] ?? ''));
 
         signModalEl?.addEventListener('shown.bs.modal', () => {
             window.VacationSignaturePad?.init?.('vacationSignatureCanvas');
+        });
+
+        annulModalEl?.addEventListener('shown.bs.modal', () => {
+            window.VacationSignaturePad?.init?.('annulSignatureCanvas');
         });
 
         const csrfToken = window.APP?.csrfToken || '';
@@ -269,10 +278,33 @@ $currentUserRole = strtoupper((string) ($authUser['rolename'] ?? ''));
                         </table>
                     </div>
                 `;
+                return;
+            }
+
+            const annulButton = target.closest('.btn-annul-vacation');
+            if (annulButton instanceof HTMLElement) {
+                const requestId = Number(annulButton.dataset.requestId || 0);
+                const annulModal = getModalInstance(annulModalEl);
+                if (!annulModal || requestId <= 0) {
+                    return;
+                }
+
+                if (annulRequestIdInput) {
+                    annulRequestIdInput.value = String(requestId);
+                }
+                if (annulReasonInput) {
+                    annulReasonInput.value = '';
+                }
+                window.VacationSignaturePad?.clear?.();
+                annulModal.show();
             }
         });
 
         clearButton?.addEventListener('click', () => {
+            window.VacationSignaturePad?.clear?.();
+        });
+
+        annulClearBtn?.addEventListener('click', () => {
             window.VacationSignaturePad?.clear?.();
         });
 
@@ -317,6 +349,58 @@ $currentUserRole = strtoupper((string) ($authUser['rolename'] ?? ''));
                 saveButton.querySelector('#vacationSignSpinner')?.classList.add('d-none');
             }
         });
+
+        annulConfirmBtn?.addEventListener('click', async () => {
+            const requestId = Number(annulRequestIdInput?.value || 0);
+            const reason = String(annulReasonInput?.value || '').trim();
+
+            if (requestId <= 0) {
+                await notify('Solicitud invalida.');
+                return;
+            }
+
+            if (!reason) {
+                await notify('Debe ingresar un motivo de anulacion.');
+                return;
+            }
+
+            if (window.VacationSignaturePad?.isEmpty?.()) {
+                await notify('Debe ingresar la firma para anular la solicitud.');
+                return;
+            }
+
+            const signature = window.VacationSignaturePad?.toDataUrl?.();
+            if (!signature) {
+                await notify('No fue posible obtener la firma.', 'error');
+                return;
+            }
+
+            annulConfirmBtn.disabled = true;
+            annulConfirmBtn.textContent = 'Procesando...';
+
+            try {
+                const result = await fetchJson(window.APP.vacationRejectUrl, {
+                    requestId,
+                    rejectReason: reason,
+                    state: 'ANNULLED',
+                    sing: signature,
+                    _csrf_token: csrfToken
+                });
+
+                if (result.success === true || String(result.code) === '200') {
+                    const annulModal = getModalInstance(annulModalEl);
+                    annulModal?.hide();
+                    await notify('Solicitud anulada exitosamente.', 'success');
+                    window.location.reload();
+                    return;
+                }
+
+                await notify(result.errorMessage || result.message || 'No fue posible anular la solicitud.', 'error');
+            } finally {
+                annulConfirmBtn.disabled = false;
+                annulConfirmBtn.textContent = 'Anular Solicitud';
+            }
+        });
     };
 
     if (document.readyState === 'loading') {
@@ -327,121 +411,29 @@ $currentUserRole = strtoupper((string) ($authUser['rolename'] ?? ''));
 })();
 </script>
 
-<div class="modal fade" id="rejectVacationModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+<div class="modal fade" id="annulVacationModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content border-0 shadow-sm">
             <div class="modal-header">
-                <h5 class="modal-title">Rechazar Solicitud</h5>
+                <h5 class="modal-title">Anular Solicitud</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <div class="modal-body">
-                <input type="hidden" id="rejectRequestId">
+                <input type="hidden" id="annulRequestId">
                 <div class="mb-3">
-                    <label for="rejectReason" class="form-label fw-semibold">Motivo del Rechazo <span class="text-danger">*</span></label>
-                    <textarea class="form-control" id="rejectReason" rows="4" maxlength="500" required placeholder="Describa el motivo del rechazo..."></textarea>
-                    <small class="text-muted d-block mt-1"><span id="rejectReasonCounter">0</span>/500 caracteres</small>
+                    <label for="annulReason" class="form-label fw-semibold">Motivo de la Anulacion <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="annulReason" rows="4" maxlength="500" required placeholder="Describa el motivo de la anulacion..."></textarea>
                 </div>
+                <p class="text-muted">La anulacion requiere firma digital.</p>
+                <div class="signature-pad-wrapper mb-3">
+                    <canvas id="annulSignatureCanvas" class="signature-canvas" aria-label="Area de firma para anulacion"></canvas>
+                </div>
+                <button type="button" class="btn btn-outline-secondary" id="annulClearSignature">Limpiar firma</button>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-danger" id="confirmRejectBtn">Rechazar Solicitud</button>
+                <button type="button" class="btn btn-danger" id="confirmAnnulBtn">Anular Solicitud</button>
             </div>
         </div>
     </div>
 </div>
-<script>
-(() => {
-    const initRejectModule = () => {
-        const modalEl = document.getElementById('rejectVacationModal');
-        const requestIdInput = document.getElementById('rejectRequestId');
-        const reasonInput = document.getElementById('rejectReason');
-        const counter = document.getElementById('rejectReasonCounter');
-        const confirmBtn = document.getElementById('confirmRejectBtn');
-        const csrfToken = window.APP?.csrfToken || '';
-
-        const getModal = () => (modalEl && window.bootstrap?.Modal)
-            ? window.bootstrap.Modal.getOrCreateInstance(modalEl)
-            : null;
-
-        const notify = async (message, icon = 'warning') => {
-            if (window.Swal?.fire) {
-                await window.Swal.fire({ icon, text: message, confirmButtonText: 'Aceptar' });
-                return;
-            }
-            alert(message);
-        };
-
-        document.addEventListener('click', (event) => {
-            const btn = event.target instanceof Element ? event.target.closest('.btn-reject-vacation') : null;
-            if (!(btn instanceof HTMLElement)) return;
-            const requestId = Number(btn.dataset.requestId || 0);
-            if (requestId <= 0) return;
-            if (requestIdInput) requestIdInput.value = String(requestId);
-            if (reasonInput) reasonInput.value = '';
-            if (counter) counter.textContent = '0';
-            getModal()?.show();
-        });
-
-        reasonInput?.addEventListener('input', () => {
-            if (counter) counter.textContent = String(reasonInput.value.length);
-        });
-
-        confirmBtn?.addEventListener('click', async () => {
-            const requestId = Number(requestIdInput?.value || 0);
-            const reason = (reasonInput?.value || '').trim();
-
-            if (!reason) {
-                await notify('Debe ingresar un motivo de rechazo.');
-                return;
-            }
-
-            const confirmation = window.Swal?.fire
-                ? await window.Swal.fire({
-                    icon: 'warning',
-                    title: '\u00bfRechazar solicitud?',
-                    text: 'Esta accion no se puede revertir.',
-                    showCancelButton: true,
-                    confirmButtonText: 'S\u00ed, rechazar',
-                    cancelButtonText: 'Cancelar',
-                    confirmButtonColor: '#dc3545',
-                })
-                : { isConfirmed: window.confirm('\u00bfEsta seguro que desea rechazar esta solicitud?') };
-
-            if (!confirmation?.isConfirmed) return;
-
-            confirmBtn.disabled = true;
-            confirmBtn.textContent = 'Procesando...';
-
-            try {
-                const response = await fetch(window.APP.vacationRejectUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-                    body: JSON.stringify({ requestId, rejectReason: reason, _csrf_token: csrfToken })
-                });
-
-                const ct = response.headers.get('content-type') || '';
-                const result = ct.toLowerCase().includes('application/json')
-                    ? await response.json()
-                    : { success: false, message: 'Respuesta invalida' };
-
-                if (result.success === true || String(result.code) === '200') {
-                    getModal()?.hide();
-                    await notify('Solicitud rechazada exitosamente.', 'success');
-                    window.location.reload();
-                } else {
-                    await notify(result.errorMessage || result.message || 'No fue posible rechazar la solicitud.', 'error');
-                }
-            } finally {
-                confirmBtn.disabled = false;
-                confirmBtn.textContent = 'Rechazar Solicitud';
-            }
-        });
-    };
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initRejectModule);
-    } else {
-        initRejectModule();
-    }
-})();
-</script>
