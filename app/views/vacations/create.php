@@ -10,7 +10,7 @@ $minDate = date('Y-m-d');
 
 <div class="card border-0 shadow-sm vacation-card">
     <div class="card-body">
-        <form method="POST" action="<?= base_url('rrhh/solicitud-vacaciones/store') ?>" id="vacationCreateForm" novalidate>
+        <form method="POST" action="<?= base_url('rrhh/solicitud-vacaciones/store') ?>" id="vacationCreateForm" enctype="multipart/form-data" novalidate>
             <input type="hidden" name="_csrf_token" value="<?= htmlspecialchars((string) ($csrfToken ?? get_csrf_token()), ENT_QUOTES, 'UTF-8') ?>">
             <input type="hidden" name="request_type" id="requestTypeHidden" value="0">
 
@@ -76,6 +76,19 @@ $minDate = date('Y-m-d');
                         placeholder="Ejemplo: Vacaciones de verano"
                     ></textarea>
                     <small class="text-muted">Maximo 100 caracteres.</small>
+                </div>
+                <div class="col-12 d-none" id="filesRow">
+                    <label for="filesInput" class="form-label">Archivos adjuntos <span class="text-muted fw-normal">(opcional)</span></label>
+                    <input
+                        type="file"
+                        class="form-control"
+                        id="filesInput"
+                        name="files[]"
+                        multiple
+                        accept="application/pdf,image/jpeg,image/png"
+                    >
+                    <small class="text-muted">Solo se permiten archivos PDF, JPG o PNG.</small>
+                    <div id="filesError" class="invalid-feedback"></div>
                 </div>
             </div>
 
@@ -165,6 +178,7 @@ $minDate = date('Y-m-d');
                 endDateInput.value = '';
                 endDateInput.removeAttribute('max');
             }
+            if (filesRow) filesRow.classList.remove('d-none');
         } else {
             pageTitle.textContent = 'Crear Solicitud de Vacaciones';
             pageSubtitle.textContent = 'Registra un nuevo periodo de vacaciones.';
@@ -177,6 +191,9 @@ $minDate = date('Y-m-d');
             endDateInput.removeAttribute('max');
             endDateInput.min = startDateInput.value || '<?= $minDate ?>';
             recalcDays();
+            if (filesRow) filesRow.classList.add('d-none');
+            if (filesInput) { filesInput.value = ''; filesInput.classList.remove('is-invalid'); }
+            if (filesError) filesError.textContent = '';
         }
     };
 
@@ -203,6 +220,32 @@ $minDate = date('Y-m-d');
     endDateInput.addEventListener('change', () => {
         if (getRequestType() === 0) recalcDays();
     });
+
+    const filesRow   = document.getElementById('filesRow');
+    const filesInput = document.getElementById('filesInput');
+    const filesError = document.getElementById('filesError');
+    const ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
+    const ALLOWED_EXTS = /\.(pdf|jpe?g|png)$/i;
+
+    const validateFiles = () => {
+        if (!filesInput || !filesInput.files || filesInput.files.length === 0) return true;
+        for (const file of filesInput.files) {
+            const typeOk = ALLOWED_TYPES.includes(file.type);
+            const extOk = ALLOWED_EXTS.test(file.name);
+            if (!typeOk || !extOk) {
+                filesInput.classList.add('is-invalid');
+                if (filesError) filesError.textContent = `El archivo "${file.name}" no es valido. Solo se permiten PDF o imagenes.`;
+                return false;
+            }
+        }
+        filesInput.classList.remove('is-invalid');
+        if (filesError) filesError.textContent = '';
+        return true;
+    };
+
+    if (filesInput) {
+        filesInput.addEventListener('change', validateFiles);
+    }
 
     form.addEventListener('submit', (event) => {
         const type = getRequestType();
@@ -237,6 +280,12 @@ $minDate = date('Y-m-d');
                 return;
             }
             quantityInput.value = String(days);
+        }
+
+        if (!validateFiles()) {
+            event.preventDefault();
+            notify('Uno o mas archivos adjuntos no son validos. Solo se permiten PDF o imagenes.');
+            return;
         }
     });
 

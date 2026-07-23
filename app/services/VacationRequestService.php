@@ -14,17 +14,35 @@ final class VacationRequestService
     }
 
     /**
+     * @param array<int, array{name: string, tmp_name: string, type: string}> $files
      * @return array<string, mixed>
      */
-    public function create(string $startDateIso, string $endDateIso, int $quantity, string $description, int $requestType): array
+    public function create(string $startDateIso, string $endDateIso, int $quantity, string $description, int $requestType, array $files = []): array
     {
-        return $this->apiService->post('/api/VacationRequest/Create', [
-            'startDate' => $startDateIso,
-            'endDate' => $endDateIso,
-            'quantity' => $quantity,
+        $fields = [
+            'startDate'   => $startDateIso,
+            'endDate'     => $endDateIso,
+            'quantity'    => (string) $quantity,
             'description' => $description,
-            'requestType' => $requestType,
-        ]);
+            'requestType' => (string) $requestType,
+        ];
+
+        if ($files === []) {
+            return $this->apiService->post('/api/VacationRequest/Create', [
+                'startDate'   => $startDateIso,
+                'endDate'     => $endDateIso,
+                'quantity'    => $quantity,
+                'description' => $description,
+                'requestType' => $requestType,
+            ]);
+        }
+
+        $fileMap = [];
+        foreach ($files as $index => $file) {
+            $fileMap['Files[' . $index . ']'] = $file;
+        }
+
+        return $this->apiService->postMultipart('/api/VacationRequest/Create', $fields, $fileMap);
     }
 
     /**

@@ -176,12 +176,20 @@ final class VacationRequestController extends Controller
             return;
         }
 
+        $uploadedFiles = $this->resolveUploadedFiles();
+        if ($uploadedFiles === null) {
+            flash('danger', 'Uno o mas archivos adjuntos no son validos. Solo se permiten PDF o imagenes (JPG, PNG, GIF, WEBP).');
+            $this->redirect('/rrhh/solicitud-vacaciones/crear');
+            return;
+        }
+
         $response = ServiceFactory::vacationRequestService()->create(
             $startDate->format('Y-m-d') . 'T00:00:00',
             $endDate->format('Y-m-d') . 'T00:00:00',
             $finalQuantity,
             $description,
-            $requestType
+            $requestType,
+            $uploadedFiles
         );
 
         $httpCode = (int) ($response['http_code'] ?? 0);
@@ -755,6 +763,83 @@ final class VacationRequestController extends Controller
 
         $errorMsg = (string) ($response['errorMessage'] ?? ($response['message'] ?? 'No fue posible rechazar la solicitud'));
         $this->json(['code' => (string) $httpCode, 'success' => false, 'message' => $errorMsg], $httpCode >= 400 ? $httpCode : 400);
+    }
+
+    /**
+     * Reads and validates uploaded files from $_FILES['files'].
+     *
+     * Returns a normalised list of file arrays ready to be forwarded to the API,
+     * or null if any file fails validation.
+     *
+     * @return array<int, array{name: string, tmp_name: string, type: string}>|null
+     */
+    private function resolveUploadedFiles(): ?array
+    {
+        $allowedMimes = [
+            'application/pdf',
+            'application/x-pdf',
+            'image/jpeg',
+            'image/png',
+        ];
+        $allowedExts = ['pdf', 'jpg', 'jpeg', 'png'];
+
+        if (!isset($_FILES['files']) || !is_array($_FILES['files'])) {
+            return [];
+        }
+
+        $raw = $_FILES['files'];
+
+        // Normalise the PHP multiple-file structure into an indexed list
+        $names    = is_array($raw['name'])     ? $raw['name']     : [$raw['name']];
+        $tmpNames = is_array($raw['tmp_name']) ? $raw['tmp_name'] : [$raw['tmp_name']];
+        $errors   = is_array($raw['error'])    ? $raw['error']    : [$raw['error']];
+        $sizes    = is_array($raw['size'])     ? $raw['size']     : [$raw['size']];
+
+        $files = [];
+
+        foreach ($names as $i => $originalName) {
+            $uploadError = (int) ($errors[$i] ?? UPLOAD_ERR_NO_FILE);
+
+            // Skip entries where no file was selected
+            if ($uploadError === UPLOAD_ERR_NO_FILE) {
+                continue;
+            }
+
+            if ($uploadError !== UPLOAD_ERR_OK) {
+                return null;
+            }
+
+            $tmpName = (string) ($tmpNames[$i] ?? '');
+            $size    = (int) ($sizes[$i] ?? 0);
+            $name    = basename((string) $originalName);
+
+            if (!is_uploaded_file($tmpName)) {
+                return null;
+            }
+
+            if ($size <= 0 || $size > 10 * 1024 * 1024) {
+                return null;
+            }
+
+            $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+            if (!in_array($ext, $allowedExts, true)) {
+                return null;
+            }
+
+            $finfo = new \finfo(FILEINFO_MIME_TYPE);
+            $mime  = $finfo->file($tmpName);
+            if (!is_string($mime) || !in_array(strtolower($mime), $allowedMimes, true)) {
+                return null;
+            }
+
+            $files[] = [
+                'name'     => $name,
+                'tmp_name' => $tmpName,
+                'type'     => strtolower($mime),
+            ];
+        }
+
+        return $files;
     }
 
     /**
