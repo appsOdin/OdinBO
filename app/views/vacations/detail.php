@@ -91,6 +91,7 @@ $ownerSignatureSrc = $buildSignatureSrc($ownerSignatureRaw);
     </div>
     <div class="d-flex flex-wrap gap-2">
         <a href="<?= base_url('rrhh/solicitud-vacaciones') ?>" class="btn btn-outline-secondary">Volver a Mis Solicitudes</a>
+        <a href="#archivosAdjuntosCard" class="btn btn-outline-primary">Ver Archivos Adjuntos</a>
         <?php if ($canOwnerSign): ?>
             <button type="button" class="btn btn-primary" id="openSignFromDetail">Firmar Solicitud</button>
         <?php endif; ?>
@@ -256,9 +257,9 @@ $ownerSignatureSrc = $buildSignatureSrc($ownerSignatureRaw);
     </div>
 
     <div class="col-12 col-lg-5">
-        <div class="card border-0 shadow-sm vacation-card h-100">
+        <div class="card border-0 shadow-sm vacation-card h-100" id="archivosAdjuntosCard">
             <div class="card-body">
-                <h5 class="mb-3">Archivos Adjuntos</h5>
+                <h5 class="mb-3">Archivos Adjuntos (<?= count($files) ?>)</h5>
                 <?php if ($files === []): ?>
                     <div class="text-muted">No hay archivos adjuntos.</div>
                 <?php else: ?>
@@ -266,6 +267,9 @@ $ownerSignatureSrc = $buildSignatureSrc($ownerSignatureRaw);
                         <?php foreach ($files as $file): ?>
                             <?php
                             $fileId = (int) ($file['id'] ?? 0);
+                            $previewUrl = $fileId > 0
+                                ? base_url('rrhh/vacaciones/descargar?fileId=' . $fileId . '&view=1')
+                                : '#';
                             $downloadUrl = $fileId > 0
                                 ? base_url('rrhh/vacaciones/descargar?fileId=' . $fileId)
                                 : '#';
@@ -276,7 +280,15 @@ $ownerSignatureSrc = $buildSignatureSrc($ownerSignatureRaw);
                                     <small class="text-muted"><?= htmlspecialchars((string) ($file['size'] ?? ($file['sizeFormatted'] ?? '')), ENT_QUOTES, 'UTF-8') ?></small>
                                 </div>
                                 <?php if ($fileId > 0): ?>
-                                    <a href="<?= htmlspecialchars($downloadUrl, ENT_QUOTES, 'UTF-8') ?>" class="btn btn-sm btn-outline-primary" target="_blank" rel="noopener noreferrer">Descargar</a>
+                                    <div class="d-flex gap-2">
+                                        <button
+                                            type="button"
+                                            class="btn btn-sm btn-outline-secondary btn-preview-file"
+                                            data-preview-url="<?= htmlspecialchars($previewUrl, ENT_QUOTES, 'UTF-8') ?>"
+                                            data-file-name="<?= htmlspecialchars((string) ($file['name'] ?? ($file['fileName'] ?? 'archivo')), ENT_QUOTES, 'UTF-8') ?>"
+                                        >Ver</button>
+                                        <a href="<?= htmlspecialchars($downloadUrl, ENT_QUOTES, 'UTF-8') ?>" class="btn btn-sm btn-outline-primary" target="_blank" rel="noopener noreferrer">Descargar</a>
+                                    </div>
                                 <?php endif; ?>
                             </div>
                         <?php endforeach; ?>
@@ -286,6 +298,76 @@ $ownerSignatureSrc = $buildSignatureSrc($ownerSignatureRaw);
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="filePreviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-sm">
+            <div class="modal-header">
+                <h5 class="modal-title" id="filePreviewTitle">Vista previa de archivo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <iframe
+                    id="filePreviewFrame"
+                    src="about:blank"
+                    title="Vista previa"
+                    class="w-100 border rounded"
+                    style="height: 70vh;"
+                ></iframe>
+            </div>
+            <div class="modal-footer">
+                <a id="filePreviewOpenTab" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-outline-secondary">Abrir en nueva pestana</a>
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(() => {
+    const modalEl = document.getElementById('filePreviewModal');
+    const frameEl = document.getElementById('filePreviewFrame');
+    const titleEl = document.getElementById('filePreviewTitle');
+    const openTabEl = document.getElementById('filePreviewOpenTab');
+
+    const getModal = () => (modalEl && window.bootstrap?.Modal)
+        ? window.bootstrap.Modal.getOrCreateInstance(modalEl)
+        : null;
+
+    document.addEventListener('click', (event) => {
+        const btn = event.target instanceof Element ? event.target.closest('.btn-preview-file') : null;
+        if (!(btn instanceof HTMLElement)) {
+            return;
+        }
+
+        const previewUrl = btn.dataset.previewUrl || '';
+        const fileName = btn.dataset.fileName || 'archivo';
+        if (!previewUrl) {
+            return;
+        }
+
+        if (titleEl) {
+            titleEl.textContent = `Vista previa: ${fileName}`;
+        }
+
+        if (openTabEl) {
+            openTabEl.href = previewUrl;
+        }
+
+        if (frameEl) {
+            frameEl.src = previewUrl;
+        }
+
+        getModal()?.show();
+    });
+
+    modalEl?.addEventListener('hidden.bs.modal', () => {
+        if (frameEl) {
+            frameEl.src = 'about:blank';
+        }
+    });
+})();
+</script>
 
 <?php if ($canOwnerSign): ?>
 <div class="modal fade" id="detailSignModal" tabindex="-1" aria-hidden="true">

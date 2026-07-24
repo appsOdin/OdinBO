@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Core\Logger;
 use App\Core\Request;
 use App\Services\ServiceFactory;
 
@@ -178,10 +179,16 @@ final class VacationRequestController extends Controller
 
         $uploadedFiles = $this->resolveUploadedFiles();
         if ($uploadedFiles === null) {
-            flash('danger', 'Uno o mas archivos adjuntos no son validos. Solo se permiten PDF o imagenes (JPG, PNG, GIF, WEBP).');
+            flash('danger', 'Uno o mas archivos adjuntos no son validos. Solo se permiten PDF, JPG o PNG.');
             $this->redirect('/rrhh/solicitud-vacaciones/crear');
             return;
         }
+
+        Logger::info('VacationRequest store files parsed', [
+            'request_type' => $requestType,
+            'parsed_files_count' => count($uploadedFiles),
+            'raw_files_keys' => array_keys($_FILES),
+        ]);
 
         $response = ServiceFactory::vacationRequestService()->create(
             $startDate->format('Y-m-d') . 'T00:00:00',
@@ -557,6 +564,25 @@ final class VacationRequestController extends Controller
 
         $detail = is_array($response['data'] ?? null) ? $response['data'] : [];
 
+        $filesResponse = ServiceFactory::vacationRequestService()->getFiles($requestId);
+        $filesHttpCode = (int) ($filesResponse['http_code'] ?? 0);
+
+        if ($filesHttpCode === 401 || $filesHttpCode === 406) {
+            ServiceFactory::authService()->logout();
+            flash('danger', (string) ($filesResponse['message'] ?? 'Sesion expirada.'));
+            $this->redirect('/login');
+            return;
+        }
+
+        $filesRows = is_array($filesResponse['data'] ?? null) ? $filesResponse['data'] : [];
+        if ($filesRows !== []) {
+            $detail['files'] = array_values(array_filter($filesRows, static function ($row): bool {
+                return is_array($row);
+            }));
+        } elseif (!is_array($detail['files'] ?? null)) {
+            $detail['files'] = [];
+        }
+
         $this->view('vacations/detail', [
             'title' => 'Detalle de solicitud de vacaciones',
             'detail' => $detail,
@@ -570,6 +596,7 @@ final class VacationRequestController extends Controller
     public function downloadFile(Request $request): void
     {
         $fileId = (int) $request->query('fileId', 0);
+        $viewInline = (string) $request->query('view', '0') === '1';
         if ($fileId <= 0) {
             http_response_code(422);
             echo 'ID de archivo invalido';
@@ -593,10 +620,9 @@ final class VacationRequestController extends Controller
         }
 
         $contentType = strtolower(trim((string) ($result['content_type'] ?? '')));
-        $allowedTypes = ['application/pdf', 'application/octet-stream'];
+        $allowedTypes = ['application/pdf', 'application/octet-stream', 'image/jpeg', 'image/png'];
         if (!in_array($contentType, $allowedTypes, true)) {
-            // Default to PDF if the API did not send a recognised type
-            $contentType = 'application/pdf';
+            $contentType = 'application/octet-stream';
         }
 
         // Build a safe filename from content-disposition or fallback
@@ -610,7 +636,7 @@ final class VacationRequestController extends Controller
         }
 
         header('Content-Type: ' . $contentType);
-        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Content-Disposition: ' . ($viewInline ? 'inline' : 'attachment') . '; filename="' . $filename . '"');
         header('Cache-Control: private, max-age=0, must-revalidate');
         header('Pragma: private');
         header('X-Content-Type-Options: nosniff');
@@ -783,11 +809,16 @@ final class VacationRequestController extends Controller
         ];
         $allowedExts = ['pdf', 'jpg', 'jpeg', 'png'];
 
-        if (!isset($_FILES['files']) || !is_array($_FILES['files'])) {
-            return [];
+        $raw = null;
+        if (isset($_FILES['files']) && is_array($_FILES['files'])) {
+            $raw = $_FILES['files'];
+        } elseif (isset($_FILES['Files']) && is_array($_FILES['Files'])) {
+            $raw = $_FILES['Files'];
         }
 
-        $raw = $_FILES['files'];
+        if ($raw === null) {
+            return [];
+        }
 
         // Normalise the PHP multiple-file structure into an indexed list
         $names    = is_array($raw['name'])     ? $raw['name']     : [$raw['name']];

@@ -82,7 +82,7 @@ $currentUserRole = strtoupper((string) ($authUser['rolename'] ?? ''));
                                     <?php elseif ($stateKey === 'TOSIGNED'): ?>
                                         <button type="button" class="btn btn-sm btn-outline-secondary btn-view-files" data-request-id="<?= $id ?>">Archivos</button>
                                     <?php endif; ?>
-                                    <?php if ($stateKey !== 'ANNULLED_APPROVED' && $stateKey !== 'REJECTED'): ?>
+                                    <?php if (!in_array($stateKey, ['ANNULLED', 'ANNULLED_APPROVED', 'REJECTED'], true)): ?>
                                         <button type="button" class="btn btn-sm btn-outline-danger btn-annul-vacation" data-request-id="<?= $id ?>">Anular</button>
                                     <?php endif; ?>
                                 </div>

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Core\Logger;
+
 /**
  * Vacation request use-cases.
  */
@@ -28,6 +30,10 @@ final class VacationRequestService
         ];
 
         if ($files === []) {
+            Logger::info('VacationRequest create without files', [
+                'request_type' => $requestType,
+            ]);
+
             return $this->apiService->post('/api/VacationRequest/Create', [
                 'startDate'   => $startDateIso,
                 'endDate'     => $endDateIso,
@@ -40,7 +46,17 @@ final class VacationRequestService
         $fileMap = [];
         foreach ($files as $index => $file) {
             $fileMap['Files[' . $index . ']'] = $file;
+            if ($index === 0) {
+                // Compatibility alias for APIs that bind a single file from "Files"
+                $fileMap['Files'] = $file;
+            }
         }
+
+        Logger::info('VacationRequest create multipart files', [
+            'request_type' => $requestType,
+            'files_count' => count($files),
+            'multipart_keys' => array_keys($fileMap),
+        ]);
 
         return $this->apiService->postMultipart('/api/VacationRequest/Create', $fields, $fileMap);
     }
