@@ -54,7 +54,6 @@ final class AuthMiddleware
     private function isAllowedForRole(string $role, string $method, string $path): bool
     {
         $routeKey = strtoupper($method) . ' ' . $path;
-
         if ($role === 'ADMIN') {
             $forbidden = [
                 'GET /users',
@@ -78,6 +77,11 @@ final class AuthMiddleware
                 'POST /rrhh/solicitudes-vacaciones/files',
                 'POST /rrhh/solicitud-vacaciones/save-signature',
                 'POST /rrhh/solicitud-vacaciones/reject',
+                'GET /articles',
+                'POST /articles/list',
+                'POST /articles/detail',
+                'GET /users/change-password',
+                'POST /users/update-password',
             ];
 
             return in_array($routeKey, $allowed, true);
