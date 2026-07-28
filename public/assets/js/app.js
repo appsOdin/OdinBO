@@ -884,6 +884,7 @@
             detailId.textContent = article.ID || '-';
             detailDescription.textContent = article.DESCRIPTION || '-';
             detailPrice.textContent = formatCurrency(article.PRICE || 0);
+            detailNotes.style.whiteSpace = 'pre-line';
             detailNotes.textContent = article.NOTAS || '-';
 
             imageThumbs.innerHTML = '';
