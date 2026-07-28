@@ -198,7 +198,6 @@ final class VacationRequestController extends Controller
             $requestType,
             $uploadedFiles
         );
-
         $httpCode = (int) ($response['http_code'] ?? 0);
         $code = trim((string) ($response['code'] ?? ''));
 

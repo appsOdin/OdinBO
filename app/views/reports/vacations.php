@@ -46,13 +46,13 @@ $signers = $signers ?? [];
                 <thead>
                 <tr>
                     <th>ID</th>
-                    <th>Identificacion</th>
+                    <th>Identificación</th>
                     <th>Nombre</th>
                     <th>Inicio</th>
                     <th>Fin</th>
                     <th>Tipo</th>
                     <th>Cantidad</th>
-                    <th>Descripcion</th>
+                    <th>Descripción</th>
                 </tr>
                 </thead>
                 <tbody id="vacationReportBody">

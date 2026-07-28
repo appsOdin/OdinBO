@@ -92,7 +92,7 @@ $users = $users ?? [];
                                     <button type="button" class="btn btn-sm btn-outline-danger btn-annul-vacation" data-request-id="<?= $id ?>">Anular</button>
                                 <?php endif; ?>
                                 <?php if ($stateKey === 'ANNULLED'): ?>
-                                    <button type="button" class="btn btn-sm btn-success btn-approve-annulment" data-request-id="<?= $id ?>">Aprobar anulacion</button>
+                                    <button type="button" class="btn btn-sm btn-success btn-approve-annulment" data-request-id="<?= $id ?>">Aprobar anulación</button>
                                 <?php endif; ?>
                             </div>
                         </td>

@@ -4,8 +4,8 @@ $articles = $articles ?? [];
 ?>
 <section class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
     <div>
-        <h2 class="fw-semibold mb-1">Articulos</h2>
-        <p class="text-muted m-0">Consulta y detalle de articulos.</p>
+        <h2 class="fw-semibold mb-1">Artículos</h2>
+        <p class="text-muted m-0">Consulta y detalle de artículos.</p>
     </div>
 </section>
 
@@ -28,7 +28,7 @@ $articles = $articles ?? [];
                 <thead>
                 <tr>
                     <th>ID</th>
-                    <th>Descripcion</th>
+                    <th>Descripción</th>
                     <th>Precio</th>
                     <th>Accion</th>
                 </tr>
@@ -41,7 +41,7 @@ $articles = $articles ?? [];
                         data-price="<?= htmlspecialchars((string) $article->PRICE, ENT_QUOTES, 'UTF-8') ?>"
                     >
                         <td data-label="ID"><?= htmlspecialchars($article->ID, ENT_QUOTES, 'UTF-8') ?></td>
-                        <td data-label="Descripcion"><?= htmlspecialchars($article->DESCRIPTION, ENT_QUOTES, 'UTF-8') ?></td>
+                        <td data-label="Descripción"><?= htmlspecialchars($article->DESCRIPTION, ENT_QUOTES, 'UTF-8') ?></td>
                         <td data-label="Precio"><?= htmlspecialchars(number_format($article->PRICE, 2, '.', ','), ENT_QUOTES, 'UTF-8') ?></td>
                         <td data-label="Accion">
                             <button class="btn btn-sm btn-outline-primary btn-article-detail" type="button">Detalle</button>
@@ -76,7 +76,7 @@ $articles = $articles ?? [];
     <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content border-0 shadow-sm">
             <div class="modal-header">
-                <h5 class="modal-title" id="articleDetailModalLabel">Detalle del articulo</h5>
+                <h5 class="modal-title" id="articleDetailModalLabel">Detalle del artículo</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <div class="modal-body">
@@ -103,14 +103,14 @@ $articles = $articles ?? [];
                     <div class="col-lg-7">
                         <div class="card border-0 bg-light h-100">
                             <div class="card-body">
-                                <h6 class="fw-semibold mb-3">Datos del articulo</h6>
+                                <h6 class="fw-semibold mb-3">Datos del artículo</h6>
                                 <div class="row g-3">
                                     <div class="col-md-4">
                                         <label class="form-label text-muted mb-1">ID</label>
                                         <div class="fw-semibold" id="articleDetailId">-</div>
                                     </div>
                                     <div class="col-md-8">
-                                        <label class="form-label text-muted mb-1">Descripcion</label>
+                                        <label class="form-label text-muted mb-1">Descripción</label>
                                         <div class="fw-semibold" id="articleDetailDescription">-</div>
                                     </div>
                                     <div class="col-md-4">
@@ -155,7 +155,7 @@ $articles = $articles ?? [];
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content border-0 shadow-sm">
             <div class="modal-header">
-                <h5 class="modal-title" id="articleImageModalLabel">Imagen del articulo</h5>
+                <h5 class="modal-title" id="articleImageModalLabel">Imagen del artículo</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <div class="modal-body text-center">

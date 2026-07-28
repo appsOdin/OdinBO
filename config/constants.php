@@ -9,7 +9,7 @@ define('APP_URL', 'http://localhost:8181/OdinBO/public');
 define('APP_TIMEZONE', 'America/Costa_Rica');
 
 $apiBaseUrl = getenv('API_BASE_URL');
-define('API_BASE_URL', rtrim((is_string($apiBaseUrl) && $apiBaseUrl !== '') ? $apiBaseUrl : 'http://localhost', '/'));
+define('API_BASE_URL', rtrim((is_string($apiBaseUrl) && $apiBaseUrl !== '') ? $apiBaseUrl : 'https://api-prd.odincostarica.com', '/'));
 define('TOKEN_REFRESH_MINUTES', 5);
 define('SESSION_TIMEOUT', 60);
 
@@ -73,6 +73,17 @@ const MENU_OPTIONS_USER= [
 		'children' => [
 			['label' => 'Mis solicitudes', 'path' => 'rrhh/solicitud-vacaciones'],
 			['label' => 'Para Firmar', 'path' => 'rrhh/solicitudes-para-firmar'],
+		],
+	],
+];
+
+const MENU_OPTIONS_GUEST = [
+	['label' => 'Dashboard', 'path' => 'dashboard'],
+	['label' => 'Cambiar contraseña', 'path' => 'users/change-password'],
+	[
+		'label' => 'RRHH',
+		'children' => [
+			['label' => 'Mis solicitudes', 'path' => 'rrhh/solicitud-vacaciones'],
 		],
 	],
 ];

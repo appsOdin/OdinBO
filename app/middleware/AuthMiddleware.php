@@ -64,10 +64,14 @@ final class AuthMiddleware
 
             return !in_array($routeKey, $forbidden, true);
         }
-
+        /*
+        *Se define un conjunto de rutas permitidas para el rol USER, ya que este rol tiene acceso limitado a ciertas funcionalidades del sistema. 
+        * En route se especifican las rutas.
+         */
         if ($role === 'USER') {
             $allowed = [
                 'POST /logout',
+                'GET /dashboard',
                 'GET /rrhh/solicitud-vacaciones',
                 'GET /rrhh/solicitud-vacaciones/crear',
                 'GET /rrhh/solicitud-vacaciones/detalle',
@@ -80,6 +84,23 @@ final class AuthMiddleware
                 'GET /articles',
                 'POST /articles/list',
                 'POST /articles/detail',
+                'GET /users/change-password',
+                'POST /users/update-password',
+            ];
+
+            return in_array($routeKey, $allowed, true);
+        }
+        if ($role === 'GUEST') {
+            $allowed = [
+                'POST /logout',
+                'GET /dashboard',
+                'GET /rrhh/solicitud-vacaciones',
+                'GET /rrhh/solicitud-vacaciones/crear',
+                'GET /rrhh/solicitud-vacaciones/detalle',
+                'POST /rrhh/solicitud-vacaciones/store',
+                'GET /rrhh/vacaciones/descargar',
+                'POST /rrhh/solicitud-vacaciones/save-signature',
+                'POST /rrhh/solicitud-vacaciones/reject',
                 'GET /users/change-password',
                 'POST /users/update-password',
             ];

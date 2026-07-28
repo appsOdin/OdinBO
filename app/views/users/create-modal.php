@@ -11,7 +11,7 @@
                     <input type="hidden" name="_csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label">Identificacion</label>
+                            <label class="form-label">Identificación</label>
                             <input type="text" class="form-control" name="id" maxlength="20" required>
                         </div>
                         <div class="col-md-6">
@@ -31,7 +31,7 @@
                             <input type="email" class="form-control" name="email" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Contrasena</label>
+                            <label class="form-label">Contraseña</label>
                             <input type="password" class="form-control" name="password" minlength="8" required>
                         </div>
                         <div class="col-md-3">
@@ -40,6 +40,7 @@
                                 <option value="1">ADMIN</option>
                                 <option value="2" selected>USER</option>
                                 <option value="3">SUPER</option>
+                                <option value="4">GUEST</option>
                             </select>
                         </div>
                         <div class="col-md-3">

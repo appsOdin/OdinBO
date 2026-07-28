@@ -4,7 +4,8 @@ $menuOptions = match ($rolename) {
     'SUPER' => MENU_OPTIONS_SUPER,
     'USER' => MENU_OPTIONS_USER,
     'ADMIN' => MENU_OPTIONS_ADMIN,
-    default => MENU_OPTIONS_USER,
+    'GUEST' => MENU_OPTIONS_GUEST,
+    default => MENU_OPTIONS_GUEST,
 };
 $currentUri = $_SERVER['REQUEST_URI'] ?? '';
 

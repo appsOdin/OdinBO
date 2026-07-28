@@ -34,13 +34,7 @@ final class VacationRequestService
                 'request_type' => $requestType,
             ]);
 
-            return $this->apiService->post('/api/VacationRequest/Create', [
-                'startDate'   => $startDateIso,
-                'endDate'     => $endDateIso,
-                'quantity'    => $quantity,
-                'description' => $description,
-                'requestType' => $requestType,
-            ]);
+            return $this->apiService->postMultipart('/api/VacationRequest/Create', $fields, []);
         }
 
         $fileMap = [];

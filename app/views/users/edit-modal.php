@@ -37,6 +37,7 @@
                                 <option value="1">ADMIN</option>
                                 <option value="2">USER</option>
                                 <option value="3">SUPER</option>
+                                <option value="4">GUEST</option>
                             </select>
                         </div>
                         <div class="col-md-3">
