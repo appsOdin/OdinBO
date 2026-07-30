@@ -102,6 +102,8 @@ $minDate = date('Y-m-d');
 
 <script>
 (() => {
+    const holidays = <?= json_encode(array_values(HOLIDAYS)) ?>;
+
     const form = document.getElementById('vacationCreateForm');
     const startDateInput = document.getElementById('startDate');
     const endDateInput = document.getElementById('endDate');
@@ -134,11 +136,17 @@ $minDate = date('Y-m-d');
 
     const getRequestType = () => (radioPermiso && radioPermiso.checked ? 1 : 0);
 
+    const isHoliday = (date) => {
+        const mm = String(date.getMonth() + 1).padStart(2, '0');
+        const dd = String(date.getDate()).padStart(2, '0');
+        return holidays.includes(`${mm}-${dd}`);
+    };
+
     const countWorkDays = (start, end) => {
         let count = 0;
         const cur = new Date(start);
         while (cur <= end) {
-            if (cur.getDay() !== 0) { // 0 = domingo
+            if (cur.getDay() !== 0 && !isHoliday(cur)) { // 0 = domingo, excluye feriados
                 count++;
             }
             cur.setDate(cur.getDate() + 1);
