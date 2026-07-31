@@ -30,6 +30,9 @@ const HOLIDAYS = [
     '08-15', // Día de la Madre
     '09-15', // Independencia
     '12-25', // Navidad
+    "08-02", // Día de la Virgen de los Ángeles
+    "08-31", // Día de la Persona Negra y la Cultura Afrocostarricense
+    "12-01", // Abolición del Ejército
 ];
 const MENU_OPTIONS_SUPER = [
 	['label' => 'Dashboard', 'path' => 'dashboard'],
