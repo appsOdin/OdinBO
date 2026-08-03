@@ -9,8 +9,24 @@ $menuOptions = match ($rolename) {
 };
 $currentUri = $_SERVER['REQUEST_URI'] ?? '';
 
-$isActivePath = static function (string $path) use ($currentUri): bool {
-    return $path !== '' && str_contains($currentUri, '/' . $path);
+// Collect all explicit menu paths to avoid false-positive parent matches
+$allMenuPaths = [];
+foreach ($menuOptions as $_item) {
+    if (isset($_item['path'])) $allMenuPaths[] = $_item['path'];
+    foreach (($_item['children'] ?? []) as $_child) {
+        if (isset($_child['path'])) $allMenuPaths[] = $_child['path'];
+    }
+}
+
+$isActivePath = static function (string $path) use ($currentUri, $allMenuPaths): bool {
+    if ($path === '' || !str_contains($currentUri, '/' . $path)) return false;
+    // If a more specific menu path also matches, let that one be active instead
+    foreach ($allMenuPaths as $other) {
+        if ($other !== $path && str_starts_with($other, $path . '/') && str_contains($currentUri, '/' . $other)) {
+            return false;
+        }
+    }
+    return true;
 };
 
 $collapseIndex = 0;
@@ -18,9 +34,10 @@ $collapseIndex = 0;
 <aside class="sidebar" id="sidebarNav">
     <div class="sidebar-brand px-3 py-4">
         <div class="d-flex align-items-start justify-content-between gap-2">
-            <div>
-                <h5 class="m-0">OdinBO</h5>
-                <small>Panel de Control</small>
+           <div>
+                <!-- Agregar logo aquí -->
+                <!-- <img src="<?php //base_url('assets/img/logo.png') ?>" alt="OdinBO" style="max-height:40px;">
+                <small>Panel de Control</small> -->
             </div>
             <button class="btn btn-sm btn-outline-light d-lg-none sidebar-close-btn" id="btnCloseSidebar" type="button" aria-label="Cerrar menu lateral">
                 Cerrar

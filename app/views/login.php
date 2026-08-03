@@ -26,8 +26,9 @@ $flashMessages = $flashMessages ?? [];
 <div class="container min-vh-100 d-flex align-items-center justify-content-center">
     <div class="card auth-card shadow border-0">
         <div class="card-body p-4 p-lg-5">
-            <h3 class="fw-bold mb-1">Bienvenido</h3>
-            <p class="text-muted mb-4">Inicia sesion para continuar.</p>
+            <div class="text-center mb-4">
+                <img src="<?= base_url('assets/img/logo.png') ?>" alt="OdinBO" style="max-height:140px;">
+            </div>
 
             <div id="loginRedirectMessageContainer"></div>
 
