@@ -159,13 +159,15 @@ final class VacationRequestController extends Controller
             $finalQuantity = 0;
             $cur = $startDate;
             while ($cur <= $endDate) {
-                if ((int) $cur->format('w') !== 0) { // 0 = domingo
+                $dayOfWeek = (int) $cur->format('w');
+                $mmdd = $cur->format('m-d');
+                if ($dayOfWeek !== 0 && !in_array($mmdd, HOLIDAYS, true)) { // excluye domingos y feriados
                     $finalQuantity++;
                 }
                 $cur = $cur->modify('+1 day');
             }
             if ($finalQuantity < 1 || $finalQuantity > 255) {
-                flash('danger', 'La cantidad de dias debe estar entre 1 y 255 (sin contar domingos).');
+                flash('danger', 'La cantidad de dias debe estar entre 1 y 255 (sin contar domingos ni feriados).');
                 $this->redirect('/rrhh/solicitud-vacaciones/crear');
                 return;
             }
