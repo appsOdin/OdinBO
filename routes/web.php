@@ -35,6 +35,7 @@ return [
     ['method' => 'POST', 'path' => '/rrhh/solicitud-vacaciones/store', 'handler' => [VacationRequestController::class, 'store'], 'middleware' => [AuthMiddleware::class]],
     ['method' => 'POST', 'path' => '/rrhh/solicitud-vacaciones/save-signature', 'handler' => [VacationRequestController::class, 'saveSignature'], 'middleware' => [AuthMiddleware::class]],
     ['method' => 'POST', 'path' => '/rrhh/solicitud-vacaciones/reject', 'handler' => [VacationRequestController::class, 'reject'], 'middleware' => [AuthMiddleware::class]],
+    ['method' => 'POST', 'path' => '/rrhh/solicitud-vacaciones/adjust', 'handler' => [VacationRequestController::class, 'adjust'], 'middleware' => [AuthMiddleware::class]],
 
     ['method' => 'GET', 'path' => '/rrhh/solicitudes-vacaciones', 'handler' => [VacationRequestController::class, 'all'], 'middleware' => [AuthMiddleware::class]],
     ['method' => 'POST', 'path' => '/rrhh/solicitudes-vacaciones/signers', 'handler' => [VacationRequestController::class, 'signers'], 'middleware' => [AuthMiddleware::class]],

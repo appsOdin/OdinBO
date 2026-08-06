@@ -9,7 +9,7 @@ define('APP_URL', 'http://localhost:8181/OdinBO/public');
 define('APP_TIMEZONE', 'America/Costa_Rica');
 
 $apiBaseUrl = getenv('API_BASE_URL');
-define('API_BASE_URL', rtrim((is_string($apiBaseUrl) && $apiBaseUrl !== '') ? $apiBaseUrl : 'http://localhost', '/'));
+define('API_BASE_URL', rtrim((is_string($apiBaseUrl) && $apiBaseUrl !== '') ? $apiBaseUrl : 'http://localhost:5104', '/'));
 define('TOKEN_REFRESH_MINUTES', 5);
 define('SESSION_TIMEOUT', 60);
 

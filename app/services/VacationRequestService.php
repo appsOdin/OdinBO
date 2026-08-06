@@ -171,6 +171,20 @@ final class VacationRequestService
     }
 
     /**
+     * @return array<string, mixed>
+     */
+    public function adjustVacationRequest(int $requestId, ?string $reason, ?int $requestCant, string $state, ?string $sing): array
+    {
+        return $this->apiService->post('/api/VacationRequest/AdjustVacationRequest', [
+            'requestId' => $requestId,
+            'reason' => $reason,
+            'requestCant' => $requestCant,
+            'state' => $state,
+            'sing' => $sing,
+        ]);
+    }
+
+    /**
      * @return array{http_code: int, body: string, content_type: string, content_disposition: string}
      */
     public function downloadFile(int $fileId): array

@@ -45,6 +45,8 @@ $users = $users ?? [];
                         'TOSIGNED' => '<span class="badge text-bg-info">Para Firmar</span>',
                         'APPROVED' => '<span class="badge text-bg-success">Aprobado</span>',
                         'SIGN' => '<span class="badge text-bg-success">Firmada</span>',
+                        'ADJUSTED' => '<span class="badge text-bg-warning">Ajustada</span>',
+                        'ADJUSTMENT_ACCEPTED' => '<span class="badge text-bg-success">Ajuste Aprobado</span>',
                         'REJECTED' => '<span class="badge text-bg-danger">Rechazado</span>',
                         'ANNULLED' => '<span class="badge text-bg-dark">Anulada</span>',
                         'ANNULLED_APPROVED' => '<span class="badge text-bg-primary">Anulacion Aprobada</span>',
@@ -58,6 +60,11 @@ $users = $users ?? [];
                         data-id="<?= $id ?>"
                         data-user="<?= htmlspecialchars((string) ($req['userName'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
                         data-description="<?= htmlspecialchars((string) ($req['description'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
+                        data-start="<?= htmlspecialchars(date('d/m/Y', strtotime((string) ($req['startDate'] ?? 'now'))), ENT_QUOTES, 'UTF-8') ?>"
+                        data-end="<?= htmlspecialchars(date('d/m/Y', strtotime((string) ($req['endDate'] ?? 'now'))), ENT_QUOTES, 'UTF-8') ?>"
+                        data-type="<?= htmlspecialchars((string) ($typeLabel ?? '—'), ENT_QUOTES, 'UTF-8') ?>"
+                        data-quantity="<?= (int) ($req['quantity'] ?? 0) ?>"
+                        data-state="<?= htmlspecialchars((string) ($stateName ?? ''), ENT_QUOTES, 'UTF-8') ?>"
                     >
                         <td><?= $id ?></td>
                         <td><?= htmlspecialchars((string) ($req['userName'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
@@ -93,6 +100,9 @@ $users = $users ?? [];
                                 <?php endif; ?>
                                 <?php if ($stateKey === 'ANNULLED'): ?>
                                     <button type="button" class="btn btn-sm btn-success btn-approve-annulment" data-request-id="<?= $id ?>">Aprobar anulación</button>
+                                <?php endif; ?>
+                                <?php if ($stateKey === 'SIGN' && $requestType === 1): ?>
+                                    <button type="button" class="btn btn-sm btn-warning btn-adjust-vacation" data-request-id="<?= $id ?>">Ajustar</button>
                                 <?php endif; ?>
                             </div>
                         </td>
@@ -175,6 +185,58 @@ $users = $users ?? [];
     </div>
 </div>
 
+<div class="modal fade" id="adjustVacationModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-sm">
+            <div class="modal-header">
+                <h5 class="modal-title">Ajustar Solicitud de Permiso</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="adjustRequestId">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">ID</label>
+                        <input type="text" class="form-control" id="adjustInfoId" readonly>
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label fw-semibold">Usuario</label>
+                        <input type="text" class="form-control" id="adjustInfoUser" readonly>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Inicio</label>
+                        <input type="text" class="form-control" id="adjustInfoStart" readonly>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Fin</label>
+                        <input type="text" class="form-control" id="adjustInfoEnd" readonly>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Tipo</label>
+                        <input type="text" class="form-control" id="adjustInfoType" readonly>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold" for="adjustRequestCant">Cantidad (horas)</label>
+                        <input type="number" min="1" max="255" step="1" class="form-control" id="adjustRequestCant" required>
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label fw-semibold">Estado</label>
+                        <input type="text" class="form-control" id="adjustInfoState" readonly>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold" for="adjustReason">Razon <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="adjustReason" rows="3" maxlength="200" required placeholder="Indique la razon del ajuste..."></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-warning" id="confirmAdjustBtn">Ajustar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 (() => {
     const initVacationAllModule = () => {
@@ -184,11 +246,22 @@ $users = $users ?? [];
         const signersModalEl = document.getElementById('vacationSignersModal');
         const filesModalEl = document.getElementById('vacationFilesModal');
         const addSignersModalEl = document.getElementById('vacationAddSignersModal');
+        const adjustModalEl = document.getElementById('adjustVacationModal');
 
         const signersBody = document.getElementById('vacationSignersBody');
         const filesBody = document.getElementById('vacationFilesBody');
         const addSignersForm = document.getElementById('vacationAddSignersForm');
         const requestIdInput = document.getElementById('vacationRequestIdInput');
+        const adjustRequestIdInput = document.getElementById('adjustRequestId');
+        const adjustInfoId = document.getElementById('adjustInfoId');
+        const adjustInfoUser = document.getElementById('adjustInfoUser');
+        const adjustInfoStart = document.getElementById('adjustInfoStart');
+        const adjustInfoEnd = document.getElementById('adjustInfoEnd');
+        const adjustInfoType = document.getElementById('adjustInfoType');
+        const adjustInfoState = document.getElementById('adjustInfoState');
+        const adjustRequestCantInput = document.getElementById('adjustRequestCant');
+        const adjustReasonInput = document.getElementById('adjustReason');
+        const confirmAdjustBtn = document.getElementById('confirmAdjustBtn');
 
         if (!body) {
             return;
@@ -234,6 +307,10 @@ $users = $users ?? [];
         }
 
         return response.json();
+    };
+
+    const sendAdjustRequest = async (payload) => {
+        return fetchJson(window.APP.vacationAdjustUrl, payload);
     };
 
     const renderSigners = (rows) => {
@@ -401,6 +478,48 @@ $users = $users ?? [];
 
                 requestIdInput.value = String(requestId);
                 addSignersModal.show();
+                return;
+            }
+
+            const adjustButton = target.closest('.btn-adjust-vacation');
+            if (adjustButton instanceof HTMLElement) {
+                const requestId = Number(adjustButton.dataset.requestId || 0);
+                const adjustModal = getModalInstance(adjustModalEl);
+                const row = adjustButton.closest('tr');
+
+                if (requestId <= 0 || !adjustModal || !(row instanceof HTMLTableRowElement)) {
+                    return;
+                }
+
+                if (adjustRequestIdInput) {
+                    adjustRequestIdInput.value = String(requestId);
+                }
+                if (adjustInfoId) {
+                    adjustInfoId.value = String(row.getAttribute('data-id') || requestId);
+                }
+                if (adjustInfoUser) {
+                    adjustInfoUser.value = String(row.getAttribute('data-user') || '');
+                }
+                if (adjustInfoStart) {
+                    adjustInfoStart.value = String(row.getAttribute('data-start') || '');
+                }
+                if (adjustInfoEnd) {
+                    adjustInfoEnd.value = String(row.getAttribute('data-end') || '');
+                }
+                if (adjustInfoType) {
+                    adjustInfoType.value = String(row.getAttribute('data-type') || '');
+                }
+                if (adjustInfoState) {
+                    adjustInfoState.value = String(row.getAttribute('data-state') || '');
+                }
+                if (adjustRequestCantInput) {
+                    adjustRequestCantInput.value = String(row.getAttribute('data-quantity') || '1');
+                }
+                if (adjustReasonInput) {
+                    adjustReasonInput.value = '';
+                }
+
+                adjustModal.show();
             }
         });
 
@@ -440,6 +559,58 @@ $users = $users ?? [];
 
             await notify('Firmantes agregados exitosamente.', 'success');
             window.location.reload();
+        });
+
+        confirmAdjustBtn?.addEventListener('click', async () => {
+            const requestId = Number(adjustRequestIdInput?.value || 0);
+            const reason = String(adjustReasonInput?.value || '').trim();
+            const requestCant = Number(adjustRequestCantInput?.value || 0);
+
+            if (requestId <= 0) {
+                await notify('Solicitud invalida.');
+                return;
+            }
+
+            if (!Number.isFinite(requestCant) || requestCant < 1) {
+                await notify('La cantidad debe ser mayor o igual a 1.');
+                return;
+            }
+
+            if (requestCant > 255) {
+                await notify('La cantidad no puede superar 255.');
+                return;
+            }
+
+            if (!reason) {
+                await notify('Debe ingresar la razon del ajuste.');
+                return;
+            }
+
+            confirmAdjustBtn.disabled = true;
+            confirmAdjustBtn.textContent = 'Procesando...';
+
+            try {
+                const result = await sendAdjustRequest({
+                    requestId,
+                    reason,
+                    requestCant: Math.floor(requestCant),
+                    state: 'ADJUSTED',
+                    sing: null,
+                    _csrf_token: csrfToken
+                });
+
+                if (String(result.code) !== '200') {
+                    await notify(result.data || result.message || 'No fue posible ajustar la solicitud.', 'error');
+                    return;
+                }
+
+                getModalInstance(adjustModalEl)?.hide();
+                await notify('Solicitud ajustada exitosamente.', 'success');
+                window.location.reload();
+            } finally {
+                confirmAdjustBtn.disabled = false;
+                confirmAdjustBtn.textContent = 'Ajustar';
+            }
         });
     };
 

@@ -41,6 +41,8 @@ $currentUserRole = strtoupper((string) ($authUser['rolename'] ?? ''));
                             'TOSIGNED' => '<span class="badge text-bg-info">Para Firmar</span>',
                             'APPROVED' => '<span class="badge text-bg-success">Aprobado</span>',
                             'SIGN' => '<span class="badge text-bg-success">Firmada</span>',
+                            'ADJUSTED' => '<span class="badge text-bg-warning">Ajustada</span>',
+                            'ADJUSTMENT_ACCEPTED' => '<span class="badge text-bg-success">Ajuste Aprobado</span>',
                             'REJECTED' => '<span class="badge text-bg-danger">Rechazado</span>',
                             'ANNULLED' => '<span class="badge text-bg-dark">Anulada</span>',
                             'ANNULLED_APPROVED' => '<span class="badge text-bg-primary">Anulacion Aprobada</span>',
@@ -80,7 +82,10 @@ $currentUserRole = strtoupper((string) ($authUser['rolename'] ?? ''));
                                     <?php elseif ($stateKey === 'TOSIGNED'): ?>
                                         <button type="button" class="btn btn-sm btn-outline-secondary btn-view-files" data-request-id="<?= $id ?>">Archivos</button>
                                     <?php endif; ?>
-                                    <?php if (!in_array($stateKey, ['ANNULLED', 'ANNULLED_APPROVED', 'REJECTED'], true)): ?>
+                                    <?php if ($stateKey === 'ADJUSTED' && $requestType === 1): ?>
+                                        <button type="button" class="btn btn-sm btn-warning btn-approve-adjustment" data-request-id="<?= $id ?>">Aprobar Ajuste</button>
+                                    <?php endif; ?>
+                                    <?php if (!in_array($stateKey, ['ANNULLED', 'ANNULLED_APPROVED', 'REJECTED','ADJUSTMENT_ACCEPTED'], true)): ?>
                                         <button type="button" class="btn btn-sm btn-outline-danger btn-annul-vacation" data-request-id="<?= $id ?>">Anular</button>
                                     <?php endif; ?>
                                 </div>
@@ -98,18 +103,18 @@ $currentUserRole = strtoupper((string) ($authUser['rolename'] ?? ''));
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content border-0 shadow-sm">
             <div class="modal-header">
-                <h5 class="modal-title">Firmar Documento</h5>
+                <h5 class="modal-title" id="vacationSignModalTitle">Firmar Documento</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <div class="modal-body">
-                <p class="text-muted">Dibuja tu firma y luego presiona "Firmar Documento".</p>
+                <p class="text-muted" id="vacationSignModalHelp">Dibuja tu firma y luego presiona "Firmar Documento".</p>
                 <div class="signature-pad-wrapper mb-3">
                     <canvas id="vacationSignatureCanvas" class="signature-canvas" aria-label="Area de firma"></canvas>
                 </div>
                 <div class="d-flex gap-2">
                     <button type="button" class="btn btn-outline-secondary" id="vacationClearSignature">Limpiar</button>
                     <button type="button" class="btn btn-primary" id="vacationSaveSignature">
-                        <span class="spinner-border spinner-border-sm me-2 d-none" role="status" aria-hidden="true" id="vacationSignSpinner"></span>Firmar Documento
+                        <span class="spinner-border spinner-border-sm me-2 d-none" role="status" aria-hidden="true" id="vacationSignSpinner"></span><span id="vacationSaveSignatureText">Firmar Documento</span>
                     </button>
                 </div>
             </div>
@@ -140,12 +145,16 @@ $currentUserRole = strtoupper((string) ($authUser['rolename'] ?? ''));
         const annulModalEl = document.getElementById('annulVacationModal');
         const filesBody = document.getElementById('vacationMyFilesBody');
         const saveButton = document.getElementById('vacationSaveSignature');
+        const saveButtonText = document.getElementById('vacationSaveSignatureText');
+        const signModalTitle = document.getElementById('vacationSignModalTitle');
+        const signModalHelp = document.getElementById('vacationSignModalHelp');
         const clearButton = document.getElementById('vacationClearSignature');
         const annulConfirmBtn = document.getElementById('confirmAnnulBtn');
         const annulClearBtn = document.getElementById('annulClearSignature');
         const annulReasonInput = document.getElementById('annulReason');
         const annulRequestIdInput = document.getElementById('annulRequestId');
         let currentRequestId = 0;
+        let currentSignAction = 'SIGN_REQUEST';
 
         const getModalInstance = (element) => {
             if (!element || !window.bootstrap || !window.bootstrap.Modal) {
@@ -212,6 +221,39 @@ $currentUserRole = strtoupper((string) ($authUser['rolename'] ?? ''));
                 }
 
                 currentRequestId = requestId;
+                currentSignAction = 'SIGN_REQUEST';
+                if (signModalTitle) {
+                    signModalTitle.textContent = 'Firmar Documento';
+                }
+                if (signModalHelp) {
+                    signModalHelp.textContent = 'Dibuja tu firma y luego presiona "Firmar Documento".';
+                }
+                if (saveButtonText) {
+                    saveButtonText.textContent = 'Firmar Documento';
+                }
+                signModal.show();
+                return;
+            }
+
+            const approveAdjustmentButton = target.closest('.btn-approve-adjustment');
+            if (approveAdjustmentButton instanceof HTMLElement) {
+                const requestId = Number(approveAdjustmentButton.dataset.requestId || 0);
+                const signModal = getModalInstance(signModalEl);
+                if (!signModal || requestId <= 0) {
+                    return;
+                }
+
+                currentRequestId = requestId;
+                currentSignAction = 'APPROVE_ADJUSTMENT';
+                if (signModalTitle) {
+                    signModalTitle.textContent = 'Aprobar Ajuste';
+                }
+                if (signModalHelp) {
+                    signModalHelp.textContent = 'Dibuja tu firma para aprobar el ajuste de la solicitud.';
+                }
+                if (saveButtonText) {
+                    saveButtonText.textContent = 'Aprobar Ajuste';
+                }
                 signModal.show();
                 return;
             }
@@ -327,19 +369,31 @@ $currentUserRole = strtoupper((string) ($authUser['rolename'] ?? ''));
             saveButton.querySelector('#vacationSignSpinner')?.classList.remove('d-none');
 
             try {
-                const result = await fetchJson(window.APP.vacationSaveSignatureUrl, {
-                    requestId: currentRequestId,
-                    signature,
-                    _csrf_token: csrfToken
-                });
+                const result = currentSignAction === 'APPROVE_ADJUSTMENT'
+                    ? await fetchJson(window.APP.vacationAdjustUrl, {
+                        requestId: currentRequestId,
+                        reason: null,
+                        requestCant: null,
+                        state: 'ADJUSTMENT_ACCEPTED',
+                        sing: signature,
+                        _csrf_token: csrfToken
+                    })
+                    : await fetchJson(window.APP.vacationSaveSignatureUrl, {
+                        requestId: currentRequestId,
+                        signature,
+                        _csrf_token: csrfToken
+                    });
 
                 if (String(result.code) !== '200') {
-                    await notify(result.message || 'No fue posible guardar la firma.', 'error');
+                    await notify(result.message || 'No fue posible completar la accion.', 'error');
                     return;
                 }
 
                 const signModal = getModalInstance(signModalEl);
-                await notify('Firma guardada exitosamente.', 'success');
+                const successMessage = currentSignAction === 'APPROVE_ADJUSTMENT'
+                    ? 'Ajuste aprobado exitosamente.'
+                    : 'Firma guardada exitosamente.';
+                await notify(successMessage, 'success');
                 signModal?.hide();
                 window.location.reload();
             } finally {

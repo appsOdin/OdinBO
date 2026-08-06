@@ -20,10 +20,8 @@ final class TraceService
     public function getTrace(int $page, int $reg): array
     {
         return $this->apiService->post('/api/Errtrace/GetTrace', [
-            'data' => [
-                'page' => $page,
-                'reg'  => $reg,
-            ],
+            'page' => $page,
+            'reg'  => $reg,
         ]);
     }
 }

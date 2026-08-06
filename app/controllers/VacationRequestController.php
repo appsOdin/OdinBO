@@ -777,7 +777,9 @@ final class VacationRequestController extends Controller
             return;
         }
 
-        if ($httpCode >= 200 && $httpCode < 300 && (string) ($response['code'] ?? '200') === '200') {
+        $apiCodeRaw = $response['code'] ?? null;
+        $apiCode = is_scalar($apiCodeRaw) ? trim((string) $apiCodeRaw) : '';
+        if ($httpCode >= 200 && $httpCode < 300 && $apiCode === '200') {
             $defaultMessage = match ($state) {
                 'ANNULLED' => 'Solicitud anulada exitosamente',
                 'ANNULLED_APPROVED' => 'Anulacion aprobada exitosamente',
@@ -789,6 +791,168 @@ final class VacationRequestController extends Controller
         }
 
         $errorMsg = (string) ($response['errorMessage'] ?? ($response['message'] ?? 'No fue posible rechazar la solicitud'));
+        $this->json(['code' => (string) $httpCode, 'success' => false, 'message' => $errorMsg], $httpCode >= 400 ? $httpCode : 400);
+    }
+
+    public function adjust(Request $request): void
+    {
+        if (!validate_csrf_token((string) $request->input('_csrf_token', ''))) {
+            $this->json(['code' => '403', 'message' => 'Token CSRF invalido', 'data' => null], 403);
+            return;
+        }
+
+        $requestId = (int) $request->input('requestId', 0);
+        $state = strtoupper(trim((string) $request->input('state', '')));
+        $reason = trim((string) $request->input('reason', ''));
+        $requestCantRaw = $request->input('requestCant', null);
+        $sing = trim((string) $request->input('sing', ''));
+
+        if ($requestId <= 0) {
+            $this->json(['code' => '422', 'message' => 'ID de solicitud invalido', 'data' => null], 422);
+            return;
+        }
+
+        if (!in_array($state, ['ADJUSTED', 'ADJUSTMENT_ACCEPTED'], true)) {
+            $this->json(['code' => '422', 'message' => 'Estado invalido para ajuste', 'data' => null], 422);
+            return;
+        }
+
+        $detailResponse = ServiceFactory::vacationRequestService()->getDetail($requestId);
+        $detailHttpCode = (int) ($detailResponse['http_code'] ?? 0);
+
+        if ($detailHttpCode === 401) {
+            ServiceFactory::authService()->logout();
+            $this->json(['code' => '401', 'message' => 'Sesion expirada', 'data' => null], 401);
+            return;
+        }
+
+        if ($detailHttpCode === 406) {
+            $this->json($detailResponse, 406);
+            return;
+        }
+
+        if ($detailHttpCode !== 200 || !is_array($detailResponse['data'] ?? null)) {
+            $this->json(['code' => '422', 'message' => 'No fue posible verificar la solicitud', 'data' => null], 422);
+            return;
+        }
+
+        $detail = $detailResponse['data'];
+        $requestType = (int) ($detail['requestType'] ?? -1);
+        $stateKey = strtoupper((string) ($detail['stateKey'] ?? ''));
+        $currentQuantity = (int) ($detail['quantity'] ?? 0);
+
+        if ($requestType !== 1) {
+            $this->json(['code' => '422', 'message' => 'Solo se pueden ajustar solicitudes de tipo Permiso', 'data' => null], 422);
+            return;
+        }
+
+        $requestCant = null;
+        if ($state === 'ADJUSTED') {
+            if ($stateKey !== 'SIGN') {
+                $this->json(['code' => '422', 'message' => 'Solo se pueden ajustar solicitudes en estado FIRMADA', 'data' => null], 422);
+                return;
+            }
+
+            if ($reason === '') {
+                $this->json(['code' => '422', 'message' => 'La razon del ajuste es obligatoria', 'data' => null], 422);
+                return;
+            }
+
+            if (mb_strlen($reason, 'UTF-8') > 200) {
+                $this->json(['code' => '422', 'message' => 'La razon no puede superar 200 caracteres', 'data' => null], 422);
+                return;
+            }
+
+            $requestCant = is_numeric($requestCantRaw) ? (int) $requestCantRaw : 0;
+            if ($requestCant < 1) {
+                $this->json(['code' => '422', 'message' => 'La cantidad ajustada debe ser mayor o igual a 1', 'data' => null], 422);
+                return;
+            }
+
+            if ($requestCant > 255) {
+                $this->json(['code' => '422', 'message' => 'La cantidad ajustada no puede superar 255', 'data' => null], 422);
+                return;
+            }
+
+            $sing = '';
+        }
+
+        if ($state === 'ADJUSTMENT_ACCEPTED') {
+            if ($stateKey !== 'ADJUSTED') {
+                $this->json(['code' => '422', 'message' => 'Solo se puede aprobar ajuste cuando la solicitud esta AJUSTADA', 'data' => null], 422);
+                return;
+            }
+
+            if (!preg_match('/^data:image\/png;base64,/', $sing)) {
+                $this->json(['code' => '422', 'message' => 'Formato de firma invalido', 'data' => null], 422);
+                return;
+            }
+
+            $base64 = substr($sing, strlen('data:image/png;base64,'));
+            $binary = base64_decode($base64, true);
+
+            if ($binary === false || strlen($binary) < 100) {
+                $this->json(['code' => '422', 'message' => 'Firma vacia o invalida', 'data' => null], 422);
+                return;
+            }
+
+            if (strlen($binary) > 2 * 1024 * 1024) {
+                $this->json(['code' => '422', 'message' => 'La firma supera el tamano permitido (2 MB)', 'data' => null], 422);
+                return;
+            }
+
+            // The API binds requestCant as Byte, so it must always be a numeric value in 1..255.
+            if ($currentQuantity >= 1 && $currentQuantity <= 255) {
+                $requestCant = $currentQuantity;
+            } else {
+                $requestCant = 1;
+            }
+
+            $reason = '';
+        }
+
+        if (!is_int($requestCant) || $requestCant < 1 || $requestCant > 255) {
+            $this->json(['code' => '422', 'message' => 'La cantidad del ajuste debe estar entre 1 y 255', 'data' => null], 422);
+            return;
+        }
+
+        $apiReason = $state === 'ADJUSTMENT_ACCEPTED'
+            ? ''
+            : ($reason !== '' ? $reason : null);
+
+        $response = ServiceFactory::vacationRequestService()->adjustVacationRequest(
+            $requestId,
+            $apiReason,
+            $requestCant,
+            $state,
+            $sing !== '' ? $sing : null
+        );
+
+        $httpCode = (int) ($response['http_code'] ?? 0);
+
+        if ($httpCode === 401) {
+            ServiceFactory::authService()->logout();
+            $this->json(['code' => '401', 'message' => 'Sesion expirada', 'data' => null], 401);
+            return;
+        }
+
+        if ($httpCode === 406) {
+            $this->json($response, 406);
+            return;
+        }
+
+        $apiCodeRaw = $response['code'] ?? null;
+        $apiCode = is_scalar($apiCodeRaw) ? trim((string) $apiCodeRaw) : '';
+        if ($httpCode >= 200 && $httpCode < 300 && $apiCode === '200') {
+            $defaultMessage = $state === 'ADJUSTMENT_ACCEPTED'
+                ? 'Ajuste aprobado exitosamente'
+                : 'Solicitud ajustada exitosamente';
+            $message = (string) ($response['message'] ?? $defaultMessage);
+            $this->json(['code' => '200', 'success' => true, 'message' => $message]);
+            return;
+        }
+
+        $errorMsg = (string) ($response['data'] ?? ($response['message'] ?? 'No fue posible procesar el ajuste'));
         $this->json(['code' => (string) $httpCode, 'success' => false, 'message' => $errorMsg], $httpCode >= 400 ? $httpCode : 400);
     }
 

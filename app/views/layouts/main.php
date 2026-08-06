@@ -198,6 +198,7 @@ window.APP = {
     vacationGetFilesUrl: '<?= base_url('rrhh/solicitudes-vacaciones/files') ?>',
     vacationAddSignersUrl: '<?= base_url('rrhh/solicitudes-vacaciones/add-signers') ?>',
     vacationSaveSignatureUrl: '<?= base_url('rrhh/solicitud-vacaciones/save-signature') ?>',
+    vacationAdjustUrl: '<?= base_url('rrhh/solicitud-vacaciones/adjust') ?>',
     vacationDownloadFileUrl: '<?= base_url('rrhh/vacaciones/descargar') ?>',
     vacationRejectUrl: '<?= base_url('rrhh/solicitud-vacaciones/reject') ?>',
     vacationReportListUrl: '<?= base_url('reportes/vacaciones/list') ?>',

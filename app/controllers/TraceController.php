@@ -35,8 +35,11 @@ final class TraceController extends Controller
             ? (int) $request->query('reg', 10)
             : 10;
 
-        $response    = ServiceFactory::traceService()->getTrace($page, $reg);
-        $apiHttpCode = (int) ($response['http_code'] ?? 200);
+        $response = ServiceFactory::traceService()->getTrace($page, $reg);
+
+        $normalized = $this->normalizeTraceResponse($response);
+
+        $apiHttpCode = $normalized['http_code'];
 
         if ($apiHttpCode === 401 || $apiHttpCode === 406) {
             ServiceFactory::authService()->logout();
@@ -45,8 +48,8 @@ final class TraceController extends Controller
             return;
         }
 
-        $rows         = $apiHttpCode === 200 && is_array($response['data'] ?? null) ? $response['data'] : [];
-        $totalRecords = (int) ($response['totalRecords'] ?? (int) ($response['total'] ?? count($rows)));
+        $rows = $apiHttpCode === 200 ? $normalized['rows'] : [];
+        $totalRecords = $normalized['totalRecords'];
 
         $this->view('traces/index', [
             'title'          => 'Trace Logs',
@@ -55,7 +58,7 @@ final class TraceController extends Controller
             'reg'            => $reg,
             'totalRecords'   => $totalRecords,
             'apiHttpCode'    => $apiHttpCode,
-            'apiMessage'     => (string) ($response['message'] ?? ''),
+            'apiMessage'     => $normalized['message'],
             'authUser'       => ServiceFactory::sessionManager()->getUser(),
             'csrfToken'      => get_csrf_token(),
             'flashMessages'  => consume_flash(),
@@ -76,7 +79,90 @@ final class TraceController extends Controller
             : 10;
 
         $response = ServiceFactory::traceService()->getTrace($page, $reg);
-        $this->json($response, (int) ($response['http_code'] ?? 200));
+
+        $normalized = $this->normalizeTraceResponse($response);
+
+        $this->json([
+            'code' => $normalized['code'],
+            'message' => $normalized['message'],
+            'data' => $normalized['rows'],
+            'totalRecords' => $normalized['totalRecords'],
+        ], $normalized['http_code']);
+    }
+
+    /**
+     * @param array<string, mixed> $response
+     * @return array{code: string, message: string, http_code: int, rows: array<int, array<string, mixed>>, totalRecords: int}
+     */
+    private function normalizeTraceResponse(array $response): array
+    {
+        $httpCode = (int) ($response['http_code'] ?? 200);
+
+        $codeRaw = $response['code'] ?? null;
+        $code = is_scalar($codeRaw) && trim((string) $codeRaw) !== ''
+            ? trim((string) $codeRaw)
+            : ($httpCode >= 200 && $httpCode < 300 ? '200' : (string) $httpCode);
+
+        $messageRaw = $response['message'] ?? ($response['data'] ?? null);
+        $message = is_scalar($messageRaw) ? (string) $messageRaw : '';
+
+        $data = $response['data'] ?? null;
+        $rows = [];
+        $totalRecords = 0;
+
+        if (is_array($data)) {
+            if ($this->isList($data)) {
+                $rows = $this->filterRows($data);
+                $totalRecords = count($rows);
+            } else {
+                $candidateRows = null;
+                foreach (['data', 'rows', 'items', 'result'] as $key) {
+                    if (isset($data[$key]) && is_array($data[$key])) {
+                        $candidateRows = $data[$key];
+                        break;
+                    }
+                }
+
+                if (is_array($candidateRows)) {
+                    $rows = $this->filterRows($candidateRows);
+                }
+
+                $totalRaw = $data['totalRecords'] ?? $data['total'] ?? $response['totalRecords'] ?? $response['total'] ?? count($rows);
+                $totalRecords = is_numeric($totalRaw) ? (int) $totalRaw : count($rows);
+            }
+        }
+
+        if ($totalRecords <= 0) {
+            $totalRaw = $response['totalRecords'] ?? $response['total'] ?? count($rows);
+            $totalRecords = is_numeric($totalRaw) ? (int) $totalRaw : count($rows);
+        }
+
+        return [
+            'code' => $code,
+            'message' => $message,
+            'http_code' => $httpCode,
+            'rows' => $rows,
+            'totalRecords' => $totalRecords,
+        ];
+    }
+
+    /**
+     * @param array<int|string, mixed> $value
+     */
+    private function isList(array $value): bool
+    {
+        return $value === [] || array_keys($value) === range(0, count($value) - 1);
+    }
+
+    /**
+     * @param array<int|string, mixed> $rows
+     * @return array<int, array<string, mixed>>
+     */
+    private function filterRows(array $rows): array
+    {
+        return array_values(array_filter($rows, static function ($row): bool {
+            return is_array($row);
+        }));
     }
 
     private function hasAdminRole(): bool
