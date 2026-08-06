@@ -26,6 +26,8 @@ $canCurrentUserSign = (bool) ($detail['canCurrentUserSign'] ?? false);
 $isOwner = (bool) ($detail['isOwner'] ?? false);
 $canOwnerSign = $isOwner && $stateKey === 'APPROVED';
 $progress = $totalSigners > 0 ? (int) round(($signedCount / $totalSigners) * 100) : 0;
+$notes = trim((string) ($detail['rejectedDescription'] ?? ''));
+$hasNotes = $notes !== '';
 
 $buildSignatureSrc = static function (string $signatureRaw): string {
     $signatureRaw = trim($signatureRaw);
@@ -97,7 +99,7 @@ $ownerSignatureSrc = $buildSignatureSrc($ownerSignatureRaw);
         <?php endif; ?>
         <?php
         $authRolename = strtoupper((string) ($authUser['rolename'] ?? ''));
-        $canReject = ($isOwner || in_array($authRolename, ['ADMIN', 'SUPER'], true)) && in_array($authRolename, ['ADMIN', 'SUPER'], true) && !in_array($stateKey, ['REJECTED', 'CANCELLED', 'SIGN'], true);
+        $canReject = ($isOwner || in_array($authRolename, ['ADMIN', 'SUPER'], true)) && in_array($authRolename, ['ADMIN', 'SUPER'], true) && !in_array($stateKey, ['REJECTED', 'CANCELLED', 'SIGN','ADJUSTMENT_ACCEPTED'], true);
         ?>
         <?php if ($canReject): ?>
             <button type="button" class="btn btn-danger btn-reject-vacation" data-request-id="<?= $id ?>">Rechazar</button>
@@ -150,12 +152,12 @@ $ownerSignatureSrc = $buildSignatureSrc($ownerSignatureRaw);
                         <small class="text-muted d-block">Descripcion</small>
                         <div><?= htmlspecialchars((string) ($detail['description'] ?? ''), ENT_QUOTES, 'UTF-8') ?></div>
                     </div>
-                    <?php if ($stateKey === 'REJECTED' && ($detail['rejectedDescription'] ?? '') !== ''): ?>
                     <div class="col-12">
-                        <small class="text-muted d-block">Motivo de Rechazo</small>
-                        <div class="text-danger"><?= htmlspecialchars((string) $detail['rejectedDescription'], ENT_QUOTES, 'UTF-8') ?></div>
+                        <small class="text-muted d-block">Notas de ajuste o rechazo</small>
+                        <div class="rounded p-2 <?= $hasNotes ? 'border border-warning bg-warning-subtle text-dark' : 'border bg-light text-muted' ?>">
+                            <?= $hasNotes ? htmlspecialchars($notes, ENT_QUOTES, 'UTF-8') : 'Sin notas registradas.' ?>
+                        </div>
                     </div>
-                    <?php endif; ?>
                 </div>
                 <div class="mt-3 small text-muted">
                     <?= $isOwner ? 'Eres el propietario de esta solicitud.' : 'No eres el propietario de esta solicitud.' ?>

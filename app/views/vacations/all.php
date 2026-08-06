@@ -92,10 +92,10 @@ $users = $users ?? [];
                                 <?php
                                 $startDateTs = strtotime((string) ($req['startDate'] ?? ''));
                                 $startDatePast = $startDateTs !== false && $startDateTs < strtotime(date('Y-m-d'));
-                                if (!in_array($stateKey, ['REJECTED', 'ANNULLED', 'ANNULLED_APPROVED', 'SIGN'], true) && !$startDatePast): ?>
+                                if (!in_array($stateKey, ['REJECTED', 'ANNULLED', 'ANNULLED_APPROVED', 'SIGN','ADJUSTMENT_ACCEPTED'], true) && !$startDatePast): ?>
                                     <button type="button" class="btn btn-sm btn-danger btn-reject-vacation" data-request-id="<?= $id ?>">Rechazar</button>
                                 <?php endif; ?>
-                                <?php if (!in_array($stateKey, ['ANNULLED', 'ANNULLED_APPROVED', 'REJECTED'], true)): ?>
+                                <?php if (!in_array($stateKey, ['ANNULLED', 'ANNULLED_APPROVED', 'REJECTED','ADJUSTMENT_ACCEPTED'], true)): ?>
                                     <button type="button" class="btn btn-sm btn-outline-danger btn-annul-vacation" data-request-id="<?= $id ?>">Anular</button>
                                 <?php endif; ?>
                                 <?php if ($stateKey === 'ANNULLED'): ?>

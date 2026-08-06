@@ -51,6 +51,9 @@ $currentUserRole = strtoupper((string) ($authUser['rolename'] ?? ''));
                         $requestType = isset($req['requestType']) && $req['requestType'] !== null ? (int) $req['requestType'] : null;
                         $quantityLabel = $requestType === 1 ? 'h' : ($requestType === 0 ? 'd' : '');
                         $typeLabel = $requestType === 1 ? 'Permiso' : ($requestType === 0 ? 'Vacaciones' : null);
+                        
+                        $startDateTs = strtotime((string) ($req['startDate'] ?? 'now'));
+                        $startDatePast = $startDateTs !== false && $startDateTs < strtotime(date('Y-m-d'));
                         ?>
                         <tr>
                             <td><?= $id ?></td>
@@ -85,7 +88,7 @@ $currentUserRole = strtoupper((string) ($authUser['rolename'] ?? ''));
                                     <?php if ($stateKey === 'ADJUSTED' && $requestType === 1): ?>
                                         <button type="button" class="btn btn-sm btn-warning btn-approve-adjustment" data-request-id="<?= $id ?>">Aprobar Ajuste</button>
                                     <?php endif; ?>
-                                    <?php if (!in_array($stateKey, ['ANNULLED', 'ANNULLED_APPROVED', 'REJECTED','ADJUSTMENT_ACCEPTED'], true)): ?>
+                                    <?php if (!in_array($stateKey, ['ANNULLED', 'ANNULLED_APPROVED', 'REJECTED','ADJUSTMENT_ACCEPTED'], true) && !$startDatePast): ?>
                                         <button type="button" class="btn btn-sm btn-outline-danger btn-annul-vacation" data-request-id="<?= $id ?>">Anular</button>
                                     <?php endif; ?>
                                 </div>
