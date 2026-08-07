@@ -956,6 +956,65 @@ final class VacationRequestController extends Controller
         $this->json(['code' => (string) $httpCode, 'success' => false, 'message' => $errorMsg], $httpCode >= 400 ? $httpCode : 400);
     }
 
+    public function uploadFileVacationRequest(Request $request): void
+    {
+        if (!validate_csrf_token((string) $request->input('_csrf_token', ''))) {
+            $this->json(['code' => '403', 'message' => 'Token CSRF invalido', 'data' => null], 403);
+            return;
+        }
+
+        $requestId = (int) $request->input('requestId', 0);
+        if ($requestId <= 0) {
+            $this->json(['code' => '422', 'message' => 'ID de solicitud invalido', 'data' => null], 422);
+            return;
+        }
+
+        if (!isset($_FILES['file']) || !is_array($_FILES['file'])) {
+            $this->json(['code' => '422', 'message' => 'Debe adjuntar un archivo', 'data' => null], 422);
+            return;
+        }
+
+        $rawFile = $_FILES['file'];
+        $uploadError = (int) ($rawFile['error'] ?? UPLOAD_ERR_NO_FILE);
+
+        if ($uploadError !== UPLOAD_ERR_OK) {
+            $this->json(['code' => '422', 'message' => 'Error al subir el archivo', 'data' => null], 422);
+            return;
+        }
+
+        $tmpName  = (string) ($rawFile['tmp_name'] ?? '');
+        $name     = basename((string) ($rawFile['name'] ?? ''));
+        $size     = (int) ($rawFile['size'] ?? 0);
+        $mimeType = (string) ($rawFile['type'] ?? '');
+
+        if (!is_uploaded_file($tmpName)) {
+            $this->json(['code' => '422', 'message' => 'Archivo no valido', 'data' => null], 422);
+            return;
+        }
+
+        if ($size <= 0 || $size > 10 * 1024 * 1024) {
+            $this->json(['code' => '422', 'message' => 'El archivo no debe superar 10 MB', 'data' => null], 422);
+            return;
+        }
+
+        $allowedMimes = ['application/pdf', 'application/x-pdf', 'image/jpeg', 'image/png'];
+        $allowedExts  = ['pdf', 'jpg', 'jpeg', 'png'];
+        $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+
+        if (!in_array($ext, $allowedExts, true) || !in_array($mimeType, $allowedMimes, true)) {
+            $this->json(['code' => '422', 'message' => 'Solo se permiten archivos PDF, JPG o PNG', 'data' => null], 422);
+            return;
+        }
+
+        $response = ServiceFactory::vacationRequestService()->uploadFileVacationRequest($requestId, [
+            'name'     => $name,
+            'tmp_name' => $tmpName,
+            'type'     => $mimeType,
+        ]);
+
+        $this->json($response, (int) ($response['http_code'] ?? 200));
+    }
+
     /**
      * Reads and validates uploaded files from $_FILES['files'].
      *

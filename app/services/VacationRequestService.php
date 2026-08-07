@@ -191,4 +191,17 @@ final class VacationRequestService
     {
         return $this->apiService->getFile('/api/VacationRequest/DownloadFile/' . $fileId);
     }
+
+    /**
+     * @param array{name: string, tmp_name: string, type: string} $file
+     * @return array<string, mixed>
+     */
+    public function uploadFileVacationRequest(int $requestId, array $file): array
+    {
+        return $this->apiService->postMultipart('/api/VacationRequest/UploadFileVacationRequest', [
+            'ResquestId' => (string) $requestId,
+        ], [
+            'File' => $file,
+        ]);
+    }
 }

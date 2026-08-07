@@ -201,6 +201,7 @@ window.APP = {
     vacationAdjustUrl: '<?= base_url('rrhh/solicitud-vacaciones/adjust') ?>',
     vacationDownloadFileUrl: '<?= base_url('rrhh/vacaciones/descargar') ?>',
     vacationRejectUrl: '<?= base_url('rrhh/solicitud-vacaciones/reject') ?>',
+    vacationUploadComprobanteUrl: '<?= base_url('rrhh/solicitud-vacaciones/upload-comprobante') ?>',
     vacationReportListUrl: '<?= base_url('reportes/vacaciones/list') ?>',
     tracesListUrl: '<?= base_url('admin/traces/list') ?>'
 };

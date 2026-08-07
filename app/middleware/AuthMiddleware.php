@@ -82,6 +82,7 @@ final class AuthMiddleware
                 'POST /rrhh/solicitud-vacaciones/save-signature',
                 'POST /rrhh/solicitud-vacaciones/reject',
                 'POST /rrhh/solicitud-vacaciones/adjust',
+                'POST /rrhh/solicitud-vacaciones/upload-comprobante',
                 'GET /articles',
                 'POST /articles/list',
                 'POST /articles/detail',
@@ -103,6 +104,7 @@ final class AuthMiddleware
                 'POST /rrhh/solicitud-vacaciones/save-signature',
                 'POST /rrhh/solicitud-vacaciones/reject',
                 'POST /rrhh/solicitud-vacaciones/adjust',
+                'POST /rrhh/solicitud-vacaciones/upload-comprobante',
                 'GET /users/change-password',
                 'POST /users/update-password',
             ];

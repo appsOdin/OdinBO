@@ -82,6 +82,9 @@ $currentUserRole = strtoupper((string) ($authUser['rolename'] ?? ''));
                                     <?php elseif ($stateKey === 'SIGN'): ?>
                                         <button type="button" class="btn btn-sm btn-outline-success" disabled>Firmada</button>
                                         <button type="button" class="btn btn-sm btn-outline-secondary btn-view-files" data-request-id="<?= $id ?>">Archivos</button>
+                                        <?php if ($requestType === 1): ?>
+                                            <button type="button" class="btn btn-sm btn-primary btn-upload-comprobante" data-request-id="<?= $id ?>">Comprobante</button>
+                                        <?php endif; ?>
                                     <?php elseif ($stateKey === 'TOSIGNED'): ?>
                                         <button type="button" class="btn btn-sm btn-outline-secondary btn-view-files" data-request-id="<?= $id ?>">Archivos</button>
                                     <?php endif; ?>
@@ -341,6 +344,26 @@ $currentUserRole = strtoupper((string) ($authUser['rolename'] ?? ''));
                 window.VacationSignaturePad?.clear?.();
                 annulModal.show();
             }
+
+            const comprobanteButton = target.closest('.btn-upload-comprobante');
+            if (comprobanteButton instanceof HTMLElement) {
+                const requestId = Number(comprobanteButton.dataset.requestId || 0);
+                const comprobanteModalEl = document.getElementById('comprobanteUploadModal');
+                const comprobanteModal = getModalInstance(comprobanteModalEl);
+                if (!comprobanteModal || requestId <= 0) {
+                    return;
+                }
+
+                const comprobanteRequestIdInput = document.getElementById('comprobanteRequestId');
+                const comprobanteFileInput = document.getElementById('comprobanteFile');
+                if (comprobanteRequestIdInput) {
+                    comprobanteRequestIdInput.value = String(requestId);
+                }
+                if (comprobanteFileInput instanceof HTMLInputElement) {
+                    comprobanteFileInput.value = '';
+                }
+                comprobanteModal.show();
+            }
         });
 
         clearButton?.addEventListener('click', () => {
@@ -349,6 +372,83 @@ $currentUserRole = strtoupper((string) ($authUser['rolename'] ?? ''));
 
         annulClearBtn?.addEventListener('click', () => {
             window.VacationSignaturePad?.clear?.();
+        });
+
+        const comprobanteUploadBtn = document.getElementById('comprobanteUploadBtn');
+        comprobanteUploadBtn?.addEventListener('click', async () => {
+            const comprobanteModalEl = document.getElementById('comprobanteUploadModal');
+            const requestId = Number(document.getElementById('comprobanteRequestId')?.value || 0);
+            const fileInput = document.getElementById('comprobanteFile');
+            const spinner = document.getElementById('comprobanteSpinner');
+            const btnText = document.getElementById('comprobanteUploadBtnText');
+
+            if (requestId <= 0) {
+                await notify('Solicitud invalida.');
+                return;
+            }
+
+            if (!(fileInput instanceof HTMLInputElement) || !fileInput.files || fileInput.files.length === 0) {
+                await notify('Debe seleccionar un archivo.');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const allowedTypes = ['application/pdf', 'application/x-pdf', 'image/jpeg', 'image/png'];
+            if (!allowedTypes.includes(file.type)) {
+                await notify('Solo se permiten archivos PDF, JPG o PNG.');
+                return;
+            }
+
+            if (file.size > 10 * 1024 * 1024) {
+                await notify('El archivo no debe superar 10 MB.');
+                return;
+            }
+
+            if (comprobanteUploadBtn instanceof HTMLButtonElement) {
+                comprobanteUploadBtn.disabled = true;
+            }
+            spinner?.classList.remove('d-none');
+            if (btnText) {
+                btnText.textContent = 'Subiendo...';
+            }
+
+            try {
+                const formData = new FormData();
+                formData.append('requestId', String(requestId));
+                formData.append('_csrf_token', csrfToken);
+                formData.append('file', file);
+
+                const response = await fetch(window.APP.vacationUploadComprobanteUrl, {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    body: formData,
+                });
+
+                const contentType = response.headers.get('content-type') || '';
+                let result;
+                if (contentType.toLowerCase().includes('application/json')) {
+                    result = await response.json();
+                } else {
+                    result = { code: String(response.status || 500), message: 'Respuesta invalida', data: null };
+                }
+
+                if (String(result.code) === '200') {
+                    const comprobanteModal = getModalInstance(comprobanteModalEl);
+                    comprobanteModal?.hide();
+                    await notify('Comprobante subido exitosamente.', 'success');
+                    window.location.reload();
+                } else {
+                    await notify(result.data || result.message || 'No fue posible subir el comprobante.', 'error');
+                }
+            } finally {
+                if (comprobanteUploadBtn instanceof HTMLButtonElement) {
+                    comprobanteUploadBtn.disabled = false;
+                }
+                spinner?.classList.add('d-none');
+                if (btnText) {
+                    btnText.textContent = 'Subir';
+                }
+            }
         });
 
         saveButton?.addEventListener('click', async () => {
@@ -465,6 +565,32 @@ $currentUserRole = strtoupper((string) ($authUser['rolename'] ?? ''));
     }
 })();
 </script>
+
+<div class="modal fade" id="comprobanteUploadModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow-sm">
+            <div class="modal-header">
+                <h5 class="modal-title">Subir Comprobante</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="comprobanteRequestId">
+                <div class="mb-3">
+                    <label for="comprobanteFile" class="form-label fw-semibold">Archivo <span class="text-danger">*</span></label>
+                    <input type="file" class="form-control" id="comprobanteFile" accept=".pdf,.jpg,.jpeg,.png">
+                    <div class="form-text">PDF, JPG o PNG. Maximo 10 MB.</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="comprobanteUploadBtn">
+                    <span class="spinner-border spinner-border-sm me-2 d-none" id="comprobanteSpinner" role="status" aria-hidden="true"></span>
+                    <span id="comprobanteUploadBtnText">Subir</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="modal fade" id="annulVacationModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
