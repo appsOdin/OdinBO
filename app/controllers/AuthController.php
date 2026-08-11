@@ -35,6 +35,21 @@ final class AuthController extends Controller
         $username = sanitize_text((string) $request->input('username', ''));
         $password = (string) $request->input('password', '');
         $csrf = (string) $request->input('_csrf_token', '');
+        $deviceInfoRaw = (string) $request->input('deviceInfo', '');
+
+        // Enrich with server-resolved IP
+        $deviceData = [];
+        if ($deviceInfoRaw !== '') {
+            $decoded = json_decode($deviceInfoRaw, true);
+            if (is_array($decoded)) {
+                $deviceData = $decoded;
+            }
+        }
+        $forwardedFor = (string) ($_SERVER['HTTP_X_FORWARDED_FOR'] ?? '');
+        $deviceData['ip'] = $forwardedFor !== ''
+            ? trim(explode(',', $forwardedFor)[0])
+            : (string) ($_SERVER['REMOTE_ADDR'] ?? '');
+        $deviceInfo = json_encode($deviceData) ?: '';
 
         if (!validate_csrf_token($csrf)) {
             flash('danger', 'Token CSRF invalido.');
@@ -54,7 +69,7 @@ final class AuthController extends Controller
         }
 
         $service = ServiceFactory::authService();
-        $response = $service->login($username, $password);
+        $response = $service->login($username, $password, $deviceInfo);
 
         $httpCode = (int) ($response['http_code'] ?? 0);
         $code = trim((string) ($response['code'] ?? ''));

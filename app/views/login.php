@@ -39,8 +39,9 @@ $flashMessages = $flashMessages ?? [];
                 </div>
             <?php endforeach; ?>
 
-            <form action="<?= base_url('login') ?>" method="POST" novalidate>
+            <form action="<?= base_url('login') ?>" method="POST" novalidate id="loginForm">
                 <input type="hidden" name="_csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') ?>">
+                <input type="hidden" name="deviceInfo" id="deviceInfo">
                 <div class="mb-3">
                     <label class="form-label" for="username">Usuario</label>
                     <input type="text" class="form-control" id="username" name="username" value="<?= old('username') ?>" required>
@@ -55,6 +56,77 @@ $flashMessages = $flashMessages ?? [];
     </div>
 </div>
 <script src="<?= base_url('assets/js/bootstrap.bundle.min.js') ?>"></script>
+<script>
+(function () {
+    function getDeviceType() {
+        var ua = navigator.userAgent;
+        if (/tablet|ipad|playbook|silk/i.test(ua)) return 'tablet';
+        if (/mobile|iphone|ipod|android|blackberry|mini|windows\sce|palm/i.test(ua)) return 'mobile';
+        return 'desktop';
+    }
+
+    function getOsName() {
+        var ua = navigator.userAgent;
+        if (/windows/i.test(ua)) return 'Windows';
+        if (/macintosh|mac os x/i.test(ua)) return 'macOS';
+        if (/linux/i.test(ua)) return 'Linux';
+        if (/android/i.test(ua)) return 'Android';
+        if (/iphone|ipad|ipod/i.test(ua)) return 'iOS';
+        return 'Unknown';
+    }
+
+    function getBrowserInfo() {
+        var ua = navigator.userAgent;
+        var name = 'Unknown', version = '';
+        var map = [
+            { name: 'Edg', label: 'Edge' },
+            { name: 'OPR', label: 'Opera' },
+            { name: 'Chrome', label: 'Chrome' },
+            { name: 'Firefox', label: 'Firefox' },
+            { name: 'Safari', label: 'Safari' }
+        ];
+        for (var i = 0; i < map.length; i++) {
+            var idx = ua.indexOf(map[i].name + '/');
+            if (idx !== -1) {
+                name = map[i].label;
+                version = ua.substring(idx + map[i].name.length + 1).split(' ')[0].split('.')[0];
+                break;
+            }
+        }
+        return { name: name, version: version };
+    }
+
+    function collectDeviceInfo() {
+        var browser = getBrowserInfo();
+        return {
+            deviceType: getDeviceType(),
+            os: getOsName(),
+            browser: browser.name,
+            browserVersion: browser.version,
+            screen: screen.width + 'x' + screen.height,
+            viewport: window.innerWidth + 'x' + window.innerHeight,
+            devicePixelRatio: window.devicePixelRatio || 1,
+            touch: navigator.maxTouchPoints > 0,
+            cpuCores: navigator.hardwareConcurrency || null,
+            memoryGB: navigator.deviceMemory || null,
+            language: navigator.language || '',
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || '',
+            online: navigator.onLine,
+            userAgent: navigator.userAgent
+        };
+    }
+
+    var form = document.getElementById('loginForm');
+    if (form) {
+        form.addEventListener('submit', function () {
+            var field = document.getElementById('deviceInfo');
+            if (field) {
+                field.value = JSON.stringify(collectDeviceInfo());
+            }
+        });
+    }
+})();
+</script>
 <script>
 (function () {
     var storageKey = 'odinbo-login-redirect-message';

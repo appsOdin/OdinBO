@@ -20,12 +20,14 @@ final class AuthService
     /**
      * @return array<string, mixed>
      */
-    public function login(string $username, string $password): array
+    public function login(string $username, string $password, string $deviceInfo = ''): array
     {
-        $response = $this->apiService->post('/api/User/Login', [
-            'username' => $username,
-            'password' => $password,
-        ]);
+        $body = ['username' => $username, 'password' => $password];
+        if ($deviceInfo !== '') {
+            $body['deviceInfo'] = $deviceInfo;
+        }
+
+        $response = $this->apiService->post('/api/User/Login', $body);
 
         if (!$this->isSuccessResponse($response)) {
             return $response;
