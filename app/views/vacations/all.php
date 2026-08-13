@@ -111,6 +111,24 @@ $users = $users ?? [];
                 </tbody>
             </table>
         </div>
+
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
+            <small class="text-muted" id="vacationRequestsPaginationInfo"></small>
+            <div class="d-flex align-items-center gap-2">
+                <label for="vacationRequestsPerPage" class="small text-muted m-0">Registros por pagina</label>
+                <select id="vacationRequestsPerPage" class="form-select form-select-sm" style="width: auto;">
+                    <option value="5">5</option>
+                    <option value="8" selected>8</option>
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                </select>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-sm btn-outline-secondary" type="button" id="vacationRequestsPrevPage" aria-label="Pagina anterior">&larr;</button>
+                <small class="text-muted" id="vacationRequestsPageIndicator">Pagina 1 de 1</small>
+                <button class="btn btn-sm btn-outline-secondary" type="button" id="vacationRequestsNextPage" aria-label="Pagina siguiente">&rarr;</button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -242,6 +260,11 @@ $users = $users ?? [];
     const initVacationAllModule = () => {
         const body = document.getElementById('vacationRequestsTableBody');
         const search = document.getElementById('searchVacationRequests');
+        const paginationInfo = document.getElementById('vacationRequestsPaginationInfo');
+        const perPageSelect = document.getElementById('vacationRequestsPerPage');
+        const prevPageButton = document.getElementById('vacationRequestsPrevPage');
+        const nextPageButton = document.getElementById('vacationRequestsNextPage');
+        const pageIndicator = document.getElementById('vacationRequestsPageIndicator');
 
         const signersModalEl = document.getElementById('vacationSignersModal');
         const filesModalEl = document.getElementById('vacationFilesModal');
@@ -266,6 +289,71 @@ $users = $users ?? [];
         if (!body) {
             return;
         }
+
+        const paginationState = {
+            search: '',
+            page: 1,
+            perPage: Number(perPageSelect?.value || 8),
+            allRows: Array.from(body.querySelectorAll('tr')),
+            rows: []
+        };
+
+        const renderRows = () => {
+            const totalRows = paginationState.rows.length;
+            const totalPages = Math.max(1, Math.ceil(totalRows / paginationState.perPage));
+
+            if (paginationState.page > totalPages) {
+                paginationState.page = totalPages;
+            }
+
+            paginationState.allRows.forEach((row) => {
+                row.style.display = 'none';
+            });
+
+            const start = (paginationState.page - 1) * paginationState.perPage;
+            const end = start + paginationState.perPage;
+
+            paginationState.rows.slice(start, end).forEach((row) => {
+                row.style.display = '';
+            });
+
+            if (paginationInfo) {
+                paginationInfo.textContent = `Mostrando ${totalRows === 0 ? 0 : start + 1} a ${Math.min(end, totalRows)} de ${totalRows} registros`;
+            }
+
+            if (pageIndicator) {
+                pageIndicator.textContent = `Pagina ${paginationState.page} de ${totalPages}`;
+            }
+
+            if (prevPageButton) {
+                prevPageButton.disabled = paginationState.page <= 1;
+            }
+
+            if (nextPageButton) {
+                nextPageButton.disabled = paginationState.page >= totalPages;
+            }
+        };
+
+        const applyFilter = (resetPage = false) => {
+            if (resetPage) {
+                paginationState.page = 1;
+            }
+
+            const term = paginationState.search.toLowerCase();
+            paginationState.rows = term === ''
+                ? paginationState.allRows
+                : paginationState.allRows.filter((row) => {
+                    const values = [
+                        row.getAttribute('data-id') || '',
+                        row.getAttribute('data-user') || '',
+                        row.getAttribute('data-description') || ''
+                    ].join(' ').toLowerCase();
+
+                    return values.includes(term);
+                });
+
+            renderRows();
+        };
 
         const getModalInstance = (element) => {
             if (!element || !window.bootstrap || !window.bootstrap.Modal) {
@@ -399,17 +487,34 @@ $users = $users ?? [];
     };
 
         search?.addEventListener('input', (event) => {
-            const value = String(event.target.value || '').toLowerCase().trim();
+            paginationState.search = String(event.target.value || '').trim();
+            applyFilter(true);
+        });
 
-            Array.from(body.querySelectorAll('tr')).forEach((row) => {
-                const values = [
-                    row.getAttribute('data-id') || '',
-                    row.getAttribute('data-user') || '',
-                    row.getAttribute('data-description') || ''
-                ].join(' ').toLowerCase();
+        perPageSelect?.addEventListener('change', () => {
+            const newPerPage = Number(perPageSelect.value || 8);
+            paginationState.perPage = Number.isFinite(newPerPage) && newPerPage > 0 ? newPerPage : 8;
+            paginationState.page = 1;
+            renderRows();
+        });
 
-                row.style.display = values.includes(value) ? '' : 'none';
-            });
+        prevPageButton?.addEventListener('click', () => {
+            if (paginationState.page <= 1) {
+                return;
+            }
+
+            paginationState.page -= 1;
+            renderRows();
+        });
+
+        nextPageButton?.addEventListener('click', () => {
+            const totalPages = Math.max(1, Math.ceil(paginationState.rows.length / paginationState.perPage));
+            if (paginationState.page >= totalPages) {
+                return;
+            }
+
+            paginationState.page += 1;
+            renderRows();
         });
 
         body.addEventListener('click', async (event) => {
@@ -612,6 +717,8 @@ $users = $users ?? [];
                 confirmAdjustBtn.textContent = 'Ajustar';
             }
         });
+
+        applyFilter(true);
     };
 
     if (document.readyState === 'loading') {
