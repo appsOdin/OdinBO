@@ -97,13 +97,15 @@ final class VacationRequestService
 
     /**
      * @param array<int, string> $signerIds
-        * @param array{name: string, tmp_name: string, type: string}|null $pdfFile
+     * @param array{name: string, tmp_name: string, type: string}|null $pdfFile
      * @return array<string, mixed>
      */
-    public function addSigners(int $requestId, array $signerIds, ?array $pdfFile = null): array
+    public function addSigners(int $requestId, array $signerIds, int $requestType, ?array $pdfFile = null): array
     {
         $fields = [
             'RequestId' => (string) $requestId,
+            'RequestType' => (string) $requestType,
+            'requestType' => (string) $requestType,
         ];
 
         foreach ($signerIds as $index => $signerId) {
@@ -111,6 +113,12 @@ final class VacationRequestService
         }
 
         $files = $pdfFile === null ? [] : ['PdfFile' => $pdfFile];
+
+        Logger::info('VacationRequest add signers multipart', [
+            'request_id' => $requestId,
+            'request_type' => $requestType,
+            'has_pdf' => $pdfFile !== null,
+        ]);
 
         return $this->apiService->postMultipart('/api/VacationRequest/AddSigners', $fields, $files);
     }

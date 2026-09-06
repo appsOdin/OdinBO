@@ -294,8 +294,14 @@ final class VacationRequestController extends Controller
             }
         }
 
+        $requestType = (int) $request->input('requestType', -1);
+        if (!in_array($requestType, [0, 1], true)) {
+            $this->json(['code' => '422', 'message' => 'Tipo de solicitud invalido', 'data' => null], 422);
+            return;
+        }
+
         // requestType 1 = Permiso (PDF opcional); 0 = Vacaciones (PDF obligatorio)
-        $isPermiso = (string) $request->input('requestType', '') === '1';
+        $isPermiso = $requestType === 1;
 
         $pdfFile = null;
         if (isset($_FILES['pdfFile']) && is_array($_FILES['pdfFile'])) {
@@ -348,7 +354,7 @@ final class VacationRequestController extends Controller
             return;
         }
 
-        $response = ServiceFactory::vacationRequestService()->addSigners($requestId, $signerIds, $pdfFile);
+        $response = ServiceFactory::vacationRequestService()->addSigners($requestId, $signerIds, $requestType, $pdfFile);
 
         $this->json($response, (int) ($response['http_code'] ?? 200));
     }
