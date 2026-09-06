@@ -190,7 +190,7 @@ $users = $users ?? [];
 
                     <div class="mb-3">
                         <label class="form-label" for="vacationPdfFile">Archivo PDF</label>
-                        <input type="file" class="form-control" id="vacationPdfFile" name="pdfFile" accept="application/pdf,.pdf" required>
+                        <input type="file" class="form-control" id="vacationPdfFile" name="pdfFile" accept="application/pdf,.pdf">
                         <small class="text-muted">Tamano maximo: 5 MB.</small>
                     </div>
                 </div>
@@ -634,14 +634,11 @@ $users = $users ?? [];
         const formData = new FormData(addSignersForm);
         const pdfFile = formData.get('pdfFile');
 
-        if (!(pdfFile instanceof File) || pdfFile.size <= 0) {
-            await notify('Debe seleccionar un archivo PDF.');
-            return;
-        }
-
-        if (pdfFile.size > 5 * 1024 * 1024) {
-            await notify('El archivo PDF no puede superar 5 MB.');
-            return;
+        if (pdfFile instanceof File && pdfFile.size > 0) {
+            if (pdfFile.size > 5 * 1024 * 1024) {
+                await notify('El archivo PDF no puede superar 5 MB.');
+                return;
+            }
         }
 
         const response = await fetch(window.APP.vacationAddSignersUrl, {

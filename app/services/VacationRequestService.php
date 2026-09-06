@@ -97,10 +97,10 @@ final class VacationRequestService
 
     /**
      * @param array<int, string> $signerIds
-     * @param array{name: string, tmp_name: string, type: string} $pdfFile
+        * @param array{name: string, tmp_name: string, type: string}|null $pdfFile
      * @return array<string, mixed>
      */
-    public function addSigners(int $requestId, array $signerIds, array $pdfFile): array
+    public function addSigners(int $requestId, array $signerIds, ?array $pdfFile = null): array
     {
         $fields = [
             'RequestId' => (string) $requestId,
@@ -110,9 +110,9 @@ final class VacationRequestService
             $fields['SignerUserIds[' . $index . ']'] = $signerId;
         }
 
-        return $this->apiService->postMultipart('/api/VacationRequest/AddSigners', $fields, [
-            'PdfFile' => $pdfFile,
-        ]);
+        $files = $pdfFile === null ? [] : ['PdfFile' => $pdfFile];
+
+        return $this->apiService->postMultipart('/api/VacationRequest/AddSigners', $fields, $files);
     }
 
     /**

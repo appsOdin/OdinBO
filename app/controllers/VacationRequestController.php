@@ -294,50 +294,53 @@ final class VacationRequestController extends Controller
             }
         }
 
-        if (!isset($_FILES['pdfFile']) || !is_array($_FILES['pdfFile'])) {
-            $this->json(['code' => '422', 'message' => 'Debe adjuntar un archivo PDF', 'data' => null], 422);
-            return;
+        $pdfFile = null;
+        if (isset($_FILES['pdfFile']) && is_array($_FILES['pdfFile'])) {
+            $uploadedPdf = $_FILES['pdfFile'];
+            $uploadError = (int) ($uploadedPdf['error'] ?? UPLOAD_ERR_NO_FILE);
+
+            if ($uploadError !== UPLOAD_ERR_NO_FILE) {
+                if ($uploadError !== UPLOAD_ERR_OK) {
+                    $this->json(['code' => '422', 'message' => 'No fue posible procesar el archivo PDF', 'data' => null], 422);
+                    return;
+                }
+
+                $tmpName = (string) ($uploadedPdf['tmp_name'] ?? '');
+                $originalName = (string) ($uploadedPdf['name'] ?? '');
+                $size = (int) ($uploadedPdf['size'] ?? 0);
+
+                if (!is_uploaded_file($tmpName)) {
+                    $this->json(['code' => '422', 'message' => 'Archivo PDF invalido', 'data' => null], 422);
+                    return;
+                }
+
+                if ($size <= 0 || $size > 5 * 1024 * 1024) {
+                    $this->json(['code' => '422', 'message' => 'El archivo PDF debe pesar entre 1 byte y 5 MB', 'data' => null], 422);
+                    return;
+                }
+
+                $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+                if ($extension !== 'pdf') {
+                    $this->json(['code' => '422', 'message' => 'Solo se permite formato PDF', 'data' => null], 422);
+                    return;
+                }
+
+                $finfo = new \finfo(FILEINFO_MIME_TYPE);
+                $mime = $finfo->file($tmpName);
+                if (!is_string($mime) || !in_array(strtolower($mime), ['application/pdf', 'application/x-pdf'], true)) {
+                    $this->json(['code' => '422', 'message' => 'El archivo no corresponde a un PDF valido', 'data' => null], 422);
+                    return;
+                }
+
+                $pdfFile = [
+                    'name' => basename($originalName),
+                    'tmp_name' => $tmpName,
+                    'type' => $mime,
+                ];
+            }
         }
 
-        $pdfFile = $_FILES['pdfFile'];
-        $uploadError = (int) ($pdfFile['error'] ?? UPLOAD_ERR_NO_FILE);
-        if ($uploadError !== UPLOAD_ERR_OK) {
-            $this->json(['code' => '422', 'message' => 'No fue posible procesar el archivo PDF', 'data' => null], 422);
-            return;
-        }
-
-        $tmpName = (string) ($pdfFile['tmp_name'] ?? '');
-        $originalName = (string) ($pdfFile['name'] ?? '');
-        $size = (int) ($pdfFile['size'] ?? 0);
-
-        if (!is_uploaded_file($tmpName)) {
-            $this->json(['code' => '422', 'message' => 'Archivo PDF invalido', 'data' => null], 422);
-            return;
-        }
-
-        if ($size <= 0 || $size > 5 * 1024 * 1024) {
-            $this->json(['code' => '422', 'message' => 'El archivo PDF debe pesar entre 1 byte y 5 MB', 'data' => null], 422);
-            return;
-        }
-
-        $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
-        if ($extension !== 'pdf') {
-            $this->json(['code' => '422', 'message' => 'Solo se permite formato PDF', 'data' => null], 422);
-            return;
-        }
-
-        $finfo = new \finfo(FILEINFO_MIME_TYPE);
-        $mime = $finfo->file($tmpName);
-        if (!is_string($mime) || !in_array(strtolower($mime), ['application/pdf', 'application/x-pdf'], true)) {
-            $this->json(['code' => '422', 'message' => 'El archivo no corresponde a un PDF valido', 'data' => null], 422);
-            return;
-        }
-
-        $response = ServiceFactory::vacationRequestService()->addSigners($requestId, $signerIds, [
-            'name' => basename($originalName),
-            'tmp_name' => $tmpName,
-            'type' => $mime,
-        ]);
+        $response = ServiceFactory::vacationRequestService()->addSigners($requestId, $signerIds, $pdfFile);
 
         $this->json($response, (int) ($response['http_code'] ?? 200));
     }
