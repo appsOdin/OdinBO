@@ -83,7 +83,7 @@ $users = $users ?? [];
                             <div class="d-flex flex-wrap gap-2 vacation-actions">
                                 <a href="<?= base_url('rrhh/solicitud-vacaciones/detalle?id=' . $id) ?>" class="btn btn-sm btn-outline-primary">Ver Detalle</a>
                                 <?php if ($stateKey === 'PENDING'): ?>
-                                    <button type="button" class="btn btn-sm btn-primary btn-add-signers" data-request-id="<?= $id ?>">Agregar Firmantes</button>
+                                    <button type="button" class="btn btn-sm btn-primary btn-add-signers" data-request-id="<?= $id ?>" data-request-type="<?= $requestType === null ? '' : $requestType ?>">Agregar Firmantes</button>
                                 <?php endif; ?>
                                 <button type="button" class="btn btn-sm btn-outline-info btn-view-signers" data-request-id="<?= $id ?>">Ver Firmantes</button>
                                 <?php if ($stateKey !== 'PENDING'): ?>
@@ -171,6 +171,7 @@ $users = $users ?? [];
                 <div class="modal-body">
                     <input type="hidden" name="_csrf_token" value="<?= htmlspecialchars((string) ($csrfToken ?? get_csrf_token()), ENT_QUOTES, 'UTF-8') ?>">
                     <input type="hidden" name="requestId" id="vacationRequestIdInput">
+                    <input type="hidden" name="requestType" id="vacationRequestTypeInput">
 
                     <div class="mb-3">
                         <label class="form-label" for="vacationSignerSelect">Seleccionar Firmantes</label>
@@ -189,7 +190,7 @@ $users = $users ?? [];
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label" for="vacationPdfFile">Archivo PDF</label>
+                        <label class="form-label" for="vacationPdfFile">Archivo PDF <span id="vacationPdfFileHint" class="text-muted"></span></label>
                         <input type="file" class="form-control" id="vacationPdfFile" name="pdfFile" accept="application/pdf,.pdf">
                         <small class="text-muted">Tamano maximo: 5 MB.</small>
                     </div>
@@ -275,6 +276,9 @@ $users = $users ?? [];
         const filesBody = document.getElementById('vacationFilesBody');
         const addSignersForm = document.getElementById('vacationAddSignersForm');
         const requestIdInput = document.getElementById('vacationRequestIdInput');
+        const requestTypeInput = document.getElementById('vacationRequestTypeInput');
+        const pdfFileInput = document.getElementById('vacationPdfFile');
+        const pdfFileHint = document.getElementById('vacationPdfFileHint');
         const adjustRequestIdInput = document.getElementById('adjustRequestId');
         const adjustInfoId = document.getElementById('adjustInfoId');
         const adjustInfoUser = document.getElementById('adjustInfoUser');
@@ -581,6 +585,20 @@ $users = $users ?? [];
                     return;
                 }
 
+                // requestType 1 = Permiso (PDF opcional); 0 = Vacaciones (PDF obligatorio)
+                const requestType = String(addButton.dataset.requestType || '');
+                const isPermiso = requestType === '1';
+                if (requestTypeInput) {
+                    requestTypeInput.value = requestType;
+                }
+                if (pdfFileInput) {
+                    pdfFileInput.value = '';
+                    pdfFileInput.required = !isPermiso;
+                }
+                if (pdfFileHint) {
+                    pdfFileHint.textContent = isPermiso ? '(opcional)' : '(obligatorio)';
+                }
+
                 requestIdInput.value = String(requestId);
                 addSignersModal.show();
                 return;
@@ -633,12 +651,16 @@ $users = $users ?? [];
 
         const formData = new FormData(addSignersForm);
         const pdfFile = formData.get('pdfFile');
+        const hasPdf = pdfFile instanceof File && pdfFile.size > 0;
 
-        if (pdfFile instanceof File && pdfFile.size > 0) {
-            if (pdfFile.size > 5 * 1024 * 1024) {
-                await notify('El archivo PDF no puede superar 5 MB.');
-                return;
-            }
+        if (!hasPdf && pdfFileInput?.required) {
+            await notify('Debe seleccionar un archivo PDF para solicitudes de vacaciones.');
+            return;
+        }
+
+        if (hasPdf && pdfFile.size > 5 * 1024 * 1024) {
+            await notify('El archivo PDF no puede superar 5 MB.');
+            return;
         }
 
         const response = await fetch(window.APP.vacationAddSignersUrl, {

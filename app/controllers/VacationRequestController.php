@@ -294,6 +294,9 @@ final class VacationRequestController extends Controller
             }
         }
 
+        // requestType 1 = Permiso (PDF opcional); 0 = Vacaciones (PDF obligatorio)
+        $isPermiso = (string) $request->input('requestType', '') === '1';
+
         $pdfFile = null;
         if (isset($_FILES['pdfFile']) && is_array($_FILES['pdfFile'])) {
             $uploadedPdf = $_FILES['pdfFile'];
@@ -338,6 +341,11 @@ final class VacationRequestController extends Controller
                     'type' => $mime,
                 ];
             }
+        }
+
+        if ($pdfFile === null && !$isPermiso) {
+            $this->json(['code' => '422', 'message' => 'Debe adjuntar un archivo PDF para solicitudes de vacaciones', 'data' => null], 422);
+            return;
         }
 
         $response = ServiceFactory::vacationRequestService()->addSigners($requestId, $signerIds, $pdfFile);
