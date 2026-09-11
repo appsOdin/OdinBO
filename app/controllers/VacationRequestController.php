@@ -104,7 +104,8 @@ final class VacationRequestController extends Controller
         $startDateRaw = sanitize_text((string) $request->input('start_date', ''));
         $endDateRaw = sanitize_text((string) $request->input('end_date', ''));
         $description = sanitize_text((string) $request->input('description', ''));
-        $quantityInput = (int) $request->input('quantity', 0);
+        $quantityRaw = trim((string) $request->input('quantity', ''));
+        $quantityInput = is_numeric($quantityRaw) ? (float) $quantityRaw : 0.0;
         $requestTypeRaw = $request->input('request_type', null);
 
         if (!in_array((string) $requestTypeRaw, ['0', '1'], true)) {
@@ -143,8 +144,8 @@ final class VacationRequestController extends Controller
                 $this->redirect('/rrhh/solicitud-vacaciones/crear');
                 return;
             }
-            if ($quantityInput < 1 || $quantityInput > 999) {
-                flash('danger', 'La cantidad de horas debe estar entre 1 y 999.');
+            if ($quantityInput <= 0 || $quantityInput > 999) {
+                flash('danger', 'La cantidad de horas debe ser mayor a 0 y no superar 999.');
                 $this->redirect('/rrhh/solicitud-vacaciones/crear');
                 return;
             }
@@ -856,7 +857,7 @@ final class VacationRequestController extends Controller
         $detail = $detailResponse['data'];
         $requestType = (int) ($detail['requestType'] ?? -1);
         $stateKey = strtoupper((string) ($detail['stateKey'] ?? ''));
-        $currentQuantity = (int) ($detail['quantity'] ?? 0);
+        $currentQuantity = is_numeric($detail['quantity'] ?? null) ? (float) $detail['quantity'] : 0.0;
 
         if ($requestType !== 1) {
             $this->json(['code' => '422', 'message' => 'Solo se pueden ajustar solicitudes de tipo Permiso', 'data' => null], 422);
@@ -880,9 +881,9 @@ final class VacationRequestController extends Controller
                 return;
             }
 
-            $requestCant = is_numeric($requestCantRaw) ? (int) $requestCantRaw : 0;
-            if ($requestCant < 1) {
-                $this->json(['code' => '422', 'message' => 'La cantidad ajustada debe ser mayor o igual a 1', 'data' => null], 422);
+            $requestCant = is_numeric($requestCantRaw) ? (float) $requestCantRaw : 0.0;
+            if (!is_finite($requestCant) || $requestCant <= 0) {
+                $this->json(['code' => '422', 'message' => 'La cantidad ajustada debe ser mayor a 0', 'data' => null], 422);
                 return;
             }
 
@@ -918,18 +919,17 @@ final class VacationRequestController extends Controller
                 return;
             }
 
-            // The API binds requestCant as Byte, so it must always be a numeric value in 1..255.
-            if ($currentQuantity >= 1 && $currentQuantity <= 255) {
+            if ($currentQuantity > 0 && $currentQuantity <= 255) {
                 $requestCant = $currentQuantity;
             } else {
-                $requestCant = 1;
+                $requestCant = 0.01;
             }
 
             $reason = '';
         }
 
-        if (!is_int($requestCant) || $requestCant < 1 || $requestCant > 255) {
-            $this->json(['code' => '422', 'message' => 'La cantidad del ajuste debe estar entre 1 y 255', 'data' => null], 422);
+        if ($requestCant === null || !is_finite($requestCant) || $requestCant <= 0 || $requestCant > 255) {
+            $this->json(['code' => '422', 'message' => 'La cantidad del ajuste debe ser mayor a 0 y no superar 255', 'data' => null], 422);
             return;
         }
 

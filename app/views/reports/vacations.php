@@ -64,7 +64,7 @@ $signers = $signers ?? [];
                         <td><?= htmlspecialchars((string) ($row['start_date'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
                         <td><?= htmlspecialchars((string) ($row['end_date'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
                         <td><?= htmlspecialchars((string) ($row['request_type'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
-                        <td><?= (int) ($row['quantity'] ?? 0) ?></td>
+                        <td><?= htmlspecialchars((string) ($row['quantity'] ?? 0), ENT_QUOTES, 'UTF-8') ?></td>
                         <td><?= htmlspecialchars((string) ($row['description'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
                     </tr>
                 <?php endforeach; ?>

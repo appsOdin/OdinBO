@@ -138,7 +138,7 @@ $ownerSignatureSrc = $buildSignatureSrc($ownerSignatureRaw);
                     </div>
                     <div class="col-md-6 col-lg-2">
                         <small class="text-muted d-block"><?= (int) ($detail['requestType'] ?? 0) === 1 ? 'Horas' : 'Dias' ?></small>
-                        <div><?= (int) ($detail['quantity'] ?? 0) ?></div>
+                        <div><?= htmlspecialchars((string) ($detail['quantity'] ?? 0), ENT_QUOTES, 'UTF-8') ?></div>
                     </div>
                     <div class="col-md-6 col-lg-4">
                         <small class="text-muted d-block">Fecha de solicitud</small>

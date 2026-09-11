@@ -63,7 +63,7 @@ $users = $users ?? [];
                         data-start="<?= htmlspecialchars(date('d/m/Y', strtotime((string) ($req['startDate'] ?? 'now'))), ENT_QUOTES, 'UTF-8') ?>"
                         data-end="<?= htmlspecialchars(date('d/m/Y', strtotime((string) ($req['endDate'] ?? 'now'))), ENT_QUOTES, 'UTF-8') ?>"
                         data-type="<?= htmlspecialchars((string) ($typeLabel ?? '—'), ENT_QUOTES, 'UTF-8') ?>"
-                        data-quantity="<?= (int) ($req['quantity'] ?? 0) ?>"
+                        data-quantity="<?= htmlspecialchars((string) ($req['quantity'] ?? 0), ENT_QUOTES, 'UTF-8') ?>"
                         data-state="<?= htmlspecialchars((string) ($stateName ?? ''), ENT_QUOTES, 'UTF-8') ?>"
                     >
                         <td><?= $id ?></td>
@@ -77,7 +77,7 @@ $users = $users ?? [];
                                 <span class="text-muted">&mdash;</span>
                             <?php endif; ?>
                         </td>
-                        <td><?= (int) ($req['quantity'] ?? 0) ?><?= $quantityLabel !== '' ? ' ' . $quantityLabel : '' ?></td>
+                        <td><?= htmlspecialchars((string) ($req['quantity'] ?? 0), ENT_QUOTES, 'UTF-8') ?><?= $quantityLabel !== '' ? ' ' . $quantityLabel : '' ?></td>
                         <td><?= $stateBadge ?></td>
                         <td>
                             <div class="d-flex flex-wrap gap-2 vacation-actions">
@@ -236,7 +236,7 @@ $users = $users ?? [];
                     </div>
                     <div class="col-md-4">
                         <label class="form-label fw-semibold" for="adjustRequestCant">Cantidad (horas)</label>
-                        <input type="number" min="1" max="255" step="1" class="form-control" id="adjustRequestCant" required>
+                        <input type="number" min="0.01" max="255" step="any" class="form-control" id="adjustRequestCant" required>
                     </div>
                     <div class="col-md-8">
                         <label class="form-label fw-semibold">Estado</label>
@@ -695,8 +695,8 @@ $users = $users ?? [];
                 return;
             }
 
-            if (!Number.isFinite(requestCant) || requestCant < 1) {
-                await notify('La cantidad debe ser mayor o igual a 1.');
+            if (!Number.isFinite(requestCant) || requestCant <= 0) {
+                await notify('La cantidad debe ser mayor a 0.');
                 return;
             }
 
@@ -717,7 +717,7 @@ $users = $users ?? [];
                 const result = await sendAdjustRequest({
                     requestId,
                     reason,
-                    requestCant: Math.floor(requestCant),
+                    requestCant,
                     state: 'ADJUSTED',
                     sing: null,
                     _csrf_token: csrfToken

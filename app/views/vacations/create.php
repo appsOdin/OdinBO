@@ -60,6 +60,7 @@ $minDate = date('Y-m-d');
                         required
                         min="1"
                         max="255"
+                        step="any"
                         readonly
                     >
                     <small class="text-muted" id="quantityHint">Calculado automaticamente.</small>
@@ -174,8 +175,9 @@ $minDate = date('Y-m-d');
             quantityLabel.textContent = 'Cantidad de Horas';
             quantityHint.textContent = 'Ingresa la cantidad de horas del permiso.';
             quantityInput.readOnly = false;
-            quantityInput.min = '1';
+            quantityInput.min = '0.01';
             quantityInput.max = '999';
+            quantityInput.step = 'any';
             quantityInput.value = '';
             endDateInput.readOnly = true;
             if (startDateInput.value) {
@@ -270,9 +272,9 @@ $minDate = date('Y-m-d');
                 return;
             }
             const hours = Number(quantityInput.value || 0);
-            if (!hours || hours < 1 || hours > 999) {
+            if (!Number.isFinite(hours) || hours <= 0 || hours > 999) {
                 event.preventDefault();
-                notify('La cantidad de horas debe estar entre 1 y 999.');
+                notify('La cantidad de horas debe ser mayor a 0 y no superar 999.');
                 return;
             }
         } else {

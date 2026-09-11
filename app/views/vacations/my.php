@@ -66,7 +66,7 @@ $currentUserRole = strtoupper((string) ($authUser['rolename'] ?? ''));
                                     <span class="text-muted">—</span>
                                 <?php endif; ?>
                             </td>
-                            <td><?= (int) ($req['quantity'] ?? 0) ?><?= $quantityLabel !== '' ? ' ' . $quantityLabel : '' ?></td>
+                            <td><?= htmlspecialchars((string) ($req['quantity'] ?? 0), ENT_QUOTES, 'UTF-8') ?><?= $quantityLabel !== '' ? ' ' . $quantityLabel : '' ?></td>
                             <td><?= htmlspecialchars((string) ($req['description'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
                             <td><?= $stateBadge ?></td>
                             <td>

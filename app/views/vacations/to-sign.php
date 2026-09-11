@@ -67,7 +67,7 @@ $pendingCount = count($requests);
                                     <span class="text-muted">&mdash;</span>
                                 <?php endif; ?>
                             </td>
-                            <td><?= (int) ($req['quantity'] ?? 0) ?><?= $quantityLabel !== '' ? ' ' . $quantityLabel : '' ?></td>
+                            <td><?= htmlspecialchars((string) ($req['quantity'] ?? 0), ENT_QUOTES, 'UTF-8') ?><?= $quantityLabel !== '' ? ' ' . $quantityLabel : '' ?></td>
                             <td><?= $stateBadge ?></td>
                             <td>
                                 <div class="d-flex flex-wrap gap-2 vacation-actions">

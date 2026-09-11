@@ -19,7 +19,7 @@ final class VacationRequestService
      * @param array<int, array{name: string, tmp_name: string, type: string}> $files
      * @return array<string, mixed>
      */
-    public function create(string $startDateIso, string $endDateIso, int $quantity, string $description, int $requestType, array $files = []): array
+    public function create(string $startDateIso, string $endDateIso, float $quantity, string $description, int $requestType, array $files = []): array
     {
         $fields = [
             'startDate'   => $startDateIso,
@@ -181,7 +181,7 @@ final class VacationRequestService
     /**
      * @return array<string, mixed>
      */
-    public function adjustVacationRequest(int $requestId, ?string $reason, ?int $requestCant, string $state, ?string $sing): array
+    public function adjustVacationRequest(int $requestId, ?string $reason, ?float $requestCant, string $state, ?string $sing): array
     {
         return $this->apiService->post('/api/VacationRequest/AdjustVacationRequest', [
             'requestId' => $requestId,
