@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Controllers\AuthController;
 use App\Controllers\ArticleController;
 use App\Controllers\DashboardController;
+use App\Controllers\PermissionController;
 use App\Controllers\TraceController;
 use App\Controllers\UserController;
 use App\Controllers\VacationRequestController;
@@ -52,4 +53,9 @@ return [
 
     ['method' => 'GET',  'path' => '/admin/traces',      'handler' => [TraceController::class, 'index'], 'middleware' => [AuthMiddleware::class]],
     ['method' => 'POST', 'path' => '/admin/traces/list', 'handler' => [TraceController::class, 'list'],  'middleware' => [AuthMiddleware::class]],
+
+    ['method' => 'GET',  'path' => '/permisos/agregar',                'handler' => [PermissionController::class, 'addForm'], 'middleware' => [AuthMiddleware::class]],
+    ['method' => 'POST', 'path' => '/permisos/permisos-por-pantalla',  'handler' => [PermissionController::class, 'permissionsByScreen'], 'middleware' => [AuthMiddleware::class]],
+    ['method' => 'POST', 'path' => '/permisos/guardar',                'handler' => [PermissionController::class, 'store'], 'middleware' => [AuthMiddleware::class]],
+    ['method' => 'GET',  'path' => '/permisos',                        'handler' => [PermissionController::class, 'index'], 'middleware' => [AuthMiddleware::class]],
 ];

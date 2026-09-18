@@ -60,6 +60,10 @@ final class AuthMiddleware
                 'GET /users/list',
                 'POST /users/store',
                 'POST /users/update',
+                'GET /permisos',
+                'GET /permisos/agregar',
+                'POST /permisos/permisos-por-pantalla',
+                'POST /permisos/guardar',
             ];
 
             return !in_array($routeKey, $forbidden, true);

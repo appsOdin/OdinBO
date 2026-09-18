@@ -48,4 +48,9 @@ final class ServiceFactory
     {
         return new TraceService(self::apiService());
     }
+
+    public static function permissionService(): PermissionService
+    {
+        return new PermissionService(self::apiService());
+    }
 }

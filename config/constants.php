@@ -41,6 +41,13 @@ const MENU_OPTIONS_SUPER = [
 	['label' => 'Articulos', 'path' => 'articles'],
 	['label' => 'Trace Logs', 'path' => 'admin/traces'],
 	[
+		'label' => 'Permisos',
+		'children' => [
+			['label' => 'Agregar permisos', 'path' => 'permisos/agregar'],
+			['label' => 'Ver permisos', 'path' => 'permisos'],
+		],
+	],
+	[
 		'label' => 'RRHH',
 		'children' => [
 			['label' => 'Mis solicitudes', 'path' => 'rrhh/solicitud-vacaciones'],

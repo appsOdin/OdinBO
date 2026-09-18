@@ -203,7 +203,9 @@ window.APP = {
     vacationRejectUrl: '<?= base_url('rrhh/solicitud-vacaciones/reject') ?>',
     vacationUploadComprobanteUrl: '<?= base_url('rrhh/solicitud-vacaciones/upload-comprobante') ?>',
     vacationReportListUrl: '<?= base_url('reportes/vacaciones/list') ?>',
-    tracesListUrl: '<?= base_url('admin/traces/list') ?>'
+    tracesListUrl: '<?= base_url('admin/traces/list') ?>',
+    permissionsByScreenUrl: '<?= base_url('permisos/permisos-por-pantalla') ?>',
+    permissionsStoreUrl: '<?= base_url('permisos/guardar') ?>'
 };
 </script>
 <script src="<?= base_url('assets/js/bootstrap.bundle.min.js') ?>"></script>

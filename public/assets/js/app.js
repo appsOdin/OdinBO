@@ -1151,6 +1151,218 @@
         });
     };
 
+    const initPermissionsAddModule = () => {
+        const roleSelect = document.getElementById('permissionRole');
+        const moduleSelect = document.getElementById('permissionModule');
+        const screenSelect = document.getElementById('permissionScreen');
+        if (!roleSelect || !moduleSelect || !screenSelect) {
+            return;
+        }
+
+        // API docs state '00' as the success code, but the live API returns '200'; accept both.
+        const isPermissionSuccessCode = (code) => ['00', '200'].includes(String(code));
+
+        const searchButton = document.getElementById('btnSearchPermissions');
+        const saveButton = document.getElementById('btnSavePermissions');
+        const resultCard = document.getElementById('permissionsResultCard');
+        const tableBody = document.getElementById('permissionsTableBody');
+        const emptyMessage = document.getElementById('permissionsEmptyMessage');
+        const modules = Array.isArray(window.APP_PERMISSIONS_MODULES) ? window.APP_PERMISSIONS_MODULES : [];
+
+        const populateScreens = (moduleKey) => {
+            screenSelect.innerHTML = '<option value="">Seleccione una pantalla</option>';
+            const selectedModule = modules.find((module) => String(module.key_name) === String(moduleKey));
+            const screens = selectedModule && Array.isArray(selectedModule.screens) ? selectedModule.screens : [];
+            screens.forEach((screen) => {
+                const option = document.createElement('option');
+                option.value = screen.key_name || '';
+                option.textContent = screen.screen_name || '';
+                screenSelect.appendChild(option);
+            });
+        };
+
+        moduleSelect.addEventListener('change', () => {
+            populateScreens(moduleSelect.value);
+        });
+
+        const buildPermissionRow = (item) => {
+            const tr = document.createElement('tr');
+            tr.dataset.keyName = item.key_name || '';
+            tr.innerHTML = `
+                <td><input type="checkbox" class="form-check-input permission-check"></td>
+                <td>${escapeHtml(item.key_name || '')}</td>
+                <td>${escapeHtml(item.permission_name || '')}</td>
+            `;
+            return tr;
+        };
+
+        searchButton?.addEventListener('click', async () => {
+            const keyScreen = screenSelect.value;
+            if (!keyScreen) {
+                showToast('danger', 'Seleccione una pantalla para buscar permisos');
+                return;
+            }
+
+            const result = await fetchJson(window.APP.permissionsByScreenUrl, {
+                _csrf_token: window.APP.csrfToken,
+                key_screen: keyScreen
+            });
+
+            if (!isPermissionSuccessCode(result.code)) {
+                showToast('danger', result.message || 'No fue posible consultar los permisos');
+                if (resultCard) {
+                    resultCard.style.display = 'none';
+                }
+                return;
+            }
+
+            const rows = Array.isArray(result.data) ? result.data : [];
+            if (tableBody) {
+                tableBody.innerHTML = '';
+                rows.forEach((item) => tableBody.appendChild(buildPermissionRow(item)));
+            }
+
+            if (resultCard) {
+                resultCard.style.display = '';
+            }
+            if (emptyMessage) {
+                emptyMessage.style.display = rows.length === 0 ? '' : 'none';
+            }
+        });
+
+        saveButton?.addEventListener('click', async () => {
+            const roleId = roleSelect.value;
+            if (!roleId) {
+                showToast('danger', 'Seleccione un rol');
+                return;
+            }
+
+            const checkedKeys = Array.from(tableBody?.querySelectorAll('tr') || [])
+                .filter((row) => {
+                    const checkbox = row.querySelector('.permission-check');
+                    return checkbox instanceof HTMLInputElement && checkbox.checked;
+                })
+                .map((row) => row.dataset.keyName);
+
+            if (checkedKeys.length === 0) {
+                showToast('danger', 'Seleccione al menos un permiso');
+                return;
+            }
+
+            const result = await fetchJson(window.APP.permissionsStoreUrl, {
+                _csrf_token: window.APP.csrfToken,
+                role: roleId,
+                permission: checkedKeys
+            });
+
+            if (isPermissionSuccessCode(result.code)) {
+                showToast('success', result.message || 'Permisos guardados correctamente');
+                roleSelect.value = '';
+                moduleSelect.value = '';
+                populateScreens('');
+                if (tableBody) {
+                    tableBody.innerHTML = '';
+                }
+                if (resultCard) {
+                    resultCard.style.display = 'none';
+                }
+                if (emptyMessage) {
+                    emptyMessage.style.display = 'none';
+                }
+            } else {
+                showToast('danger', result.message || 'No fue posible guardar los permisos');
+            }
+        });
+    };
+
+    const initRolePermissionsModule = () => {
+        const tableBody = document.getElementById('rolePermissionsTableBody');
+        if (!tableBody) {
+            return;
+        }
+
+        const searchInput = document.getElementById('searchRolePermissions');
+        const paginationInfo = document.getElementById('rolePermissionsPaginationInfo');
+        const perPageSelect = document.getElementById('rolePermissionsPerPage');
+        const prevPageButton = document.getElementById('rolePermissionsPrevPage');
+        const nextPageButton = document.getElementById('rolePermissionsNextPage');
+        const pageIndicator = document.getElementById('rolePermissionsPageIndicator');
+
+        const state = {
+            search: '',
+            page: 1,
+            perPage: Number(perPageSelect?.value || 8)
+        };
+
+        const getRows = () => Array.from(tableBody.querySelectorAll('tr[data-search]'));
+
+        const applyState = () => {
+            const rows = getRows();
+            const filtered = rows.filter((row) => (row.dataset.search || '').includes(state.search.toLowerCase()));
+
+            rows.forEach((row) => {
+                row.style.display = 'none';
+            });
+
+            const totalPages = Math.max(1, Math.ceil(filtered.length / state.perPage));
+            if (state.page > totalPages) {
+                state.page = totalPages;
+            }
+
+            const start = (state.page - 1) * state.perPage;
+            const end = start + state.perPage;
+            filtered.slice(start, end).forEach((row) => {
+                row.style.display = '';
+            });
+
+            if (paginationInfo) {
+                paginationInfo.textContent = `Mostrando ${filtered.length === 0 ? 0 : start + 1} a ${Math.min(end, filtered.length)} de ${filtered.length} registros`;
+            }
+            if (pageIndicator) {
+                pageIndicator.textContent = `Pagina ${state.page} de ${totalPages}`;
+            }
+            if (prevPageButton) {
+                prevPageButton.disabled = state.page <= 1;
+            }
+            if (nextPageButton) {
+                nextPageButton.disabled = state.page >= totalPages;
+            }
+        };
+
+        searchInput?.addEventListener('input', (event) => {
+            state.search = event.target.value || '';
+            state.page = 1;
+            applyState();
+        });
+
+        perPageSelect?.addEventListener('change', () => {
+            const nextPerPage = Number(perPageSelect.value || 8);
+            state.perPage = Number.isFinite(nextPerPage) && nextPerPage > 0 ? nextPerPage : 8;
+            state.page = 1;
+            applyState();
+        });
+
+        prevPageButton?.addEventListener('click', () => {
+            if (state.page <= 1) {
+                return;
+            }
+            state.page -= 1;
+            applyState();
+        });
+
+        nextPageButton?.addEventListener('click', () => {
+            const totalRows = getRows().filter((row) => (row.dataset.search || '').includes(state.search.toLowerCase())).length;
+            const totalPages = Math.max(1, Math.ceil(totalRows / state.perPage));
+            if (state.page >= totalPages) {
+                return;
+            }
+            state.page += 1;
+            applyState();
+        });
+
+        applyState();
+    };
+
     document.addEventListener('DOMContentLoaded', () => {
         initTheme();
         initSidebar();
@@ -1158,5 +1370,7 @@
         initUsersModule();
         initArticlesModule();
         initChangePasswordModule();
+        initPermissionsAddModule();
+        initRolePermissionsModule();
     });
 })();
