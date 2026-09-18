@@ -5,17 +5,18 @@ $menu = ServiceFactory::sessionManager()->getMenu();
 $currentUri = $_SERVER['REQUEST_URI'] ?? '';
 
 // Collect all explicit menu paths to avoid false-positive parent matches
+// Backend paths come with a leading slash (e.g. "/permisos/agregar"); normalize before comparing.
 $allMenuPaths = [];
 foreach ($menu as $_item) {
     $_itemType = strtoupper((string) ($_item['key_module_type'] ?? ''));
     $_children = is_array($_item['children'] ?? null) ? $_item['children'] : [];
 
     if ($_itemType === 'ITEM' && $_children === [] && isset($_item['path'])) {
-        $allMenuPaths[] = (string) $_item['path'];
+        $allMenuPaths[] = ltrim((string) $_item['path'], '/');
     }
 
     foreach ($_children as $_child) {
-        if (isset($_child['path'])) $allMenuPaths[] = (string) $_child['path'];
+        if (isset($_child['path'])) $allMenuPaths[] = ltrim((string) $_child['path'], '/');
     }
 }
 
@@ -57,7 +58,7 @@ $collapseIndex = 0;
             $collapseId = 'sidebarCollapse' . $collapseIndex++;
             $isParentActive = false;
             foreach ($children as $child) {
-                if ($isActivePath((string) ($child['path'] ?? ''))) {
+                if ($isActivePath(ltrim((string) ($child['path'] ?? ''), '/'))) {
                     $isParentActive = true;
                     break;
                 }
@@ -78,7 +79,7 @@ $collapseIndex = 0;
             <div class="collapse <?= $isParentActive ? 'show' : '' ?>" id="<?= $collapseId ?>">
                 <ul class="nav flex-column sidebar-submenu">
                     <?php foreach ($children as $child): ?>
-                    <?php $childPath = (string) ($child['path'] ?? ''); ?>
+                    <?php $childPath = ltrim((string) ($child['path'] ?? ''), '/'); ?>
                     <li class="nav-item">
                         <a href="<?= base_url(htmlspecialchars($childPath, ENT_QUOTES, 'UTF-8')) ?>"
                            class="nav-link sidebar-submenu-link <?= $isActivePath($childPath) ? 'active' : '' ?>">
@@ -91,7 +92,7 @@ $collapseIndex = 0;
             </div>
         </div>
         <?php elseif ($itemType === 'ITEM'): ?>
-        <?php $path = (string) ($item['path'] ?? ''); ?>
+        <?php $path = ltrim((string) ($item['path'] ?? ''), '/'); ?>
         <a href="<?= base_url(htmlspecialchars($path, ENT_QUOTES, 'UTF-8')) ?>"
            class="nav-link <?= $isActivePath($path) ? 'active' : '' ?>">
             <?= htmlspecialchars((string) ($item['module_name'] ?? ''), ENT_QUOTES, 'UTF-8') ?>
