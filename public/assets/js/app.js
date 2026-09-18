@@ -1197,7 +1197,12 @@
         };
 
         searchButton?.addEventListener('click', async () => {
+            const roleId = roleSelect.value;
             const keyScreen = screenSelect.value;
+            if (!roleId) {
+                showToast('danger', 'Seleccione un rol para buscar permisos');
+                return;
+            }
             if (!keyScreen) {
                 showToast('danger', 'Seleccione una pantalla para buscar permisos');
                 return;
@@ -1205,7 +1210,8 @@
 
             const result = await fetchJson(window.APP.permissionsByScreenUrl, {
                 _csrf_token: window.APP.csrfToken,
-                key_screen: keyScreen
+                key_screen: keyScreen,
+                role: roleId
             });
 
             if (!isPermissionSuccessCode(result.code)) {
@@ -1358,6 +1364,81 @@
             }
             state.page += 1;
             applyState();
+        });
+
+        const refreshRowMeta = (row) => {
+            const badges = Array.from(row.querySelectorAll('.permission-badge'));
+            const countCell = row.querySelector('.permission-count');
+            if (countCell) {
+                countCell.textContent = String(badges.length);
+            }
+
+            const parts = [row.dataset.role || ''];
+            badges.forEach((badge) => {
+                parts.push(badge.dataset.keyName || '');
+                parts.push(badge.dataset.permissionName || '');
+            });
+            row.dataset.search = parts.join(' ').toLowerCase();
+
+            const permissionsCell = row.querySelector('.permissions-cell');
+            if (permissionsCell && badges.length === 0 && !permissionsCell.querySelector('.no-permissions-text')) {
+                const emptyText = document.createElement('span');
+                emptyText.className = 'text-muted no-permissions-text';
+                emptyText.textContent = 'Sin permisos';
+                permissionsCell.appendChild(emptyText);
+            }
+        };
+
+        tableBody.addEventListener('click', async (event) => {
+            const target = event.target;
+            if (!(target instanceof Element)) {
+                return;
+            }
+
+            const deleteButton = target.closest('.btn-delete-permission');
+            if (!(deleteButton instanceof HTMLElement)) {
+                return;
+            }
+
+            const permissionKey = deleteButton.dataset.permissionKey || '';
+            const permissionName = deleteButton.dataset.permissionName || permissionKey;
+            const row = deleteButton.closest('tr');
+            const roleId = row?.dataset.roleId || '';
+            if (permissionKey === '' || roleId === '') {
+                return;
+            }
+
+            const confirmation = window.Swal?.fire
+                ? await window.Swal.fire({
+                    icon: 'warning',
+                    title: 'Eliminar permiso',
+                    text: `Se eliminara el permiso "${permissionName}". Desea continuar?`,
+                    showCancelButton: true,
+                    confirmButtonText: 'Eliminar',
+                    cancelButtonText: 'Cancelar'
+                })
+                : { isConfirmed: window.confirm(`Se eliminara el permiso "${permissionName}". Desea continuar?`) };
+
+            if (!confirmation?.isConfirmed) {
+                return;
+            }
+
+            const result = await fetchJson(window.APP.permissionsDeleteUrl, {
+                _csrf_token: window.APP.csrfToken,
+                permission_key: permissionKey,
+                role: roleId
+            });
+
+            if (String(result.code) === '200') {
+                showToast('success', result.message || 'Permiso eliminado correctamente');
+                deleteButton.closest('.permission-badge')?.remove();
+                if (row) {
+                    refreshRowMeta(row);
+                    applyState();
+                }
+            } else {
+                showToast('danger', result.message || 'No fue posible eliminar el permiso');
+            }
         });
 
         applyState();

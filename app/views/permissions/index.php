@@ -44,18 +44,36 @@ $apiHttpCode = $apiHttpCode ?? 200;
                         $searchTextParts[] = (string) ($permission['permission_name'] ?? '');
                     }
                     $searchText = strtolower(implode(' ', $searchTextParts));
+                    $roleId = (string) ($role['id'] ?? '');
                     ?>
-                    <tr data-search="<?= htmlspecialchars($searchText, ENT_QUOTES, 'UTF-8') ?>">
+                    <tr data-search="<?= htmlspecialchars($searchText, ENT_QUOTES, 'UTF-8') ?>" data-role="<?= htmlspecialchars($roleName, ENT_QUOTES, 'UTF-8') ?>" data-role-id="<?= htmlspecialchars($roleId, ENT_QUOTES, 'UTF-8') ?>">
                         <td><?= htmlspecialchars($roleName, ENT_QUOTES, 'UTF-8') ?></td>
-                        <td>
+                        <td class="permissions-cell">
                             <?php if ($permissions === []): ?>
-                            <span class="text-muted">Sin permisos</span>
+                            <span class="text-muted no-permissions-text">Sin permisos</span>
                             <?php endif; ?>
                             <?php foreach ($permissions as $permission): ?>
-                            <span class="badge text-bg-secondary me-1 mb-1"><?= htmlspecialchars((string) ($permission['permission_name'] ?? ''), ENT_QUOTES, 'UTF-8') ?></span>
+                            <?php
+                                $keyName = (string) ($permission['key_name'] ?? '');
+                                $permissionName = (string) ($permission['permission_name'] ?? '');
+                            ?>
+                            <span class="badge text-bg-secondary me-1 mb-1 permission-badge d-inline-flex align-items-center gap-1"
+                                  data-key-name="<?= htmlspecialchars($keyName, ENT_QUOTES, 'UTF-8') ?>"
+                                  data-permission-name="<?= htmlspecialchars($permissionName, ENT_QUOTES, 'UTF-8') ?>">
+                                <?= htmlspecialchars($permissionName, ENT_QUOTES, 'UTF-8') ?>
+                                <button type="button"
+                                        class="btn-delete-permission"
+                                        data-permission-key="<?= htmlspecialchars($keyName, ENT_QUOTES, 'UTF-8') ?>"
+                                        data-permission-name="<?= htmlspecialchars($permissionName, ENT_QUOTES, 'UTF-8') ?>"
+                                        title="Eliminar permiso"
+                                        aria-label="Eliminar permiso"
+                                        style="display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:#dc3545;color:#fff;border:none;font-size:10px;line-height:1;padding:0;">
+                                    &times;
+                                </button>
+                            </span>
                             <?php endforeach; ?>
                         </td>
-                        <td><?= count($permissions) ?></td>
+                        <td class="permission-count"><?= count($permissions) ?></td>
                     </tr>
                 <?php endforeach; ?>
                 <?php if ($rolePermissions === []): ?>

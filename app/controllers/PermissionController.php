@@ -98,7 +98,12 @@ final class PermissionController extends Controller
             $this->json(['code' => '422', 'message' => 'Debe seleccionar una pantalla.'], 422);
         }
 
-        $response = ServiceFactory::permissionService()->getPermissionsByScreen($keyScreen);
+        $role = $request->input('role', null);
+        if (!is_numeric($role)) {
+            $this->json(['code' => '422', 'message' => 'Debe seleccionar un rol.'], 422);
+        }
+
+        $response = ServiceFactory::permissionService()->getPermissionsByScreen($keyScreen, (int) $role);
         $this->json($response);
     }
 
@@ -187,5 +192,30 @@ final class PermissionController extends Controller
             'csrfToken' => get_csrf_token(),
             'flashMessages' => consume_flash(),
         ]);
+    }
+
+    public function deletePermission(Request $request): void
+    {
+        if (!$this->hasRole(['SUPER'])) {
+            $this->json(['code' => '403', 'message' => 'No tiene permisos', 'data' => null], 403);
+            return;
+        }
+
+        if (!validate_csrf_token((string) $request->input('_csrf_token', ''))) {
+            $this->json(['code' => '403', 'message' => 'Token CSRF invalido'], 403);
+        }
+
+        $permissionKey = trim((string) $request->input('permission_key', ''));
+        if ($permissionKey === '') {
+            $this->json(['code' => '422', 'message' => 'Permiso invalido.'], 422);
+        }
+
+        $role = $request->input('role', null);
+        if (!is_numeric($role)) {
+            $this->json(['code' => '422', 'message' => 'Rol invalido.'], 422);
+        }
+
+        $response = ServiceFactory::permissionService()->deletePermission((int) $role, $permissionKey);
+        $this->json($response);
     }
 }

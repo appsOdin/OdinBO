@@ -24,9 +24,9 @@ final class PermissionService
     /**
      * @return array<string, mixed>
      */
-    public function getPermissionsByScreen(string $keyScreen): array
+    public function getPermissionsByScreen(string $keyScreen, int $roleId): array
     {
-        return $this->apiService->get('/api/Permission/getPermissionByScreen/' . rawurlencode($keyScreen));
+        return $this->apiService->get('/api/Permission/getPermissionByScreen/' . rawurlencode($keyScreen) . '/' . $roleId);
     }
 
     /**
@@ -44,5 +44,13 @@ final class PermissionService
     public function getAllRolePermissions(): array
     {
         return $this->apiService->get('/api/Permission/getAllRole_Permission');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function deletePermission(int $roleId, string $permissionKey): array
+    {
+        return $this->apiService->delete('/api/Permission/DeletPermission/' . $roleId . '/' . rawurlencode($permissionKey));
     }
 }

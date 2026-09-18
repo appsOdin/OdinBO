@@ -64,6 +64,7 @@ final class AuthMiddleware
                 'GET /permisos/agregar',
                 'POST /permisos/permisos-por-pantalla',
                 'POST /permisos/guardar',
+                'POST /permisos/eliminar-permiso',
             ];
 
             return !in_array($routeKey, $forbidden, true);

@@ -205,7 +205,8 @@ window.APP = {
     vacationReportListUrl: '<?= base_url('reportes/vacaciones/list') ?>',
     tracesListUrl: '<?= base_url('admin/traces/list') ?>',
     permissionsByScreenUrl: '<?= base_url('permisos/permisos-por-pantalla') ?>',
-    permissionsStoreUrl: '<?= base_url('permisos/guardar') ?>'
+    permissionsStoreUrl: '<?= base_url('permisos/guardar') ?>',
+    permissionsDeleteUrl: '<?= base_url('permisos/eliminar-permiso') ?>'
 };
 </script>
 <script src="<?= base_url('assets/js/bootstrap.bundle.min.js') ?>"></script>

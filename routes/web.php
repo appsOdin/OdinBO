@@ -57,5 +57,6 @@ return [
     ['method' => 'GET',  'path' => '/permisos/agregar',                'handler' => [PermissionController::class, 'addForm'], 'middleware' => [AuthMiddleware::class]],
     ['method' => 'POST', 'path' => '/permisos/permisos-por-pantalla',  'handler' => [PermissionController::class, 'permissionsByScreen'], 'middleware' => [AuthMiddleware::class]],
     ['method' => 'POST', 'path' => '/permisos/guardar',                'handler' => [PermissionController::class, 'store'], 'middleware' => [AuthMiddleware::class]],
+    ['method' => 'POST', 'path' => '/permisos/eliminar-permiso',       'handler' => [PermissionController::class, 'deletePermission'], 'middleware' => [AuthMiddleware::class]],
     ['method' => 'GET',  'path' => '/permisos',                        'handler' => [PermissionController::class, 'index'], 'middleware' => [AuthMiddleware::class]],
 ];
