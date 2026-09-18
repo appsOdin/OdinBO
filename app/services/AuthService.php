@@ -66,11 +66,14 @@ final class AuthService
             return ['code' => '500', 'message' => 'Missing authentication data', 'data' => null];
         }
 
+        $menu = is_array($data['menu'] ?? null) ? $data['menu'] : [];
+
         $this->sessionManager->storeAuth([
             'id' => $id,
             'username' => $user,
             'token' => $token,
             'rolename' => $rolename,
+            'menu' => $menu,
         ]);
 
         return $response;

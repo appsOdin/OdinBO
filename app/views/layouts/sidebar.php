@@ -1,20 +1,21 @@
 <?php
-$rolename = (string) ($authUser['rolename'] ?? '');
-$menuOptions = match ($rolename) {
-    'SUPER' => MENU_OPTIONS_SUPER,
-    'USER' => MENU_OPTIONS_USER,
-    'ADMIN' => MENU_OPTIONS_ADMIN,
-    'GUEST' => MENU_OPTIONS_GUEST,
-    default => MENU_OPTIONS_GUEST,
-};
+use App\Services\ServiceFactory;
+
+$menu = ServiceFactory::sessionManager()->getMenu();
 $currentUri = $_SERVER['REQUEST_URI'] ?? '';
 
 // Collect all explicit menu paths to avoid false-positive parent matches
 $allMenuPaths = [];
-foreach ($menuOptions as $_item) {
-    if (isset($_item['path'])) $allMenuPaths[] = $_item['path'];
-    foreach (($_item['children'] ?? []) as $_child) {
-        if (isset($_child['path'])) $allMenuPaths[] = $_child['path'];
+foreach ($menu as $_item) {
+    $_itemType = strtoupper((string) ($_item['key_module_type'] ?? ''));
+    $_children = is_array($_item['children'] ?? null) ? $_item['children'] : [];
+
+    if ($_itemType === 'ITEM' && $_children === [] && isset($_item['path'])) {
+        $allMenuPaths[] = (string) $_item['path'];
+    }
+
+    foreach ($_children as $_child) {
+        if (isset($_child['path'])) $allMenuPaths[] = (string) $_child['path'];
     }
 }
 
@@ -45,9 +46,13 @@ $collapseIndex = 0;
         </div>
     </div>
     <nav class="sidebar-nav px-2">
-        <?php foreach ($menuOptions as $item): ?>
-        <?php $children = is_array($item['children'] ?? null) ? $item['children'] : []; ?>
-        <?php if ($children !== []): ?>
+        <?php foreach ($menu as $item): ?>
+        <?php
+            $itemType = strtoupper((string) ($item['key_module_type'] ?? ''));
+            $children = is_array($item['children'] ?? null) ? $item['children'] : [];
+            $isGroup = $itemType === 'GROUP' && $children !== [];
+        ?>
+        <?php if ($isGroup): ?>
         <?php
             $collapseId = 'sidebarCollapse' . $collapseIndex++;
             $isParentActive = false;
@@ -64,7 +69,7 @@ $collapseIndex = 0;
                data-bs-toggle="collapse"
                aria-expanded="<?= $isParentActive ? 'true' : 'false' ?>"
                aria-controls="<?= $collapseId ?>">
-                <span><?= htmlspecialchars((string) ($item['label'] ?? ''), ENT_QUOTES, 'UTF-8') ?></span>
+                <span><?= htmlspecialchars((string) ($item['module_name'] ?? ''), ENT_QUOTES, 'UTF-8') ?></span>
                 <span class="sidebar-group-hint">
                     <span class="sidebar-group-hint-text"><?= $isParentActive ? 'contraer' : 'expandir' ?></span>
                     <i class="sidebar-arrow"></i>
@@ -78,18 +83,18 @@ $collapseIndex = 0;
                         <a href="<?= base_url(htmlspecialchars($childPath, ENT_QUOTES, 'UTF-8')) ?>"
                            class="nav-link sidebar-submenu-link <?= $isActivePath($childPath) ? 'active' : '' ?>">
                             <span class="sidebar-submenu-dot"></span>
-                            <?= htmlspecialchars((string) ($child['label'] ?? ''), ENT_QUOTES, 'UTF-8') ?>
+                            <?= htmlspecialchars((string) ($child['screen_name'] ?? ''), ENT_QUOTES, 'UTF-8') ?>
                         </a>
                     </li>
                     <?php endforeach; ?>
                 </ul>
             </div>
         </div>
-        <?php else: ?>
+        <?php elseif ($itemType === 'ITEM'): ?>
         <?php $path = (string) ($item['path'] ?? ''); ?>
         <a href="<?= base_url(htmlspecialchars($path, ENT_QUOTES, 'UTF-8')) ?>"
            class="nav-link <?= $isActivePath($path) ? 'active' : '' ?>">
-            <?= htmlspecialchars((string) ($item['label'] ?? ''), ENT_QUOTES, 'UTF-8') ?>
+            <?= htmlspecialchars((string) ($item['module_name'] ?? ''), ENT_QUOTES, 'UTF-8') ?>
         </a>
         <?php endif; ?>
         <?php endforeach; ?>

@@ -12,7 +12,7 @@ final class SessionManager
     private const KEY_AUTH = 'auth';
 
     /**
-     * @param array{id: string, username: string, token: string, rolename: string} $userData
+     * @param array{id: string, username: string, token: string, rolename: string, menu?: array<int, mixed>} $userData
      */
     public function storeAuth(array $userData): void
     {
@@ -24,6 +24,7 @@ final class SessionManager
             'token' => $token,
             'rolename' => $userData['rolename'],
             'expires_at' => $expiresAt,
+            'menu' => is_array($userData['menu'] ?? null) ? $userData['menu'] : [],
         ];
 
         $this->syncLifetimeWithTokenExp($expiresAt);
@@ -83,6 +84,15 @@ final class SessionManager
     public function getExpiresAt(): int
     {
         return (int) ($_SESSION[self::KEY_AUTH]['expires_at'] ?? 0);
+    }
+
+    /**
+     * @return array<int, mixed>
+     */
+    public function getMenu(): array
+    {
+        $menu = $_SESSION[self::KEY_AUTH]['menu'] ?? [];
+        return is_array($menu) ? $menu : [];
     }
 
     private function resolveExpiresAtFromToken(string $token): int
