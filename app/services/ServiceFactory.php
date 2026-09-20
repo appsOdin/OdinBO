@@ -53,4 +53,9 @@ final class ServiceFactory
     {
         return new PermissionService(self::apiService());
     }
+
+    public static function signatureDependencyService(): SignatureDependencyService
+    {
+        return new SignatureDependencyService(self::apiService());
+    }
 }

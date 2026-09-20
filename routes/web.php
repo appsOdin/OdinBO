@@ -6,6 +6,7 @@ use App\Controllers\AuthController;
 use App\Controllers\ArticleController;
 use App\Controllers\DashboardController;
 use App\Controllers\PermissionController;
+use App\Controllers\SignatureDependencyController;
 use App\Controllers\TraceController;
 use App\Controllers\UserController;
 use App\Controllers\VacationRequestController;
@@ -47,6 +48,12 @@ return [
 
     ['method' => 'GET', 'path' => '/rrhh/solicitudes-para-firmar', 'handler' => [VacationRequestController::class, 'toSign'], 'middleware' => [AuthMiddleware::class]],
     ['method' => 'GET', 'path' => '/rrhh/vacaciones/descargar', 'handler' => [VacationRequestController::class, 'downloadFile'], 'middleware' => [AuthMiddleware::class]],
+
+    ['method' => 'GET', 'path' => '/rrhh/dependencia-firma', 'handler' => [SignatureDependencyController::class, 'index'], 'middleware' => [AuthMiddleware::class]],
+    ['method' => 'POST', 'path' => '/rrhh/dependencia-firma/list', 'handler' => [SignatureDependencyController::class, 'list'], 'middleware' => [AuthMiddleware::class]],
+    ['method' => 'POST', 'path' => '/rrhh/dependencia-firma/users', 'handler' => [SignatureDependencyController::class, 'users'], 'middleware' => [AuthMiddleware::class]],
+    ['method' => 'POST', 'path' => '/rrhh/dependencia-firma/store', 'handler' => [SignatureDependencyController::class, 'store'], 'middleware' => [AuthMiddleware::class]],
+    ['method' => 'POST', 'path' => '/rrhh/dependencia-firma/update', 'handler' => [SignatureDependencyController::class, 'update'], 'middleware' => [AuthMiddleware::class]],
 
     ['method' => 'GET', 'path' => '/reportes/vacaciones', 'handler' => [VacationRequestController::class, 'vacationReport'], 'middleware' => [AuthMiddleware::class]],
     ['method' => 'POST', 'path' => '/reportes/vacaciones/list', 'handler' => [VacationRequestController::class, 'vacationReportList'], 'middleware' => [AuthMiddleware::class]],
