@@ -44,6 +44,7 @@ return [
     ['method' => 'POST', 'path' => '/rrhh/solicitudes-vacaciones/signers', 'handler' => [VacationRequestController::class, 'signers'], 'middleware' => [AuthMiddleware::class]],
     ['method' => 'POST', 'path' => '/rrhh/solicitudes-vacaciones/files', 'handler' => [VacationRequestController::class, 'files'], 'middleware' => [AuthMiddleware::class]],
     ['method' => 'POST', 'path' => '/rrhh/solicitudes-vacaciones/add-signers', 'handler' => [VacationRequestController::class, 'addSigners'], 'middleware' => [AuthMiddleware::class]],
+    ['method' => 'POST', 'path' => '/rrhh/solicitudes-vacaciones/upload-file-to-sign', 'handler' => [VacationRequestController::class, 'uploadFileToSign'], 'middleware' => [AuthMiddleware::class]],
     ['method' => 'GET', 'path' => '/rrhh/calendario-vacaciones', 'handler' => [VacationRequestController::class, 'calendar'], 'middleware' => [AuthMiddleware::class]],
 
     ['method' => 'GET', 'path' => '/rrhh/solicitudes-para-firmar', 'handler' => [VacationRequestController::class, 'toSign'], 'middleware' => [AuthMiddleware::class]],

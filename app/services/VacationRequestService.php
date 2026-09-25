@@ -212,4 +212,17 @@ final class VacationRequestService
             'File' => $file,
         ]);
     }
+
+    /**
+     * @param array{name: string, tmp_name: string, type: string} $file
+     * @return array<string, mixed>
+     */
+    public function uploadFileToSign(int $requestId, array $file): array
+    {
+        return $this->apiService->postMultipart('/api/VacationRequest/UploadFileToSign', [
+            'ResquestId' => (string) $requestId,
+        ], [
+            'File' => $file,
+        ]);
+    }
 }
