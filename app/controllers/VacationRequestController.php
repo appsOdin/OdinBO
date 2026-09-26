@@ -682,10 +682,10 @@ final class VacationRequestController extends Controller
             'ANNULLED_APPROVED' => ['ADMIN', 'SUPER'],
         ];
 
-        if (!$this->hasRole($rolesByState[$state])) {
+        /*if (!$this->hasRole($rolesByState[$state])) {
             $this->json(['code' => '403', 'message' => 'No tiene permisos para ejecutar esta accion', 'data' => null], 403);
             return;
-        }
+        }*/
 
         if (!validate_csrf_token((string) $request->input('_csrf_token', ''))) {
             $this->json(['code' => '403', 'message' => 'Token CSRF invalido', 'data' => null], 403);

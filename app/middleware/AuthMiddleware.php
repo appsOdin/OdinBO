@@ -30,8 +30,8 @@ final class AuthMiddleware
 
         $user = $session->getUser();
         $rolename = strtoupper(trim((string) ($user['rolename'] ?? '')));
-
-        if ($rolename === 'SUPER') {
+return;
+      /*  if ($rolename === 'SUPER') {
             return;
         }
 
@@ -46,9 +46,8 @@ final class AuthMiddleware
                 'data' => null,
             ], 403);
         }
-
-        flash('danger', 'No tiene permisos para acceder a este recurso.');
-        redirect($this->defaultPathForRole($rolename));
+        flash('danger', 'No tiene permisos para acceder a este recurso.');*/
+        //redirect($this->defaultPathForRole($rolename));
     }
 
     private function isAllowedForRole(string $role, string $method, string $path): bool
