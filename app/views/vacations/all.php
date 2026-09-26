@@ -99,9 +99,6 @@ $users = $users ?? [];
                                 if (!in_array($stateKey, ['REJECTED', 'ANNULLED', 'ANNULLED_APPROVED', 'SIGN','ADJUSTMENT_ACCEPTED'], true) && !$startDatePast): ?>
                                     <button type="button" class="btn btn-sm btn-danger btn-reject-vacation" data-request-id="<?= $id ?>">Rechazar</button>
                                 <?php endif; ?>
-                                <?php if (!in_array($stateKey, ['ANNULLED', 'ANNULLED_APPROVED', 'REJECTED','ADJUSTMENT_ACCEPTED'], true)): ?>
-                                    <button type="button" class="btn btn-sm btn-outline-danger btn-annul-vacation" data-request-id="<?= $id ?>">Anular</button>
-                                <?php endif; ?>
                                 <?php if ($stateKey === 'ANNULLED'): ?>
                                     <button type="button" class="btn btn-sm btn-success btn-approve-annulment" data-request-id="<?= $id ?>">Aprobar anulación</button>
                                 <?php endif; ?>
