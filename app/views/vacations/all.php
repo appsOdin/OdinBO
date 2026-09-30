@@ -85,10 +85,11 @@ $users = $users ?? [];
                                 <?php if ($stateKey === 'PENDING'): ?>
                                     <?php if ($requestType === 0): ?>
                                         <button type="button" class="btn btn-sm btn-primary btn-add-boleta" data-request-id="<?= $id ?>">Agregar boleta</button>
-                                    <?php else: ?>
-                                        <button type="button" class="btn btn-sm btn-primary btn-add-signers" data-request-id="<?= $id ?>" data-request-type="<?= $requestType === null ? '' : $requestType ?>">Agregar Firmantes</button>
                                     <?php endif; ?>
                                 <?php endif; ?>
+                                    <?php if ($requestType === 1): ?>
+                                        <button type="button" class="btn btn-success btn-add-boleta" data-request-id="<?= $id ?>">Comprobante</button>
+                                    <?php endif; ?>
                                 <button type="button" class="btn btn-sm btn-outline-info btn-view-signers" data-request-id="<?= $id ?>">Ver Firmantes</button>
                                 <?php if ($stateKey !== 'PENDING'): ?>
                                     <button type="button" class="btn btn-sm btn-outline-secondary btn-view-files" data-request-id="<?= $id ?>">Archivos</button>
