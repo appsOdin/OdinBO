@@ -752,7 +752,7 @@ $users = $users ?? [];
                 return;
             }
 
-            const response = await fetch(window.APP.vacationUploadFileToSignUrl, {
+            const response = await fetch(window.APP.vacationUploadComprobanteUrl, {
                 method: 'POST',
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest'
