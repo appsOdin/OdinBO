@@ -84,7 +84,7 @@ $users = $users ?? [];
                                 <a href="<?= base_url('rrhh/solicitud-vacaciones/detalle?id=' . $id) ?>" class="btn btn-sm btn-outline-primary">Ver Detalle</a>
                                 <?php if ($stateKey === 'PENDING'): ?>
                                     <?php if ($requestType === 0): ?>
-                                        <button type="button" class="btn btn-sm btn-primary btn-add-boleta" data-request-id="<?= $id ?>">Agregar boleta</button>
+                                        <button type="button" class="btn btn-sm btn-primary btn-add-file-to-sign" data-request-id="<?= $id ?>">Agregar boleta</button>
                                     <?php endif; ?>
                                 <?php endif; ?>
                                     <?php if ($requestType === 1): ?>
@@ -312,6 +312,8 @@ $users = $users ?? [];
         const addBoletaForm = document.getElementById('vacationAddBoletaForm');
         const boletaRequestIdInput = document.getElementById('vacationBoletaRequestIdInput');
         const boletaFileInput = document.getElementById('vacationBoletaFile');
+        let boletaUploadUrl = '';
+        let boletaUploadLabel = 'archivo';
         const adjustRequestIdInput = document.getElementById('adjustRequestId');
         const adjustInfoId = document.getElementById('adjustInfoId');
         const adjustInfoUser = document.getElementById('adjustInfoUser');
@@ -637,13 +639,19 @@ $users = $users ?? [];
                 return;
             }
 
-            const addBoletaButton = target.closest('.btn-add-boleta');
-            if (addBoletaButton instanceof HTMLElement) {
-                const requestId = Number(addBoletaButton.dataset.requestId || 0);
+            const uploadFileButton = target.closest('.btn-add-boleta, .btn-add-file-to-sign');
+            if (uploadFileButton instanceof HTMLElement) {
+                const requestId = Number(uploadFileButton.dataset.requestId || 0);
                 const addBoletaModal = getModalInstance(addBoletaModalEl);
                 if (requestId <= 0 || !addBoletaModal || !boletaRequestIdInput) {
                     return;
                 }
+
+                const isFileToSign = uploadFileButton.classList.contains('btn-add-file-to-sign');
+                boletaUploadUrl = isFileToSign
+                    ? window.APP.vacationUploadFileToSignUrl
+                    : window.APP.vacationUploadComprobanteUrl;
+                boletaUploadLabel = isFileToSign ? 'boleta' : 'comprobante';
 
                 if (boletaFileInput) {
                     boletaFileInput.value = '';
@@ -752,7 +760,12 @@ $users = $users ?? [];
                 return;
             }
 
-            const response = await fetch(window.APP.vacationUploadComprobanteUrl, {
+            if (!boletaUploadUrl) {
+                await notify('No se pudo determinar el endpoint para subir el archivo.', 'error');
+                return;
+            }
+
+            const response = await fetch(boletaUploadUrl, {
                 method: 'POST',
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest'
@@ -766,11 +779,13 @@ $users = $users ?? [];
                 : { code: String(response.status || 500), message: 'Respuesta invalida' };
 
             if (String(result.code) !== '200') {
-                await notify(result.message || 'No fue posible agregar la boleta.', 'error');
+                const itemName = boletaUploadLabel === 'boleta' ? 'la boleta' : 'el comprobante';
+                await notify(result.message || `No fue posible agregar ${itemName}.`, 'error');
                 return;
             }
 
-            await notify('Boleta agregada exitosamente.', 'success');
+            const itemName = boletaUploadLabel === 'boleta' ? 'la boleta' : 'el comprobante';
+            await notify(`Se agregó ${itemName} exitosamente.`, 'success');
             window.location.reload();
         });
 
