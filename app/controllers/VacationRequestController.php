@@ -886,11 +886,11 @@ final class VacationRequestController extends Controller
         }
 
         $detail = $detailResponse['data'];
-        $requestType = (int) ($detail['requestType'] ?? -1);
+        $requestTypeKey = strtoupper((string) ($detail['requestTypeKey'] ?? ''));
         $stateKey = strtoupper((string) ($detail['stateKey'] ?? ''));
         $currentQuantity = is_numeric($detail['quantity'] ?? null) ? (float) $detail['quantity'] : 0.0;
 
-        if ($requestType !== 1) {
+        if ($requestTypeKey !== 'PERMISSION') {
             $this->json(['code' => '422', 'message' => 'Solo se pueden ajustar solicitudes de tipo Permiso', 'data' => null], 422);
             return;
         }

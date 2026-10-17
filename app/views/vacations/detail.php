@@ -5,6 +5,18 @@ $detail = $detail ?? [];
 $id = (int) ($detail['id'] ?? 0);
 $stateKey = strtoupper((string) ($detail['stateKey'] ?? ''));
 $stateName = (string) ($detail['stateName'] ?? 'Desconocido');
+$requestTypeKey = strtoupper((string) ($detail['requestTypeKey'] ?? ''));
+$requestTypeName = (string) ($detail['requestTypeName'] ?? '');
+$requestSubtypeName = match ($requestTypeKey) {
+    'LICENSE' => (string) ($detail['licenseTypeName'] ?? ''),
+    'MEDICAL_LEAVE' => (string) ($detail['medicalLeaveTypeName'] ?? ''),
+    default => '',
+};
+$quantityLabel = match ($requestTypeKey) {
+    'PERMISSION' => 'Horas',
+    'VACATION' => 'Dias',
+    default => 'Cantidad',
+};
 $stateBadge = match ($stateKey) {
     'PENDING' => '<span class="badge text-bg-warning">Pendiente</span>',
     'TOSIGNED' => '<span class="badge text-bg-info">Por Firmar</span>',
@@ -137,7 +149,7 @@ $ownerSignatureSrc = $buildSignatureSrc($ownerSignatureRaw);
                         <div><?= htmlspecialchars(date('d/m/Y', strtotime((string) ($detail['endDate'] ?? 'now'))), ENT_QUOTES, 'UTF-8') ?></div>
                     </div>
                     <div class="col-md-6 col-lg-2">
-                        <small class="text-muted d-block"><?= (int) ($detail['requestType'] ?? 0) === 1 ? 'Horas' : 'Dias' ?></small>
+                        <small class="text-muted d-block"><?= htmlspecialchars($quantityLabel, ENT_QUOTES, 'UTF-8') ?></small>
                         <div><?= htmlspecialchars((string) ($detail['quantity'] ?? 0), ENT_QUOTES, 'UTF-8') ?></div>
                     </div>
                     <div class="col-md-6 col-lg-4">
@@ -146,8 +158,14 @@ $ownerSignatureSrc = $buildSignatureSrc($ownerSignatureRaw);
                     </div>
                     <div class="col-md-6 col-lg-3">
                         <small class="text-muted d-block">Tipo</small>
-                        <div><?= (int) ($detail['requestType'] ?? 0) === 1 ? 'Permiso' : 'Vacaciones' ?></div>
+                        <div><?= htmlspecialchars($requestTypeName, ENT_QUOTES, 'UTF-8') ?></div>
                     </div>
+                    <?php if ($requestSubtypeName !== ''): ?>
+                        <div class="col-md-6 col-lg-3">
+                            <small class="text-muted d-block"><?= $requestTypeKey === 'LICENSE' ? 'Tipo de licencia' : 'Tipo de incapacidad' ?></small>
+                            <div><?= htmlspecialchars($requestSubtypeName, ENT_QUOTES, 'UTF-8') ?></div>
+                        </div>
+                    <?php endif; ?>
                     <div class="col-12">
                         <small class="text-muted d-block">Descripcion</small>
                         <div><?= htmlspecialchars((string) ($detail['description'] ?? ''), ENT_QUOTES, 'UTF-8') ?></div>
