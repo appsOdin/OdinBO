@@ -41,6 +41,7 @@ return [
     ['method' => 'POST', 'path' => '/rrhh/solicitud-vacaciones/upload-comprobante', 'handler' => [VacationRequestController::class, 'uploadFileVacationRequest'], 'middleware' => [AuthMiddleware::class]],
 
     ['method' => 'GET', 'path' => '/rrhh/solicitudes-vacaciones', 'handler' => [VacationRequestController::class, 'all'], 'middleware' => [AuthMiddleware::class]],
+    ['method' => 'POST', 'path' => '/rrhh/solicitudes-vacaciones/list', 'handler' => [VacationRequestController::class, 'listAll'], 'middleware' => [AuthMiddleware::class]],
     ['method' => 'POST', 'path' => '/rrhh/solicitudes-vacaciones/signers', 'handler' => [VacationRequestController::class, 'signers'], 'middleware' => [AuthMiddleware::class]],
     ['method' => 'POST', 'path' => '/rrhh/solicitudes-vacaciones/files', 'handler' => [VacationRequestController::class, 'files'], 'middleware' => [AuthMiddleware::class]],
     ['method' => 'POST', 'path' => '/rrhh/solicitudes-vacaciones/add-signers', 'handler' => [VacationRequestController::class, 'addSigners'], 'middleware' => [AuthMiddleware::class]],

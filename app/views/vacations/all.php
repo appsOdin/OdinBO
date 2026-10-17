@@ -14,9 +14,28 @@ $users = $users ?? [];
 
 <div class="card border-0 shadow-sm vacation-card mb-3">
     <div class="card-body">
-        <div class="row g-2 mb-3">
+        <ul class="nav nav-tabs mb-3" id="vacationRequestTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" type="button" role="tab" aria-selected="true" data-request-type="VACATION">Vacaciones</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" type="button" role="tab" aria-selected="false" data-request-type="PERMISSION">Permisos</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" type="button" role="tab" aria-selected="false" data-request-type="MEDICAL_LEAVE">Incapacidades</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" type="button" role="tab" aria-selected="false" data-request-type="LICENSE">Licencias</button>
+            </li>
+        </ul>
+
+        <div class="row g-2 mb-3 align-items-end">
             <div class="col-md-6 col-lg-4">
-                <input type="text" id="searchVacationRequests" class="form-control" placeholder="Buscar por ID, usuario o descripcion">
+                <label class="form-label" for="searchVacationRequests">Buscar solicitudes</label>
+                <input type="text" id="searchVacationRequests" class="form-control" placeholder="ID o usuario">
+            </div>
+            <div class="col-auto">
+                <button type="button" id="searchVacationRequestsButton" class="btn btn-outline-primary">Buscar</button>
             </div>
         </div>
 
@@ -29,88 +48,13 @@ $users = $users ?? [];
                     <th>Inicio</th>
                     <th>Fin</th>
                     <th>Tipo</th>
+                    <th id="vacationRequestExtraTypeHeading" class="d-none"></th>
                     <th>Cantidad</th>
                     <th>Estado</th>
                     <th>Acciones</th>
                 </tr>
                 </thead>
-                <tbody id="vacationRequestsTableBody">
-                <?php foreach ($requests as $req): ?>
-                    <?php
-                    $id = (int) ($req['id'] ?? 0);
-                    $stateKey = strtoupper((string) ($req['stateKey'] ?? ''));
-                    $stateName = (string) ($req['stateName'] ?? 'Desconocido');
-                    $stateBadge = match ($stateKey) {
-                        'PENDING' => '<span class="badge text-bg-warning">Pendiente</span>',
-                        'TOSIGNED' => '<span class="badge text-bg-info">Para Firmar</span>',
-                        'APPROVED' => '<span class="badge text-bg-success">Aprobado</span>',
-                        'SIGN' => '<span class="badge text-bg-success">Firmada</span>',
-                        'ADJUSTED' => '<span class="badge text-bg-warning">Ajustada</span>',
-                        'ADJUSTMENT_ACCEPTED' => '<span class="badge text-bg-success">Ajuste Aprobado</span>',
-                        'REJECTED' => '<span class="badge text-bg-danger">Rechazado</span>',
-                        'ANNULLED' => '<span class="badge text-bg-dark">Anulada</span>',
-                        'ANNULLED_APPROVED' => '<span class="badge text-bg-primary">Anulacion Aprobada</span>',
-                        default => '<span class="badge text-bg-secondary">' . htmlspecialchars($stateName, ENT_QUOTES, 'UTF-8') . '</span>',
-                    };
-                    $requestType = isset($req['requestType']) && $req['requestType'] !== null ? (int) $req['requestType'] : null;
-                    $quantityLabel = $requestType === 1 ? 'h' : ($requestType === 0 ? 'd' : '');
-                    $typeLabel = $requestType === 1 ? 'Permiso' : ($requestType === 0 ? 'Vacaciones' : null);
-                    ?>
-                    <tr
-                        data-id="<?= $id ?>"
-                        data-user="<?= htmlspecialchars((string) ($req['userName'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
-                        data-description="<?= htmlspecialchars((string) ($req['description'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
-                        data-start="<?= htmlspecialchars(date('d/m/Y', strtotime((string) ($req['startDate'] ?? 'now'))), ENT_QUOTES, 'UTF-8') ?>"
-                        data-end="<?= htmlspecialchars(date('d/m/Y', strtotime((string) ($req['endDate'] ?? 'now'))), ENT_QUOTES, 'UTF-8') ?>"
-                        data-type="<?= htmlspecialchars((string) ($typeLabel ?? '—'), ENT_QUOTES, 'UTF-8') ?>"
-                        data-quantity="<?= htmlspecialchars((string) ($req['quantity'] ?? 0), ENT_QUOTES, 'UTF-8') ?>"
-                        data-state="<?= htmlspecialchars((string) ($stateName ?? ''), ENT_QUOTES, 'UTF-8') ?>"
-                    >
-                        <td><?= $id ?></td>
-                        <td><?= htmlspecialchars((string) ($req['userName'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
-                        <td><?= htmlspecialchars(date('d/m/Y', strtotime((string) ($req['startDate'] ?? 'now'))), ENT_QUOTES, 'UTF-8') ?></td>
-                        <td><?= htmlspecialchars(date('d/m/Y', strtotime((string) ($req['endDate'] ?? 'now'))), ENT_QUOTES, 'UTF-8') ?></td>
-                        <td>
-                            <?php if ($typeLabel !== null): ?>
-                                <span class="badge <?= $requestType === 1 ? 'text-bg-secondary' : 'text-bg-primary' ?>"><?= $typeLabel ?></span>
-                            <?php else: ?>
-                                <span class="text-muted">&mdash;</span>
-                            <?php endif; ?>
-                        </td>
-                        <td><?= htmlspecialchars((string) ($req['quantity'] ?? 0), ENT_QUOTES, 'UTF-8') ?><?= $quantityLabel !== '' ? ' ' . $quantityLabel : '' ?></td>
-                        <td><?= $stateBadge ?></td>
-                        <td>
-                            <div class="d-flex flex-wrap gap-2 vacation-actions">
-                                <a href="<?= base_url('rrhh/solicitud-vacaciones/detalle?id=' . $id) ?>" class="btn btn-sm btn-outline-primary">Ver Detalle</a>
-                                <?php if ($stateKey === 'PENDING'): ?>
-                                    <?php if ($requestType === 0): ?>
-                                        <button type="button" class="btn btn-sm btn-primary btn-add-file-to-sign" data-request-id="<?= $id ?>">Agregar boleta</button>
-                                    <?php endif; ?>
-                                <?php endif; ?>
-                                    <?php if ($requestType === 1): ?>
-                                        <button type="button" class="btn btn-success btn-add-boleta" data-request-id="<?= $id ?>">Comprobante</button>
-                                    <?php endif; ?>
-                                <button type="button" class="btn btn-sm btn-outline-info btn-view-signers" data-request-id="<?= $id ?>">Ver Firmantes</button>
-                                <?php if ($stateKey !== 'PENDING'): ?>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary btn-view-files" data-request-id="<?= $id ?>">Archivos</button>
-                                <?php endif; ?>
-                                <?php
-                                $startDateTs = strtotime((string) ($req['startDate'] ?? ''));
-                                $startDatePast = $startDateTs !== false && $startDateTs < strtotime(date('Y-m-d'));
-                                if (!in_array($stateKey, ['REJECTED', 'ANNULLED', 'ANNULLED_APPROVED', 'SIGN','ADJUSTMENT_ACCEPTED'], true) && !$startDatePast): ?>
-                                    <button type="button" class="btn btn-sm btn-danger btn-reject-vacation" data-request-id="<?= $id ?>">Rechazar</button>
-                                <?php endif; ?>
-                                <?php if ($stateKey === 'ANNULLED'): ?>
-                                    <button type="button" class="btn btn-sm btn-success btn-approve-annulment" data-request-id="<?= $id ?>">Aprobar anulación</button>
-                                <?php endif; ?>
-                                <?php if ($stateKey === 'SIGN' && $requestType === 1): ?>
-                                    <button type="button" class="btn btn-sm btn-warning btn-adjust-vacation" data-request-id="<?= $id ?>">Ajustar</button>
-                                <?php endif; ?>
-                            </div>
-                        </td>
-                    </tr>
-                <?php endforeach; ?>
-                </tbody>
+                <tbody id="vacationRequestsTableBody"><tr><td colspan="8" class="text-muted">Cargando solicitudes...</td></tr></tbody>
             </table>
         </div>
 
@@ -120,8 +64,8 @@ $users = $users ?? [];
                 <label for="vacationRequestsPerPage" class="small text-muted m-0">Registros por pagina</label>
                 <select id="vacationRequestsPerPage" class="form-select form-select-sm" style="width: auto;">
                     <option value="5">5</option>
-                    <option value="8" selected>8</option>
-                    <option value="10">10</option>
+                    <option value="8">8</option>
+                    <option value="10" selected>10</option>
                     <option value="20">20</option>
                 </select>
             </div>
@@ -290,11 +234,14 @@ $users = $users ?? [];
     const initVacationAllModule = () => {
         const body = document.getElementById('vacationRequestsTableBody');
         const search = document.getElementById('searchVacationRequests');
+        const searchButton = document.getElementById('searchVacationRequestsButton');
+        const tabButtons = Array.from(document.querySelectorAll('#vacationRequestTabs [data-request-type]'));
         const paginationInfo = document.getElementById('vacationRequestsPaginationInfo');
         const perPageSelect = document.getElementById('vacationRequestsPerPage');
         const prevPageButton = document.getElementById('vacationRequestsPrevPage');
         const nextPageButton = document.getElementById('vacationRequestsNextPage');
         const pageIndicator = document.getElementById('vacationRequestsPageIndicator');
+        const extraTypeHeading = document.getElementById('vacationRequestExtraTypeHeading');
 
         const signersModalEl = document.getElementById('vacationSignersModal');
         const filesModalEl = document.getElementById('vacationFilesModal');
@@ -330,68 +277,179 @@ $users = $users ?? [];
         }
 
         const paginationState = {
-            search: '',
+            requestType: 'VACATION',
+            search: null,
             page: 1,
-            perPage: Number(perPageSelect?.value || 8),
-            allRows: Array.from(body.querySelectorAll('tr')),
-            rows: []
+            perPage: Number(perPageSelect?.value || 10),
+            totalRows: 0,
+            requestVersion: 0
         };
 
-        const renderRows = () => {
-            const totalRows = paginationState.rows.length;
-            const totalPages = Math.max(1, Math.ceil(totalRows / paginationState.perPage));
+        const getTotalPages = () => Math.max(1, Math.ceil(paginationState.totalRows / paginationState.perPage));
 
-            if (paginationState.page > totalPages) {
-                paginationState.page = totalPages;
-            }
-
-            paginationState.allRows.forEach((row) => {
-                row.style.display = 'none';
-            });
-
-            const start = (paginationState.page - 1) * paginationState.perPage;
-            const end = start + paginationState.perPage;
-
-            paginationState.rows.slice(start, end).forEach((row) => {
-                row.style.display = '';
-            });
+        const updatePagination = () => {
+            const totalPages = getTotalPages();
+            const firstRow = paginationState.totalRows === 0 ? 0 : (paginationState.page - 1) * paginationState.perPage + 1;
+            const lastRow = Math.min(paginationState.page * paginationState.perPage, paginationState.totalRows);
 
             if (paginationInfo) {
-                paginationInfo.textContent = `Mostrando ${totalRows === 0 ? 0 : start + 1} a ${Math.min(end, totalRows)} de ${totalRows} registros`;
+                paginationInfo.textContent = `Mostrando ${firstRow} a ${lastRow} de ${paginationState.totalRows} registros`;
             }
-
             if (pageIndicator) {
                 pageIndicator.textContent = `Pagina ${paginationState.page} de ${totalPages}`;
             }
-
             if (prevPageButton) {
                 prevPageButton.disabled = paginationState.page <= 1;
             }
-
             if (nextPageButton) {
                 nextPageButton.disabled = paginationState.page >= totalPages;
             }
         };
 
-        const applyFilter = (resetPage = false) => {
-            if (resetPage) {
-                paginationState.page = 1;
+        const formatDate = (value) => {
+            const parts = String(value || '').slice(0, 10).split('-');
+            return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : '';
+        };
+
+        const renderRequests = (rows) => {
+            const showLicenseType = paginationState.requestType === 'LICENSE';
+            const showMedicalLeaveType = paginationState.requestType === 'MEDICAL_LEAVE';
+            const showExtraType = showLicenseType || showMedicalLeaveType;
+
+            if (extraTypeHeading) {
+                extraTypeHeading.classList.toggle('d-none', !showExtraType);
+                extraTypeHeading.textContent = showLicenseType ? 'Tipo de licencia' : 'Tipo de incapacidad';
             }
 
-            const term = paginationState.search.toLowerCase();
-            paginationState.rows = term === ''
-                ? paginationState.allRows
-                : paginationState.allRows.filter((row) => {
-                    const values = [
-                        row.getAttribute('data-id') || '',
-                        row.getAttribute('data-user') || '',
-                        row.getAttribute('data-description') || ''
-                    ].join(' ').toLowerCase();
+            if (!Array.isArray(rows) || rows.length === 0) {
+                body.innerHTML = `<tr><td colspan="${showExtraType ? 9 : 8}" class="text-muted">No hay solicitudes para mostrar.</td></tr>`;
+                return;
+            }
 
-                    return values.includes(term);
+            const stateBadges = {
+                PENDING: '<span class="badge text-bg-warning">Pendiente</span>',
+                TOSIGNED: '<span class="badge text-bg-info">Para Firmar</span>',
+                APPROVED: '<span class="badge text-bg-success">Aprobado</span>',
+                SIGN: '<span class="badge text-bg-success">Firmada</span>',
+                ADJUSTED: '<span class="badge text-bg-warning">Ajustada</span>',
+                ADJUSTMENT_ACCEPTED: '<span class="badge text-bg-success">Ajuste Aprobado</span>',
+                REJECTED: '<span class="badge text-bg-danger">Rechazado</span>',
+                ANNULLED: '<span class="badge text-bg-dark">Anulada</span>',
+                ANNULLED_APPROVED: '<span class="badge text-bg-primary">Anulacion Aprobada</span>'
+            };
+
+            body.innerHTML = rows.map((request) => {
+                const id = Number(request.id || 0);
+                const stateKey = String(request.stateKey || '').toUpperCase();
+                const stateName = String(request.stateName || 'Desconocido');
+                const startDate = String(request.startDate || '');
+                const typeName = String(request.requestTypeName || '');
+                const quantity = String(request.quantity ?? 0);
+                const quantityUnit = paginationState.requestType === 'VACATION'
+                    ? ' d'
+                    : (paginationState.requestType === 'PERMISSION' ? ' h' : '');
+                const extraType = showLicenseType
+                    ? request.licenseTypeName
+                    : (showMedicalLeaveType ? request.medicalLeaveTypeName : '');
+                const today = new Date();
+                const todayIso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+                const startDatePast = startDate.length >= 10 && startDate.slice(0, 10) < todayIso;
+                const actions = [
+                    `<a href="<?= htmlspecialchars(base_url('rrhh/solicitud-vacaciones/detalle'), ENT_QUOTES, 'UTF-8') ?>?id=${id}" class="btn btn-sm btn-outline-primary">Ver Detalle</a>`
+                ];
+
+                if (paginationState.requestType === 'VACATION' && stateKey === 'PENDING') {
+                    actions.push(`<button type="button" class="btn btn-sm btn-primary btn-add-file-to-sign" data-request-id="${id}">Agregar boleta</button>`);
+                }
+                if (paginationState.requestType === 'PERMISSION') {
+                    actions.push(`<button type="button" class="btn btn-sm btn-success btn-add-boleta" data-request-id="${id}">Comprobante</button>`);
+                }
+                actions.push(`<button type="button" class="btn btn-sm btn-outline-info btn-view-signers" data-request-id="${id}">Ver Firmantes</button>`);
+                if (stateKey !== 'PENDING') {
+                    actions.push(`<button type="button" class="btn btn-sm btn-outline-secondary btn-view-files" data-request-id="${id}">Archivos</button>`);
+                }
+                if (!['REJECTED', 'ANNULLED', 'ANNULLED_APPROVED', 'SIGN', 'ADJUSTMENT_ACCEPTED'].includes(stateKey) && !startDatePast) {
+                    actions.push(`<button type="button" class="btn btn-sm btn-danger btn-reject-vacation" data-request-id="${id}">Rechazar</button>`);
+                }
+                if (stateKey === 'ANNULLED') {
+                    actions.push(`<button type="button" class="btn btn-sm btn-success btn-approve-annulment" data-request-id="${id}">Aprobar anulación</button>`);
+                }
+                if (stateKey === 'SIGN' && paginationState.requestType === 'PERMISSION') {
+                    actions.push(`<button type="button" class="btn btn-sm btn-warning btn-adjust-vacation" data-request-id="${id}">Ajustar</button>`);
+                }
+
+                const extraCell = showExtraType ? `<td>${escapeHtml(extraType || '—')}</td>` : '';
+                return `
+                    <tr data-id="${id}"
+                        data-user="${escapeHtml(request.userName || '')}"
+                        data-description="${escapeHtml(request.description || '')}"
+                        data-start="${escapeHtml(formatDate(startDate))}"
+                        data-end="${escapeHtml(formatDate(request.endDate))}"
+                        data-type="${escapeHtml(typeName)}"
+                        data-quantity="${escapeHtml(quantity)}"
+                        data-state="${escapeHtml(stateName)}">
+                        <td>${id}</td>
+                        <td>${escapeHtml(request.userName || '')}</td>
+                        <td>${escapeHtml(formatDate(startDate))}</td>
+                        <td>${escapeHtml(formatDate(request.endDate))}</td>
+                        <td><span class="badge ${paginationState.requestType === 'PERMISSION' ? 'text-bg-secondary' : 'text-bg-primary'}">${escapeHtml(typeName || '—')}</span></td>
+                        ${extraCell}
+                        <td>${escapeHtml(quantity)}${quantityUnit}</td>
+                        <td>${stateBadges[stateKey] || `<span class="badge text-bg-secondary">${escapeHtml(stateName)}</span>`}</td>
+                        <td><div class="d-flex flex-wrap gap-2 vacation-actions">${actions.join('')}</div></td>
+                    </tr>
+                `;
+            }).join('');
+        };
+
+        const fetchRequests = async () => {
+            const requestVersion = ++paginationState.requestVersion;
+            const pageSize = paginationState.perPage;
+            body.innerHTML = `<tr><td colspan="${paginationState.requestType === 'LICENSE' || paginationState.requestType === 'MEDICAL_LEAVE' ? 9 : 8}" class="text-muted">Cargando solicitudes...</td></tr>`;
+            if (paginationInfo) {
+                paginationInfo.textContent = '';
+            }
+
+            try {
+                const result = await fetchJson('<?= htmlspecialchars(base_url('rrhh/solicitudes-vacaciones/list'), ENT_QUOTES, 'UTF-8') ?>', {
+                    page_number: paginationState.page,
+                    page_size: pageSize,
+                    request_type: paginationState.requestType,
+                    search: paginationState.search,
+                    _csrf_token: csrfToken
                 });
 
-            renderRows();
+                if (requestVersion !== paginationState.requestVersion) {
+                    return;
+                }
+                if (String(result.code) !== '200' || Number(result.http_code || 200) >= 400) {
+                    const errorCode = String(result.code || result.http_code || '');
+                    if (errorCode === '401' || errorCode === '406' || result.http_code === 401 || result.http_code === 406) {
+                        window.location.href = '<?= htmlspecialchars(base_url('login'), ENT_QUOTES, 'UTF-8') ?>';
+                        return;
+                    }
+                    throw new Error(result.message || 'No fue posible cargar las solicitudes.');
+                }
+
+                const resultData = result.data || {};
+                paginationState.totalRows = Number(resultData.totalRows || 0);
+                const totalPages = getTotalPages();
+                if (paginationState.page > totalPages) {
+                    paginationState.page = totalPages;
+                    fetchRequests();
+                    return;
+                }
+                renderRequests(resultData.requestList || []);
+                updatePagination();
+            } catch (error) {
+                if (requestVersion !== paginationState.requestVersion) {
+                    return;
+                }
+                const message = error instanceof Error ? error.message : 'No fue posible cargar las solicitudes.';
+                body.innerHTML = `<tr><td colspan="${paginationState.requestType === 'LICENSE' || paginationState.requestType === 'MEDICAL_LEAVE' ? 9 : 8}" class="text-danger">${escapeHtml(message)}</td></tr>`;
+                paginationState.totalRows = 0;
+                updatePagination();
+            }
         };
 
         const getModalInstance = (element) => {
@@ -525,16 +583,37 @@ $users = $users ?? [];
         `;
     };
 
-        search?.addEventListener('input', (event) => {
-            paginationState.search = String(event.target.value || '').trim();
-            applyFilter(true);
+        const searchRequests = () => {
+            paginationState.search = String(search?.value || '').trim() || null;
+            paginationState.page = 1;
+            fetchRequests();
+        };
+
+        searchButton?.addEventListener('click', searchRequests);
+        search?.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                searchRequests();
+            }
+        });
+
+        tabButtons.forEach((button) => {
+            button.addEventListener('click', () => {
+                tabButtons.forEach((tab) => {
+                    const isActive = tab === button;
+                    tab.classList.toggle('active', isActive);
+                    tab.setAttribute('aria-selected', String(isActive));
+                });
+                paginationState.requestType = String(button.dataset.requestType || 'VACATION');
+                paginationState.page = 1;
+                fetchRequests();
+            });
         });
 
         perPageSelect?.addEventListener('change', () => {
-            const newPerPage = Number(perPageSelect.value || 8);
-            paginationState.perPage = Number.isFinite(newPerPage) && newPerPage > 0 ? newPerPage : 8;
+            const newPerPage = Number(perPageSelect.value || 10);
+            paginationState.perPage = Number.isFinite(newPerPage) && newPerPage > 0 ? newPerPage : 10;
             paginationState.page = 1;
-            renderRows();
+            fetchRequests();
         });
 
         prevPageButton?.addEventListener('click', () => {
@@ -543,17 +622,16 @@ $users = $users ?? [];
             }
 
             paginationState.page -= 1;
-            renderRows();
+            fetchRequests();
         });
 
         nextPageButton?.addEventListener('click', () => {
-            const totalPages = Math.max(1, Math.ceil(paginationState.rows.length / paginationState.perPage));
-            if (paginationState.page >= totalPages) {
+            if (paginationState.page >= getTotalPages()) {
                 return;
             }
 
             paginationState.page += 1;
-            renderRows();
+            fetchRequests();
         });
 
         body.addEventListener('click', async (event) => {
@@ -841,7 +919,7 @@ $users = $users ?? [];
             }
         });
 
-        applyFilter(true);
+        fetchRequests();
     };
 
     if (document.readyState === 'loading') {

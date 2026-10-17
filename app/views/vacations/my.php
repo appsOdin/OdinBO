@@ -24,6 +24,7 @@ $currentUserRole = strtoupper((string) ($authUser['rolename'] ?? ''));
                         <th>Inicio</th>
                         <th>Fin</th>
                         <th>Tipo</th>
+                        <th>Subtipo</th>
                         <th>Cantidad</th>
                         <th>Descripcion</th>
                         <th>Estado</th>
@@ -48,9 +49,14 @@ $currentUserRole = strtoupper((string) ($authUser['rolename'] ?? ''));
                             'ANNULLED_APPROVED' => '<span class="badge text-bg-primary">Anulacion Aprobada</span>',
                             default => '<span class="badge text-bg-secondary">' . htmlspecialchars($stateName, ENT_QUOTES, 'UTF-8') . '</span>',
                         };
-                        $requestType = isset($req['requestType']) && $req['requestType'] !== null ? (int) $req['requestType'] : null;
-                        $quantityLabel = $requestType === 1 ? 'h' : ($requestType === 0 ? 'd' : '');
-                        $typeLabel = $requestType === 1 ? 'Permiso' : ($requestType === 0 ? 'Vacaciones' : null);
+                        $requestTypeKey = strtoupper((string) ($req['requestTypeKey'] ?? ''));
+                        $typeLabel = (string) ($req['requestTypeName'] ?? '');
+                        $quantityLabel = $requestTypeKey === 'PERMISSION' ? 'h' : ($requestTypeKey === 'VACATION' ? 'd' : '');
+                        $specificTypeLabel = match ($requestTypeKey) {
+                            'LICENSE' => (string) ($req['licenseTypeName'] ?? ''),
+                            'MEDICAL_LEAVE' => (string) ($req['medicalLeaveTypeName'] ?? ''),
+                            default => '',
+                        };
                         
                         $startDateTs = strtotime((string) ($req['startDate'] ?? 'now'));
                         $startDatePast = $startDateTs !== false && $startDateTs < strtotime(date('Y-m-d'));
@@ -60,12 +66,13 @@ $currentUserRole = strtoupper((string) ($authUser['rolename'] ?? ''));
                             <td><?= htmlspecialchars(date('d/m/Y', strtotime((string) ($req['startDate'] ?? 'now'))), ENT_QUOTES, 'UTF-8') ?></td>
                             <td><?= htmlspecialchars(date('d/m/Y', strtotime((string) ($req['endDate'] ?? 'now'))), ENT_QUOTES, 'UTF-8') ?></td>
                             <td>
-                                <?php if ($typeLabel !== null): ?>
-                                    <span class="badge <?= $requestType === 1 ? 'text-bg-secondary' : 'text-bg-primary' ?>"><?= $typeLabel ?></span>
+                                <?php if ($typeLabel !== ''): ?>
+                                    <span class="badge <?= $requestTypeKey === 'PERMISSION' ? 'text-bg-secondary' : 'text-bg-primary' ?>"><?= htmlspecialchars($typeLabel, ENT_QUOTES, 'UTF-8') ?></span>
                                 <?php else: ?>
                                     <span class="text-muted">—</span>
                                 <?php endif; ?>
                             </td>
+                            <td><?= htmlspecialchars($specificTypeLabel !== '' ? $specificTypeLabel : '—', ENT_QUOTES, 'UTF-8') ?></td>
                             <td><?= htmlspecialchars((string) ($req['quantity'] ?? 0), ENT_QUOTES, 'UTF-8') ?><?= $quantityLabel !== '' ? ' ' . $quantityLabel : '' ?></td>
                             <td><?= htmlspecialchars((string) ($req['description'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
                             <td><?= $stateBadge ?></td>
@@ -82,13 +89,13 @@ $currentUserRole = strtoupper((string) ($authUser['rolename'] ?? ''));
                                     <?php elseif ($stateKey === 'SIGN'): ?>
                                         <button type="button" class="btn btn-sm btn-outline-success" disabled>Firmada</button>
                                         <button type="button" class="btn btn-sm btn-outline-secondary btn-view-files" data-request-id="<?= $id ?>">Archivos</button>
-                                        <?php if ($requestType === 1): ?>
+                                        <?php if ($requestTypeKey === 'PERMISSION'): ?>
                                             <button type="button" class="btn btn-sm btn-primary btn-upload-comprobante" data-request-id="<?= $id ?>">Comprobante</button>
                                         <?php endif; ?>
                                     <?php elseif ($stateKey === 'TOSIGNED'): ?>
                                         <button type="button" class="btn btn-sm btn-outline-secondary btn-view-files" data-request-id="<?= $id ?>">Archivos</button>
                                     <?php endif; ?>
-                                    <?php if ($stateKey === 'ADJUSTED' && $requestType === 1): ?>
+                                    <?php if ($stateKey === 'ADJUSTED' && $requestTypeKey === 'PERMISSION'): ?>
                                         <button type="button" class="btn btn-sm btn-warning btn-approve-adjustment" data-request-id="<?= $id ?>">Aprobar Ajuste</button>
                                     <?php endif; ?>
                                     <?php if (!in_array($stateKey, ['ANNULLED', 'ANNULLED_APPROVED', 'REJECTED','ADJUSTMENT_ACCEPTED'], true) && !$startDatePast): ?>

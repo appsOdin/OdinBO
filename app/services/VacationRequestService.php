@@ -58,9 +58,19 @@ final class VacationRequestService
     /**
      * @return array<string, mixed>
      */
-    public function getAll(): array
+    public function getAll(
+        int $pageNumber = 1,
+        int $pageSize = 10,
+        string $requestType = 'VACATION',
+        ?string $search = null
+    ): array
     {
-        return $this->apiService->get('/api/VacationRequest/GetAll');
+        return $this->apiService->post('/api/VacationRequest/GetAll', [
+            'page_number' => $pageNumber,
+            'page_size' => $pageSize,
+            'request_type' => $requestType,
+            'search' => $search,
+        ]);
     }
 
     /**

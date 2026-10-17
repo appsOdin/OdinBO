@@ -53,18 +53,6 @@ final class VacationRequestController extends Controller
             return;
         }
 
-        $vacationResponse = ServiceFactory::vacationRequestService()->getAll();
-        $apiHttpCode = (int) ($vacationResponse['http_code'] ?? 200);
-
-        if ($apiHttpCode === 401 || $apiHttpCode === 406) {
-            ServiceFactory::authService()->logout();
-            flash('danger', (string) ($vacationResponse['message'] ?? 'Sesion expirada.'));
-            $this->redirect('/login');
-            return;
-        }
-
-        $requests = $apiHttpCode === 200 && is_array($vacationResponse['data'] ?? null) ? $vacationResponse['data'] : [];
-
         $signersResponse = ServiceFactory::vacationRequestService()->getAllSigners();
         $usersRows = is_array($signersResponse['data'] ?? null) ? $signersResponse['data'] : [];
         $users = array_values(array_filter($usersRows, static function ($user): bool {
@@ -73,13 +61,56 @@ final class VacationRequestController extends Controller
 
         $this->view('vacations/all', [
             'title' => 'Solicitudes de vacaciones',
-            'requests' => $requests,
+            'requests' => [],
             'users' => $users,
-            'apiHttpCode' => $apiHttpCode,
+            'apiHttpCode' => 200,
             'authUser' => ServiceFactory::sessionManager()->getUser(),
             'csrfToken' => get_csrf_token(),
             'flashMessages' => consume_flash(),
         ]);
+    }
+
+    public function listAll(Request $request): void
+    {
+        if (!$this->hasRole(['ADMIN', 'SUPER'])) {
+            $this->json(['code' => '403', 'message' => 'No tiene permisos', 'data' => null], 403);
+            return;
+        }
+
+        if (!validate_csrf_token((string) $request->input('_csrf_token', ''))) {
+            $this->json(['code' => '403', 'message' => 'Token CSRF invalido', 'data' => null], 403);
+            return;
+        }
+
+        $pageNumber = filter_var($request->input('page_number', 1), FILTER_VALIDATE_INT);
+        $pageSize = filter_var($request->input('page_size', 10), FILTER_VALIDATE_INT);
+        $requestType = strtoupper(trim((string) $request->input('request_type', '')));
+        $allowedTypes = ['VACATION', 'PERMISSION', 'MEDICAL_LEAVE', 'LICENSE'];
+
+        if ($pageNumber === false || $pageNumber < 1 || $pageSize === false || $pageSize < 1 || $pageSize > 100) {
+            $this->json(['code' => '422', 'message' => 'Paginacion invalida', 'data' => null], 422);
+            return;
+        }
+
+        if (!in_array($requestType, $allowedTypes, true)) {
+            $this->json(['code' => '422', 'message' => 'Tipo de solicitud invalido', 'data' => null], 422);
+            return;
+        }
+
+        $search = trim((string) $request->input('search', ''));
+        $response = ServiceFactory::vacationRequestService()->getAll(
+            $pageNumber,
+            $pageSize,
+            $requestType,
+            $search !== '' ? $search : null
+        );
+        $httpCode = (int) ($response['http_code'] ?? 200);
+
+        if ($httpCode === 401 || $httpCode === 406) {
+            ServiceFactory::authService()->logout();
+        }
+
+        $this->json($response, $httpCode >= 100 ? $httpCode : 200);
     }
 
     public function create(Request $request): void

@@ -301,6 +301,22 @@ body {
     --bs-btn-active-border-color: var(--button-active-color);
 }
 
+#vacationRequestTabs .nav-link {
+    color: var(--button-color);
+    border-color: transparent;
+}
+
+#vacationRequestTabs .nav-link:hover {
+    background-color: var(--sidebar-link-hover-bg);
+    border-color: var(--button-color);
+}
+
+#vacationRequestTabs .nav-link.active {
+    color: #fff;
+    background-color: var(--button-color);
+    border-color: var(--button-color);
+}
+
 .page-item.active .page-link {
     background-color: var(--button-color);
     border-color: var(--button-color);
