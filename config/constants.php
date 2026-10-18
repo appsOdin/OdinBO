@@ -34,4 +34,10 @@ const HOLIDAYS = [
     "08-31", // Día de la Persona Negra y la Cultura Afrocostarricense
     "12-01", // Abolición del Ejército
 ];
+const REQUESTY_TYPE = [
+    'VACATION' => 'VACATION',
+    'PERMISSION' => 'PERMISSION',
+    'LICENSE' => 'LICENSE',
+    'MEDICAL_LEAVE' => 'MEDICAL_LEAVE',
+];
 

@@ -123,6 +123,108 @@ final class VacationRequestController extends Controller
         ]);
     }
 
+    public function createLicense(Request $request): void
+    {
+        $service = ServiceFactory::vacationRequestService();
+        $catalogs = [];
+        $catalogError = false;
+        foreach (['collaborators' => 'getAllSigners', 'licenseTypes' => 'getAllLicenseTypes'] as $name => $method) {
+            $response = $service->$method();
+            $httpCode = (int) ($response['http_code'] ?? 0);
+            if ($httpCode === 401 || $httpCode === 406) {
+                ServiceFactory::authService()->logout();
+                flash('danger', (string) ($response['message'] ?? 'Sesion expirada.'));
+                $this->redirect('/login');
+                return;
+            }
+            if ($httpCode !== 200 || (string) ($response['code'] ?? '') !== '200' || !is_array($response['data'] ?? null)) {
+                $catalogError = true;
+                flash('danger', (string) ($response['message'] ?? 'No fue posible cargar las opciones de licencia.'));
+                $catalogs[$name] = [];
+                continue;
+            }
+            $catalogs[$name] = array_values(array_filter($response['data'], 'is_array'));
+        }
+
+        $this->view('vacations/create-license', array_merge($catalogs, [
+            'title' => 'Crear solicitud de licencia',
+            'catalogError' => $catalogError,
+            'authUser' => ServiceFactory::sessionManager()->getUser(),
+            'csrfToken' => get_csrf_token(),
+            'flashMessages' => consume_flash(),
+        ]));
+    }
+
+    public function storeLicense(Request $request): void
+    {
+        if (!validate_csrf_token((string) $request->input('_csrf_token', ''))) {
+            flash('danger', 'Token CSRF invalido.');
+            $this->redirect('/rrhh/solicitud-licencia/crear');
+            return;
+        }
+
+        $assignedUser = trim((string) $request->input('assigned_user', ''));
+        $licenseType = trim((string) $request->input('license_type', ''));
+        $description = sanitize_text((string) $request->input('description', ''));
+        $startRaw = (string) $request->input('start_date', '');
+        $endRaw = (string) $request->input('end_date', '');
+        $startDate = \DateTimeImmutable::createFromFormat('!Y-m-d', $startRaw);
+        $endDate = \DateTimeImmutable::createFromFormat('!Y-m-d', $endRaw);
+
+        if ($assignedUser === '' || $licenseType === '' || $description === '' || mb_strlen($description, 'UTF-8') > 100) {
+            flash('danger', 'Seleccione colaborador y tipo de licencia e ingrese un detalle de hasta 100 caracteres.');
+            $this->redirect('/rrhh/solicitud-licencia/crear');
+            return;
+        }
+        if (!$startDate || !$endDate || $startDate->format('Y-m-d') !== $startRaw || $endDate->format('Y-m-d') !== $endRaw || $endDate < $startDate) {
+            flash('danger', 'Fechas invalidas. La fecha de fin no puede ser anterior a la fecha de inicio.');
+            $this->redirect('/rrhh/solicitud-licencia/crear');
+            return;
+        }
+
+        $quantity = 0;
+        for ($currentDate = $startDate; $currentDate <= $endDate; $currentDate = $currentDate->modify('+1 day')) {
+            if ($currentDate->format('w') !== '0' && !in_array($currentDate->format('m-d'), HOLIDAYS, true)) {
+                $quantity++;
+            }
+        }
+        if ($quantity < 1) {
+            flash('danger', 'El periodo debe incluir al menos un dia que no sea domingo ni feriado.');
+            $this->redirect('/rrhh/solicitud-licencia/crear');
+            return;
+        }
+
+        $files = $this->resolveUploadedFiles();
+        if ($files === null || count($files) !== 1) {
+            flash('danger', 'Adjunte un archivo PDF, JPG o PNG de hasta 10 MB.');
+            $this->redirect('/rrhh/solicitud-licencia/crear');
+            return;
+        }
+        $response = ServiceFactory::vacationRequestService()->createLicenseRequest(
+            $assignedUser,
+            $licenseType,
+            $startDate->format('Y-m-d') . 'T00:00:00',
+            $endDate->format('Y-m-d') . 'T00:00:00',
+            $quantity,
+            $description,
+            $files[0]
+        );
+        $httpCode = (int) ($response['http_code'] ?? 0);
+        if ($httpCode === 401 || $httpCode === 406) {
+            ServiceFactory::authService()->logout();
+            flash('danger', (string) ($response['message'] ?? 'Sesion expirada.'));
+            $this->redirect('/login');
+            return;
+        }
+        if ($httpCode >= 200 && $httpCode < 300 && (string) ($response['code'] ?? '') === '200') {
+            flash('success', (string) ($response['message'] ?? 'Solicitud creada exitosamente.'));
+            $this->redirect('/rrhh/solicitudes-vacaciones');
+            return;
+        }
+        flash('danger', (string) ($response['message'] ?? 'No fue posible crear la solicitud de licencia.'));
+        $this->redirect('/rrhh/solicitud-licencia/crear');
+    }
+
     public function store(Request $request): void
     {
         $csrfToken = (string) $request->input('_csrf_token', '');
@@ -139,12 +241,12 @@ final class VacationRequestController extends Controller
         $quantityInput = is_numeric($quantityRaw) ? (float) $quantityRaw : 0.0;
         $requestTypeRaw = $request->input('request_type', null);
 
-        if (!in_array((string) $requestTypeRaw, ['0', '1'], true)) {
+        if (!in_array($requestTypeRaw, [REQUESTY_TYPE['VACATION'], REQUESTY_TYPE['PERMISSION']], true)) {
             flash('danger', 'Tipo de solicitud invalido. Seleccione Vacaciones o Permiso.');
             $this->redirect('/rrhh/solicitud-vacaciones/crear');
             return;
         }
-        $requestType = (int) $requestTypeRaw;
+        $requestType = (string) $requestTypeRaw;
 
         $startDate = \DateTimeImmutable::createFromFormat('Y-m-d', $startDateRaw);
         $endDate = \DateTimeImmutable::createFromFormat('Y-m-d', $endDateRaw);
@@ -168,7 +270,7 @@ final class VacationRequestController extends Controller
             return;
         }
 
-        if ($requestType === 1) {
+        if ($requestType === REQUESTY_TYPE['PERMISSION']) {
             // Permiso: start and end must be the same date; quantity = hours
             if ($endDate->format('Y-m-d') !== $startDate->format('Y-m-d')) {
                 flash('danger', 'Para permisos, la fecha de inicio y fin deben ser el mismo dia.');

@@ -19,14 +19,14 @@ final class VacationRequestService
      * @param array<int, array{name: string, tmp_name: string, type: string}> $files
      * @return array<string, mixed>
      */
-    public function create(string $startDateIso, string $endDateIso, float $quantity, string $description, int $requestType, array $files = []): array
+    public function create(string $startDateIso, string $endDateIso, float $quantity, string $description, string $requestType, array $files = []): array
     {
         $fields = [
             'startDate'   => $startDateIso,
             'endDate'     => $endDateIso,
             'quantity'    => (string) $quantity,
             'description' => $description,
-            'requestType' => (string) $requestType,
+            'requestType' => $requestType,
         ];
 
         if ($files === []) {
@@ -79,6 +79,27 @@ final class VacationRequestService
     public function getAllSigners(): array
     {
         return $this->apiService->get('/api/VacationRequest/GetAllSigners');
+    }
+
+    public function getAllLicenseTypes(): array
+    {
+        return $this->apiService->get('/api/VacationRequest/GetAllLicenseType');
+    }
+
+    /**
+     * @param array{name: string, tmp_name: string, type: string} $file
+     */
+    public function createLicenseRequest(string $assignedUser, string $licenseType, string $startDate, string $endDate, int $quantity, string $description, array $file): array
+    {
+        return $this->apiService->postMultipart('/api/VacationRequest/CreateLicenseRequest', [
+            'request_type' => REQUESTY_TYPE['LICENSE'],
+            'assigned_user' => $assignedUser,
+            'license_type' => $licenseType,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'quantity' => (string) $quantity,
+            'description' => $description,
+        ], ['files' => $file]);
     }
 
     /**

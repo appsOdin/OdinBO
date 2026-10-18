@@ -9,8 +9,30 @@ $users = $users ?? [];
         <h2 class="fw-semibold mb-1">Solicitudes de Vacaciones</h2>
         <p class="text-muted m-0">Listado general para administradores y super usuarios.</p>
     </div>
-    <a href="<?= base_url('rrhh/solicitud-vacaciones/crear') ?>" class="btn btn-primary">Nueva Solicitud</a>
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newRequestTypeModal">Nueva Solicitud</button>
 </section>
+
+<div class="modal fade" id="newRequestTypeModal" tabindex="-1" aria-labelledby="newRequestTypeModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-sm">
+            <div class="modal-header">
+                <h5 class="modal-title" id="newRequestTypeModalTitle">Seleccione el tipo de solicitud</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="list-group list-group-flush" style="--bs-list-group-border-color: var(--button-color);">
+                    <a href="<?= base_url('rrhh/solicitud-vacaciones/crear') ?>" class="list-group-item list-group-item-action py-3">Vacaciones</a>
+                    <a href="<?= base_url('rrhh/solicitud-vacaciones/crear') ?>" class="list-group-item list-group-item-action py-3">Permisos</a>
+                    <a href="<?= base_url('rrhh/solicitud-incapacidad/crear') ?>" class="list-group-item list-group-item-action py-3">Incapacidad</a>
+                    <a href="<?= base_url('rrhh/solicitud-licencia/crear') ?>" class="list-group-item list-group-item-action py-3">Licencia</a>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="card border-0 shadow-sm vacation-card mb-3">
     <div class="card-body">

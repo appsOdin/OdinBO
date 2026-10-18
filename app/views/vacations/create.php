@@ -12,18 +12,18 @@ $minDate = date('Y-m-d');
     <div class="card-body">
         <form method="POST" action="<?= base_url('rrhh/solicitud-vacaciones/store') ?>" id="vacationCreateForm" enctype="multipart/form-data" novalidate>
             <input type="hidden" name="_csrf_token" value="<?= htmlspecialchars((string) ($csrfToken ?? get_csrf_token()), ENT_QUOTES, 'UTF-8') ?>">
-            <input type="hidden" name="request_type" id="requestTypeHidden" value="0">
+            <input type="hidden" name="request_type" id="requestTypeHidden" value="<?= REQUESTY_TYPE['VACATION'] ?>">
 
             <div class="row g-3">
                 <div class="col-12">
                     <label class="form-label fw-semibold">Tipo de Solicitud</label>
                     <div class="d-flex gap-3">
                         <div class="form-check">
-                            <input class="form-check-input" type="radio" name="request_type_radio" id="typeVacaciones" value="0" checked>
+                            <input class="form-check-input" type="radio" name="request_type_radio" id="typeVacaciones" value="<?= REQUESTY_TYPE['VACATION'] ?>" checked>
                             <label class="form-check-label" for="typeVacaciones">Vacaciones</label>
                         </div>
                         <div class="form-check">
-                            <input class="form-check-input" type="radio" name="request_type_radio" id="typePermiso" value="1">
+                            <input class="form-check-input" type="radio" name="request_type_radio" id="typePermiso" value="<?= REQUESTY_TYPE['PERMISSION'] ?>">
                             <label class="form-check-label" for="typePermiso">Permiso</label>
                         </div>
                     </div>
@@ -104,6 +104,7 @@ $minDate = date('Y-m-d');
 <script>
 (() => {
     const holidays = <?= json_encode(array_values(HOLIDAYS)) ?>;
+    const requestTypes = <?= json_encode(REQUESTY_TYPE) ?>;
 
     const form = document.getElementById('vacationCreateForm');
     const startDateInput = document.getElementById('startDate');
@@ -135,7 +136,7 @@ $minDate = date('Y-m-d');
         return Number.isNaN(parsed.getTime()) ? null : parsed;
     };
 
-    const getRequestType = () => (radioPermiso && radioPermiso.checked ? 1 : 0);
+    const getRequestType = () => (radioPermiso && radioPermiso.checked ? requestTypes.PERMISSION : requestTypes.VACATION);
 
     const isHoliday = (date) => {
         const mm = String(date.getMonth() + 1).padStart(2, '0');
@@ -169,7 +170,7 @@ $minDate = date('Y-m-d');
     const applyTypeMode = (type) => {
         requestTypeHidden.value = String(type);
 
-        if (type === 1) {
+        if (type === requestTypes.PERMISSION) {
             pageTitle.textContent = 'Crear Solicitud de Permiso';
             pageSubtitle.textContent = 'Registra un permiso para un dia especifico.';
             quantityLabel.textContent = 'Cantidad de Horas';
@@ -214,7 +215,7 @@ $minDate = date('Y-m-d');
 
     startDateInput.addEventListener('change', () => {
         const type = getRequestType();
-        if (type === 1) {
+        if (type === requestTypes.PERMISSION) {
             endDateInput.value = startDateInput.value;
             endDateInput.min = startDateInput.value;
             endDateInput.max = startDateInput.value;
@@ -228,7 +229,7 @@ $minDate = date('Y-m-d');
     });
 
     endDateInput.addEventListener('change', () => {
-        if (getRequestType() === 0) recalcDays();
+        if (getRequestType() === requestTypes.VACATION) recalcDays();
     });
 
     const filesRow   = document.getElementById('filesRow');
@@ -265,7 +266,7 @@ $minDate = date('Y-m-d');
         if (!start) { event.preventDefault(); notify('Debe seleccionar una fecha de inicio.'); return; }
         if (!end) { event.preventDefault(); notify('Debe seleccionar una fecha de fin.'); return; }
 
-        if (type === 1) {
+        if (type === requestTypes.PERMISSION) {
             if (startDateInput.value !== endDateInput.value) {
                 event.preventDefault();
                 notify('Para permisos, la fecha de inicio y fin deben ser el mismo dia.');
@@ -299,6 +300,6 @@ $minDate = date('Y-m-d');
         }
     });
 
-    applyTypeMode(0);
+    applyTypeMode(requestTypes.VACATION);
 })();
 </script>
