@@ -86,6 +86,28 @@ final class VacationRequestService
         return $this->apiService->get('/api/VacationRequest/GetAllLicenseType');
     }
 
+    public function getAllMedicalLeaveTypes(): array
+    {
+        return $this->apiService->get('/api/VacationRequest/GetAllMedicalLeaveType');
+    }
+
+    /**
+     * @param array{name: string, tmp_name: string, type: string} $file
+     * @param array{name: string, tmp_name: string, type: string} $softlandFile
+     */
+    public function createMedicalLeaveRequest(string $assignedUser, string $medicalLeaveType, string $startDate, string $endDate, int $quantity, string $description, array $file, array $softlandFile): array
+    {
+        return $this->apiService->postMultipart('/api/VacationRequest/CreateMedicalLeaveRequest', [
+            'request_type' => REQUESTY_TYPE['MEDICAL_LEAVE'],
+            'assigned_user' => $assignedUser,
+            'medical_leave_type' => $medicalLeaveType,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'quantity' => (string) $quantity,
+            'description' => $description,
+        ], ['file' => $file, 'file_softland' => $softlandFile]);
+    }
+
     /**
      * @param array{name: string, tmp_name: string, type: string} $file
      */

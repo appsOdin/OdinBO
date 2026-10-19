@@ -225,6 +225,111 @@ final class VacationRequestController extends Controller
         $this->redirect('/rrhh/solicitud-licencia/crear');
     }
 
+    public function createMedicalLeave(Request $request): void
+    {
+        $service = ServiceFactory::vacationRequestService();
+        $catalogs = [];
+        $catalogError = false;
+        foreach (['collaborators' => 'getAllSigners', 'licenseTypes' => 'getAllMedicalLeaveTypes'] as $name => $method) {
+            $response = $service->$method();
+            $httpCode = (int) ($response['http_code'] ?? 0);
+            if ($httpCode === 401 || $httpCode === 406) {
+                ServiceFactory::authService()->logout();
+                flash('danger', (string) ($response['message'] ?? 'Sesion expirada.'));
+                $this->redirect('/login');
+                return;
+            }
+            if ($httpCode !== 200 || (string) ($response['code'] ?? '') !== '200' || !is_array($response['data'] ?? null)) {
+                $catalogError = true;
+                flash('danger', (string) ($response['message'] ?? 'No fue posible cargar las opciones de incapacidad.'));
+                $catalogs[$name] = [];
+                continue;
+            }
+            $catalogs[$name] = array_values(array_filter($response['data'], 'is_array'));
+        }
+
+        $this->view('vacations/create-license', array_merge($catalogs, [
+            'title' => 'Crear solicitud de incapacidad',
+            'isMedicalLeave' => true,
+            'catalogError' => $catalogError,
+            'authUser' => ServiceFactory::sessionManager()->getUser(),
+            'csrfToken' => get_csrf_token(),
+            'flashMessages' => consume_flash(),
+        ]));
+    }
+
+    public function storeMedicalLeave(Request $request): void
+    {
+        if (!validate_csrf_token((string) $request->input('_csrf_token', ''))) {
+            flash('danger', 'Token CSRF invalido.');
+            $this->redirect('/rrhh/solicitud-incapacidad/crear');
+            return;
+        }
+
+        $assignedUser = trim((string) $request->input('assigned_user', ''));
+        $medicalLeaveType = trim((string) $request->input('medical_leave_type', ''));
+        $description = sanitize_text((string) $request->input('description', ''));
+        $startRaw = (string) $request->input('start_date', '');
+        $endRaw = (string) $request->input('end_date', '');
+        $startDate = \DateTimeImmutable::createFromFormat('!Y-m-d', $startRaw);
+        $endDate = \DateTimeImmutable::createFromFormat('!Y-m-d', $endRaw);
+
+        if ($assignedUser === '' || $medicalLeaveType === '' || $description === '' || mb_strlen($description, 'UTF-8') > 100) {
+            flash('danger', 'Seleccione colaborador y tipo de incapacidad e ingrese un detalle de hasta 100 caracteres.');
+            $this->redirect('/rrhh/solicitud-incapacidad/crear');
+            return;
+        }
+        if (!$startDate || !$endDate || $startDate->format('Y-m-d') !== $startRaw || $endDate->format('Y-m-d') !== $endRaw || $endDate < $startDate) {
+            flash('danger', 'Fechas invalidas. La fecha de fin no puede ser anterior a la fecha de inicio.');
+            $this->redirect('/rrhh/solicitud-incapacidad/crear');
+            return;
+        }
+
+        $quantity = 0;
+        for ($currentDate = $startDate; $currentDate <= $endDate; $currentDate = $currentDate->modify('+1 day')) {
+            if ($currentDate->format('w') !== '0' && !in_array($currentDate->format('m-d'), HOLIDAYS, true)) {
+                $quantity++;
+            }
+        }
+        if ($quantity < 1) {
+            flash('danger', 'El periodo debe incluir al menos un dia que no sea domingo ni feriado.');
+            $this->redirect('/rrhh/solicitud-incapacidad/crear');
+            return;
+        }
+
+        $files = $this->resolveUploadedFiles('file');
+        $softlandFiles = $this->resolveUploadedFiles('file_softland');
+        if ($files === null || count($files) !== 1 || $softlandFiles === null || count($softlandFiles) !== 1) {
+            flash('danger', 'Adjunte la boleta de incapacidad y la boleta Softland en PDF, JPG o PNG de hasta 10 MB cada una.');
+            $this->redirect('/rrhh/solicitud-incapacidad/crear');
+            return;
+        }
+        $response = ServiceFactory::vacationRequestService()->createMedicalLeaveRequest(
+            $assignedUser,
+            $medicalLeaveType,
+            $startDate->format('Y-m-d') . 'T00:00:00',
+            $endDate->format('Y-m-d') . 'T00:00:00',
+            $quantity,
+            $description,
+            $files[0],
+            $softlandFiles[0]
+        );
+        $httpCode = (int) ($response['http_code'] ?? 0);
+        if ($httpCode === 401 || $httpCode === 406) {
+            ServiceFactory::authService()->logout();
+            flash('danger', (string) ($response['message'] ?? 'Sesion expirada.'));
+            $this->redirect('/login');
+            return;
+        }
+        if ($httpCode >= 200 && $httpCode < 300 && (string) ($response['code'] ?? '') === '200') {
+            flash('success', (string) ($response['message'] ?? 'Solicitud creada exitosamente.'));
+            $this->redirect('/rrhh/solicitudes-vacaciones');
+            return;
+        }
+        flash('danger', (string) ($response['message'] ?? 'No fue posible crear la solicitud de incapacidad.'));
+        $this->redirect('/rrhh/solicitud-incapacidad/crear');
+    }
+
     public function store(Request $request): void
     {
         $csrfToken = (string) $request->input('_csrf_token', '');
@@ -1237,7 +1342,7 @@ final class VacationRequestController extends Controller
      *
      * @return array<int, array{name: string, tmp_name: string, type: string}>|null
      */
-    private function resolveUploadedFiles(): ?array
+    private function resolveUploadedFiles(string $field = 'files'): ?array
     {
         $allowedMimes = [
             'application/pdf',
@@ -1248,9 +1353,9 @@ final class VacationRequestController extends Controller
         $allowedExts = ['pdf', 'jpg', 'jpeg', 'png'];
 
         $raw = null;
-        if (isset($_FILES['files']) && is_array($_FILES['files'])) {
-            $raw = $_FILES['files'];
-        } elseif (isset($_FILES['Files']) && is_array($_FILES['Files'])) {
+        if (isset($_FILES[$field]) && is_array($_FILES[$field])) {
+            $raw = $_FILES[$field];
+        } elseif ($field === 'files' && isset($_FILES['Files']) && is_array($_FILES['Files'])) {
             $raw = $_FILES['Files'];
         }
 

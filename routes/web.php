@@ -35,6 +35,8 @@ return [
     ['method' => 'GET', 'path' => '/rrhh/solicitud-vacaciones/crear', 'handler' => [VacationRequestController::class, 'create'], 'middleware' => [AuthMiddleware::class]],
     ['method' => 'GET', 'path' => '/rrhh/solicitud-licencia/crear', 'handler' => [VacationRequestController::class, 'createLicense'], 'middleware' => [AuthMiddleware::class]],
     ['method' => 'POST', 'path' => '/rrhh/solicitud-licencia/store', 'handler' => [VacationRequestController::class, 'storeLicense'], 'middleware' => [AuthMiddleware::class]],
+    ['method' => 'GET', 'path' => '/rrhh/solicitud-incapacidad/crear', 'handler' => [VacationRequestController::class, 'createMedicalLeave'], 'middleware' => [AuthMiddleware::class]],
+    ['method' => 'POST', 'path' => '/rrhh/solicitud-incapacidad/store', 'handler' => [VacationRequestController::class, 'storeMedicalLeave'], 'middleware' => [AuthMiddleware::class]],
     ['method' => 'GET', 'path' => '/rrhh/solicitud-vacaciones/detalle', 'handler' => [VacationRequestController::class, 'detail'], 'middleware' => [AuthMiddleware::class]],
     ['method' => 'POST', 'path' => '/rrhh/solicitud-vacaciones/store', 'handler' => [VacationRequestController::class, 'store'], 'middleware' => [AuthMiddleware::class]],
     ['method' => 'POST', 'path' => '/rrhh/solicitud-vacaciones/save-signature', 'handler' => [VacationRequestController::class, 'saveSignature'], 'middleware' => [AuthMiddleware::class]],
