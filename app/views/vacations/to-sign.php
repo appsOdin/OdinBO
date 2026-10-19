@@ -53,7 +53,7 @@ $pendingCount = count($requests);
                         };
                         $requestType = isset($req['requestType']) && $req['requestType'] !== null ? (int) $req['requestType'] : null;
                         $quantityLabel = $requestType === 1 ? 'h' : ($requestType === 0 ? 'd' : '');
-                        $typeLabel = $requestType === 1 ? 'Permiso' : ($requestType === 0 ? 'Vacaciones' : null);
+                        $typeLabel = trim((string) ($req['requestTypeName'] ?? ''));
                         ?>
                         <tr>
                             <td><?= $id ?></td>
@@ -61,8 +61,8 @@ $pendingCount = count($requests);
                             <td><?= htmlspecialchars(date('d/m/Y', strtotime((string) ($req['startDate'] ?? 'now'))), ENT_QUOTES, 'UTF-8') ?></td>
                             <td><?= htmlspecialchars(date('d/m/Y', strtotime((string) ($req['endDate'] ?? 'now'))), ENT_QUOTES, 'UTF-8') ?></td>
                             <td>
-                                <?php if ($typeLabel !== null): ?>
-                                    <span class="badge <?= $requestType === 1 ? 'text-bg-secondary' : 'text-bg-primary' ?>"><?= $typeLabel ?></span>
+                                <?php if ($typeLabel !== ''): ?>
+                                    <span class="badge <?= $requestType === 1 ? 'text-bg-secondary' : 'text-bg-primary' ?>"><?= htmlspecialchars($typeLabel, ENT_QUOTES, 'UTF-8') ?></span>
                                 <?php else: ?>
                                     <span class="text-muted">&mdash;</span>
                                 <?php endif; ?>
