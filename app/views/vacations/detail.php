@@ -12,11 +12,7 @@ $requestSubtypeName = match ($requestTypeKey) {
     'MEDICAL_LEAVE' => (string) ($detail['medicalLeaveTypeName'] ?? ''),
     default => '',
 };
-$quantityLabel = match ($requestTypeKey) {
-    'PERMISSION' => 'Horas',
-    'VACATION' => 'Dias',
-    default => 'Cantidad',
-};
+$quantityLabel = $requestTypeKey === REQUESTY_TYPE['PERMISSION'] ? 'horas' : 'días';
 $stateBadge = match ($stateKey) {
     'PENDING' => '<span class="badge text-bg-warning">Pendiente</span>',
     'TOSIGNED' => '<span class="badge text-bg-info">Por Firmar</span>',
@@ -149,8 +145,8 @@ $ownerSignatureSrc = $buildSignatureSrc($ownerSignatureRaw);
                         <div><?= htmlspecialchars(date('d/m/Y', strtotime((string) ($detail['endDate'] ?? 'now'))), ENT_QUOTES, 'UTF-8') ?></div>
                     </div>
                     <div class="col-md-6 col-lg-2">
-                        <small class="text-muted d-block"><?= htmlspecialchars($quantityLabel, ENT_QUOTES, 'UTF-8') ?></small>
-                        <div><?= htmlspecialchars((string) ($detail['quantity'] ?? 0), ENT_QUOTES, 'UTF-8') ?></div>
+                        <small class="text-muted d-block">Cantidad</small>
+                        <div><?= htmlspecialchars((string) ($detail['quantity'] ?? 0), ENT_QUOTES, 'UTF-8') ?> <?= $quantityLabel ?></div>
                     </div>
                     <div class="col-md-6 col-lg-4">
                         <small class="text-muted d-block">Fecha de solicitud</small>

@@ -40,7 +40,7 @@ $isMedicalLeave = $isMedicalLeave ?? false;
                     <input type="date" class="form-control" id="licenseEndDate" name="end_date" required>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label" for="licenseQuantity">Cantidad de dias</label>
+                    <label class="form-label" for="licenseQuantity">Cantidad de d&iacute;as</label>
                     <input type="number" class="form-control" id="licenseQuantity" name="quantity" min="1" readonly required>
                 </div>
                 <div class="col-md-8">

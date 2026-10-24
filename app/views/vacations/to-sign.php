@@ -52,7 +52,8 @@ $pendingCount = count($requests);
                             default => '<span class="badge text-bg-secondary">' . htmlspecialchars($stateName, ENT_QUOTES, 'UTF-8') . '</span>',
                         };
                         $requestType = isset($req['requestType']) && $req['requestType'] !== null ? (int) $req['requestType'] : null;
-                        $quantityLabel = $requestType === 1 ? 'h' : ($requestType === 0 ? 'd' : '');
+                        $requestTypeKey = strtoupper((string) ($req['requestTypeKey'] ?? $req['requestType'] ?? ''));
+                        $quantityLabel = ($requestTypeKey === REQUESTY_TYPE['PERMISSION'] || $requestTypeKey === '1') ? 'horas' : 'días';
                         $typeLabel = trim((string) ($req['requestTypeName'] ?? ''));
                         ?>
                         <tr>

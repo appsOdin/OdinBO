@@ -66,7 +66,7 @@ $signers = $signers ?? [];
                         <td><?= htmlspecialchars((string) ($row['start_date'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
                         <td><?= htmlspecialchars((string) ($row['end_date'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
                         <td><?= htmlspecialchars((string) ($row['request_type'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
-                        <td><?= htmlspecialchars((string) ($row['quantity'] ?? 0), ENT_QUOTES, 'UTF-8') ?></td>
+                        <td><?= htmlspecialchars((string) ($row['quantity'] ?? 0), ENT_QUOTES, 'UTF-8') ?> <?= strtoupper((string) ($row['key_name'] ?? '')) === REQUESTY_TYPE['PERMISSION'] ? 'horas' : 'días' ?></td>
                         <td><?= htmlspecialchars((string) ($row['description'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
                         <td><?= htmlspecialchars((string) ($row['state'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
                         <td><?= htmlspecialchars((string) ($row['Rejected_description'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
@@ -152,7 +152,7 @@ $signers = $signers ?? [];
                     <td>${escapeHtml(formatDate(row.start_date || ''))}</td>
                     <td>${escapeHtml(formatDate(row.end_date || ''))}</td>
                     <td>${escapeHtml(row.request_type || '')}</td>
-                    <td>${Number(row.quantity || 0)}</td>
+                    <td>${Number(row.quantity || 0)} ${String(row.key_name || '').toUpperCase() === <?= json_encode(REQUESTY_TYPE['PERMISSION']) ?> ? 'horas' : 'días'}</td>
                     <td>${escapeHtml(row.description || '')}</td>
                     <td>${escapeHtml(row.state ?? '')}</td>
                     <td>${escapeHtml(row.Rejected_description ?? '')}</td>

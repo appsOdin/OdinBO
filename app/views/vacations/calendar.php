@@ -150,6 +150,7 @@ $entries = $entries ?? [];
                     start_date: row.start_date || '',
                     end_date: row.end_date || '',
                     request_type: row.request_type || '',
+                    key_name: row.key_name || '',
                     quantity: row.quantity || 0,
                     description: row.description || ''
                 });
@@ -204,7 +205,7 @@ $entries = $entries ?? [];
                 <div class="col-md-6"><strong>Inicio:</strong> ${String(eventData.start_date || '').slice(0, 10)}</div>
                 <div class="col-md-6"><strong>Fin:</strong> ${String(eventData.end_date || '').slice(0, 10)}</div>
                 <div class="col-md-6"><strong>Tipo:</strong> ${eventData.request_type || '-'}</div>
-                <div class="col-md-6"><strong>Cantidad:</strong> ${eventData.quantity || 0}</div>
+                <div class="col-md-6"><strong>Cantidad:</strong> ${eventData.quantity || 0} ${String(eventData.key_name || '').toUpperCase() === <?= json_encode(REQUESTY_TYPE['PERMISSION']) ?> ? 'horas' : 'd\u00edas'}</div>
                 <div class="col-12"><strong>Descripcion:</strong><br>${eventData.description || '-'}</div>
             </div>
         `;

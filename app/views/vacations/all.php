@@ -292,7 +292,7 @@ $users = $users ?? [];
                             <input type="text" class="form-control" id="extendInfoType" readonly>
                         </div>
                         <div class="col-md-2">
-                            <label class="form-label" for="extendInfoQuantity">Dias</label>
+                            <label class="form-label" for="extendInfoQuantity">Cantidad</label>
                             <input type="text" class="form-control" id="extendInfoQuantity" readonly>
                         </div>
                     </div>
@@ -304,7 +304,7 @@ $users = $users ?? [];
                             <input type="date" class="form-control" id="extendEndDate" name="end_date" required>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label" for="extendQuantity">Cantidad de dias</label>
+                            <label class="form-label" for="extendQuantity">Cantidad de días</label>
                             <input type="text" class="form-control" id="extendQuantity" readonly>
                         </div>
                         <div class="col-md-6">
@@ -473,9 +473,7 @@ $users = $users ?? [];
                 const startDate = String(request.startDate || '');
                 const typeName = String(request.requestTypeName || '');
                 const quantity = String(request.quantity ?? 0);
-                const quantityUnit = paginationState.requestType === 'VACATION'
-                    ? ' d'
-                    : (paginationState.requestType === 'PERMISSION' ? ' h' : '');
+                const quantityUnit = paginationState.requestType === <?= json_encode(REQUESTY_TYPE['PERMISSION']) ?> ? ' horas' : ' días';
                 const extraType = showLicenseType
                     ? request.licenseTypeName
                     : (showMedicalLeaveType ? request.medicalLeaveTypeName : '');
@@ -505,7 +503,7 @@ $users = $users ?? [];
                 if (stateKey === 'SIGN' && paginationState.requestType === 'PERMISSION') {
                     actions.push(`<button type="button" class="btn btn-sm btn-warning btn-adjust-vacation" data-request-id="${id}">Ajustar</button>`);
                 }
-                if (stateKey === 'APPROVED' && showMedicalLeaveType) {
+                if (stateKey === 'SIGN' && showMedicalLeaveType) {
                     actions.push(`<button type="button" class="btn btn-sm btn-primary btn-extend-medical-leave" data-request-id="${id}">Extender</button>`);
                 }
 
@@ -895,7 +893,7 @@ $users = $users ?? [];
                 document.getElementById('extendInfoStart').value = String(row.dataset.start || '');
                 document.getElementById('extendInfoEnd').value = String(row.dataset.end || '');
                 document.getElementById('extendInfoType').value = String(row.dataset.extraType || '');
-                document.getElementById('extendInfoQuantity').value = String(row.dataset.quantity || '');
+                document.getElementById('extendInfoQuantity').value = `${row.dataset.quantity || 0} días`;
                 if (extendEndDateInput) {
                     extendEndDateInput.min = endIso || startIso;
                 }
@@ -1085,7 +1083,7 @@ $users = $users ?? [];
         extendEndDateInput?.addEventListener('change', () => {
             if (extendQuantityInput) {
                 const quantity = countBusinessDays(String(extendStartDateInput?.value || ''), extendEndDateInput.value);
-                extendQuantityInput.value = quantity > 0 ? String(quantity) : '';
+                extendQuantityInput.value = quantity > 0 ? `${quantity} días` : '';
             }
         });
 

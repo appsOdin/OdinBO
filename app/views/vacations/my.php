@@ -51,7 +51,7 @@ $currentUserRole = strtoupper((string) ($authUser['rolename'] ?? ''));
                         };
                         $requestTypeKey = strtoupper((string) ($req['requestTypeKey'] ?? ''));
                         $typeLabel = (string) ($req['requestTypeName'] ?? '');
-                        $quantityLabel = $requestTypeKey === 'PERMISSION' ? 'h' : ($requestTypeKey === 'VACATION' ? 'd' : '');
+                        $quantityLabel = $requestTypeKey === REQUESTY_TYPE['PERMISSION'] ? 'horas' : 'días';
                         $specificTypeLabel = match ($requestTypeKey) {
                             'LICENSE' => (string) ($req['licenseTypeName'] ?? ''),
                             'MEDICAL_LEAVE' => (string) ($req['medicalLeaveTypeName'] ?? ''),
@@ -98,7 +98,7 @@ $currentUserRole = strtoupper((string) ($authUser['rolename'] ?? ''));
                                     <?php if ($stateKey === 'ADJUSTED' && $requestTypeKey === 'PERMISSION'): ?>
                                         <button type="button" class="btn btn-sm btn-warning btn-approve-adjustment" data-request-id="<?= $id ?>">Aprobar Ajuste</button>
                                     <?php endif; ?>
-                                    <?php if (!in_array($stateKey, ['ANNULLED', 'ANNULLED_APPROVED', 'REJECTED','ADJUSTMENT_ACCEPTED'], true) && !$startDatePast): ?>
+                                    <?php if (!in_array($stateKey, ['ANNULLED', 'ANNULLED_APPROVED', 'REJECTED','ADJUSTMENT_ACCEPTED'], true)&&  !$startDatePast &&!in_array( $requestTypeKey, [REQUESTY_TYPE['MEDICAL_LEAVE'], REQUESTY_TYPE['LICENSE'] ], true)): ?>
                                         <button type="button" class="btn btn-sm btn-outline-danger btn-annul-vacation" data-request-id="<?= $id ?>">Anular</button>
                                     <?php endif; ?>
                                 </div>

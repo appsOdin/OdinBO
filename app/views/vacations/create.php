@@ -51,7 +51,7 @@ $minDate = date('Y-m-d');
                     >
                 </div>
                 <div class="col-md-4">
-                    <label for="quantity" class="form-label" id="quantityLabel">Cantidad de Dias</label>
+                    <label for="quantity" class="form-label" id="quantityLabel">Cantidad de d&iacute;as</label>
                     <input
                         type="number"
                         class="form-control"
@@ -173,7 +173,7 @@ $minDate = date('Y-m-d');
         if (type === requestTypes.PERMISSION) {
             pageTitle.textContent = 'Crear Solicitud de Permiso';
             pageSubtitle.textContent = 'Registra un permiso para un dia especifico.';
-            quantityLabel.textContent = 'Cantidad de Horas';
+            quantityLabel.textContent = 'Cantidad de horas';
             quantityHint.textContent = 'Ingresa la cantidad de horas del permiso.';
             quantityInput.readOnly = false;
             quantityInput.min = '0.01';
@@ -193,7 +193,7 @@ $minDate = date('Y-m-d');
         } else {
             pageTitle.textContent = 'Crear Solicitud de Vacaciones';
             pageSubtitle.textContent = 'Registra un nuevo periodo de vacaciones.';
-            quantityLabel.textContent = 'Cantidad de Dias';
+            quantityLabel.textContent = 'Cantidad de d\u00edas';
             quantityHint.textContent = 'Calculado automaticamente.';
             quantityInput.readOnly = true;
             quantityInput.min = '1';
