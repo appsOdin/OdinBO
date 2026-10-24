@@ -110,6 +110,22 @@ final class VacationRequestService
 
     /**
      * @param array{name: string, tmp_name: string, type: string} $file
+     * @param array{name: string, tmp_name: string, type: string} $softlandFile
+     */
+    public function extendMedicalLeaveRequest(int $requestId, string $assignedUser, string $startDate, string $endDate, int $quantity, string $description, array $file, array $softlandFile): array
+    {
+        return $this->apiService->postMultipart('/api/VacationRequest/ExtendMedicalLeaveRequest', [
+            'requestId' => (string) $requestId,
+            'assigned_user' => $assignedUser,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'quantity' => (string) $quantity,
+            'description' => $description,
+        ], ['file' => $file, 'file_softland' => $softlandFile]);
+    }
+
+    /**
+     * @param array{name: string, tmp_name: string, type: string} $file
      */
     public function createLicenseRequest(string $assignedUser, string $licenseType, string $startDate, string $endDate, int $quantity, string $description, array $file): array
     {

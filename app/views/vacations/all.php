@@ -251,6 +251,88 @@ $users = $users ?? [];
     </div>
 </div>
 
+<div class="modal fade" id="extendMedicalLeaveModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-sm">
+            <div class="modal-header">
+                <h5 class="modal-title">Extender Incapacidad</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <form id="extendMedicalLeaveForm" method="POST" action="<?= base_url('rrhh/solicitudes-vacaciones/extend-medical-leave') ?>" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <input type="hidden" name="_csrf_token" value="<?= htmlspecialchars((string) ($csrfToken ?? get_csrf_token()), ENT_QUOTES, 'UTF-8') ?>">
+                    <input type="hidden" name="requestId" id="extendRequestId">
+                    <input type="hidden" name="assigned_user" id="extendAssignedUser">
+                    <input type="hidden" name="start_date" id="extendStartDate">
+
+                    <h6 class="fw-semibold mb-2">Detalle de la solicitud</h6>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-3">
+                            <label class="form-label" for="extendInfoId">ID solicitud</label>
+                            <input type="text" class="form-control" id="extendInfoId" readonly>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label" for="extendInfoUserId">ID usuario</label>
+                            <input type="text" class="form-control" id="extendInfoUserId" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="extendInfoUser">Usuario</label>
+                            <input type="text" class="form-control" id="extendInfoUser" readonly>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label" for="extendInfoStart">Fecha inicio</label>
+                            <input type="text" class="form-control" id="extendInfoStart" readonly>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label" for="extendInfoEnd">Fecha fin</label>
+                            <input type="text" class="form-control" id="extendInfoEnd" readonly>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="extendInfoType">Tipo de incapacidad</label>
+                            <input type="text" class="form-control" id="extendInfoType" readonly>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label" for="extendInfoQuantity">Dias</label>
+                            <input type="text" class="form-control" id="extendInfoQuantity" readonly>
+                        </div>
+                    </div>
+
+                    <hr>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label" for="extendEndDate">Fecha que finaliza la extension <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="extendEndDate" name="end_date" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="extendQuantity">Cantidad de dias</label>
+                            <input type="text" class="form-control" id="extendQuantity" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="extendFile">Boleta incapacidad <span class="text-danger">*</span></label>
+                            <input type="file" class="form-control" id="extendFile" name="file" accept="application/pdf,image/png,image/jpeg,.pdf,.png,.jpg,.jpeg" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="extendSoftlandFile">Boleta Softland <span class="text-danger">*</span></label>
+                            <input type="file" class="form-control" id="extendSoftlandFile" name="file_softland" accept="application/pdf,image/png,image/jpeg,.pdf,.png,.jpg,.jpeg" required>
+                        </div>
+                        <div class="col-12">
+                            <small class="text-muted">Formatos permitidos: PDF, JPG o PNG. Tamano maximo: 10 MB.</small>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" for="extendDescription">Detalle <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="extendDescription" name="description" rows="3" maxlength="100" required></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="extendSubmitBtn">Extender solicitud</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
 (() => {
     const initVacationAllModule = () => {
@@ -293,6 +375,29 @@ $users = $users ?? [];
         const adjustRequestCantInput = document.getElementById('adjustRequestCant');
         const adjustReasonInput = document.getElementById('adjustReason');
         const confirmAdjustBtn = document.getElementById('confirmAdjustBtn');
+        const extendModalEl = document.getElementById('extendMedicalLeaveModal');
+        const extendForm = document.getElementById('extendMedicalLeaveForm');
+        const extendStartDateInput = document.getElementById('extendStartDate');
+        const extendEndDateInput = document.getElementById('extendEndDate');
+        const extendQuantityInput = document.getElementById('extendQuantity');
+        const holidays = <?= json_encode(array_values(HOLIDAYS)) ?>;
+
+        const countBusinessDays = (startIso, endIso) => {
+            if (!startIso || !endIso || endIso < startIso) {
+                return 0;
+            }
+            let quantity = 0;
+            const current = new Date(`${startIso}T00:00:00`);
+            const end = new Date(`${endIso}T00:00:00`);
+            while (current <= end) {
+                const monthDay = `${String(current.getMonth() + 1).padStart(2, '0')}-${String(current.getDate()).padStart(2, '0')}`;
+                if (current.getDay() !== 0 && !holidays.includes(monthDay)) {
+                    quantity++;
+                }
+                current.setDate(current.getDate() + 1);
+            }
+            return quantity;
+        };
 
         if (!body) {
             return;
@@ -355,6 +460,7 @@ $users = $users ?? [];
                 SIGN: '<span class="badge text-bg-success">Firmada</span>',
                 ADJUSTED: '<span class="badge text-bg-warning">Ajustada</span>',
                 ADJUSTMENT_ACCEPTED: '<span class="badge text-bg-success">Ajuste Aprobado</span>',
+                EXTENDED: '<span class="badge text-bg-info">Extendida</span>',
                 REJECTED: '<span class="badge text-bg-danger">Rechazado</span>',
                 ANNULLED: '<span class="badge text-bg-dark">Anulada</span>',
                 ANNULLED_APPROVED: '<span class="badge text-bg-primary">Anulacion Aprobada</span>'
@@ -390,7 +496,7 @@ $users = $users ?? [];
                 if (stateKey !== 'PENDING') {
                     actions.push(`<button type="button" class="btn btn-sm btn-outline-secondary btn-view-files" data-request-id="${id}">Archivos</button>`);
                 }
-                if (!['REJECTED', 'ANNULLED', 'ANNULLED_APPROVED', 'SIGN', 'ADJUSTMENT_ACCEPTED'].includes(stateKey) && !startDatePast) {
+                if (!['REJECTED', 'ANNULLED', 'ANNULLED_APPROVED', 'SIGN', 'ADJUSTMENT_ACCEPTED','EXTENDED'].includes(stateKey) && !startDatePast) {
                     actions.push(`<button type="button" class="btn btn-sm btn-danger btn-reject-vacation" data-request-id="${id}">Rechazar</button>`);
                 }
                 if (stateKey === 'ANNULLED') {
@@ -399,11 +505,18 @@ $users = $users ?? [];
                 if (stateKey === 'SIGN' && paginationState.requestType === 'PERMISSION') {
                     actions.push(`<button type="button" class="btn btn-sm btn-warning btn-adjust-vacation" data-request-id="${id}">Ajustar</button>`);
                 }
+                if (stateKey === 'APPROVED' && showMedicalLeaveType) {
+                    actions.push(`<button type="button" class="btn btn-sm btn-primary btn-extend-medical-leave" data-request-id="${id}">Extender</button>`);
+                }
 
                 const extraCell = showExtraType ? `<td>${escapeHtml(extraType || '—')}</td>` : '';
                 return `
                     <tr data-id="${id}"
                         data-user="${escapeHtml(request.userName || '')}"
+                        data-user-id="${escapeHtml(request.userId ?? '')}"
+                        data-start-iso="${escapeHtml(startDate.slice(0, 10))}"
+                        data-end-iso="${escapeHtml(String(request.endDate || '').slice(0, 10))}"
+                        data-extra-type="${escapeHtml(extraType || '')}"
                         data-description="${escapeHtml(request.description || '')}"
                         data-start="${escapeHtml(formatDate(startDate))}"
                         data-end="${escapeHtml(formatDate(request.endDate))}"
@@ -762,6 +875,34 @@ $users = $users ?? [];
                 return;
             }
 
+            const extendButton = target.closest('.btn-extend-medical-leave');
+            if (extendButton instanceof HTMLElement) {
+                const row = extendButton.closest('tr');
+                const extendModal = getModalInstance(extendModalEl);
+                if (!extendModal || !(row instanceof HTMLTableRowElement) || !extendForm) {
+                    return;
+                }
+
+                const startIso = String(row.dataset.startIso || '');
+                const endIso = String(row.dataset.endIso || '');
+                extendForm.reset();
+                document.getElementById('extendRequestId').value = String(row.dataset.id || '');
+                document.getElementById('extendAssignedUser').value = String(row.dataset.userId || '');
+                document.getElementById('extendStartDate').value = startIso;
+                document.getElementById('extendInfoId').value = String(row.dataset.id || '');
+                document.getElementById('extendInfoUserId').value = String(row.dataset.userId || '');
+                document.getElementById('extendInfoUser').value = String(row.dataset.user || '');
+                document.getElementById('extendInfoStart').value = String(row.dataset.start || '');
+                document.getElementById('extendInfoEnd').value = String(row.dataset.end || '');
+                document.getElementById('extendInfoType').value = String(row.dataset.extraType || '');
+                document.getElementById('extendInfoQuantity').value = String(row.dataset.quantity || '');
+                if (extendEndDateInput) {
+                    extendEndDateInput.min = endIso || startIso;
+                }
+                extendModal.show();
+                return;
+            }
+
             const adjustButton = target.closest('.btn-adjust-vacation');
             if (adjustButton instanceof HTMLElement) {
                 const requestId = Number(adjustButton.dataset.requestId || 0);
@@ -938,6 +1079,57 @@ $users = $users ?? [];
             } finally {
                 confirmAdjustBtn.disabled = false;
                 confirmAdjustBtn.textContent = 'Ajustar';
+            }
+        });
+
+        extendEndDateInput?.addEventListener('change', () => {
+            if (extendQuantityInput) {
+                const quantity = countBusinessDays(String(extendStartDateInput?.value || ''), extendEndDateInput.value);
+                extendQuantityInput.value = quantity > 0 ? String(quantity) : '';
+            }
+        });
+
+        extendForm?.addEventListener('submit', async (event) => {
+            const allowedExts = ['pdf', 'png', 'jpg', 'jpeg'];
+            const fileInputs = [
+                [document.getElementById('extendFile'), 'boleta incapacidad'],
+                [document.getElementById('extendSoftlandFile'), 'boleta Softland']
+            ];
+            let error = '';
+
+            if (Number(document.getElementById('extendRequestId')?.value || 0) <= 0) {
+                error = 'ID de solicitud invalido.';
+            } else if (!String(document.getElementById('extendAssignedUser')?.value || '')) {
+                error = 'La solicitud no tiene un usuario asociado.';
+            } else if (!extendEndDateInput?.value || (extendEndDateInput.min && extendEndDateInput.value < extendEndDateInput.min)) {
+                error = 'Seleccione una fecha de finalizacion de extension valida.';
+            } else if (countBusinessDays(String(extendStartDateInput?.value || ''), extendEndDateInput.value) < 1) {
+                error = 'El periodo debe incluir al menos un dia que no sea domingo ni feriado.';
+            } else {
+                for (const [input, label] of fileInputs) {
+                    const file = input instanceof HTMLInputElement ? input.files?.[0] : null;
+                    const ext = String(file?.name || '').split('.').pop().toLowerCase();
+                    if (!file || !allowedExts.includes(ext) || file.size > 10 * 1024 * 1024) {
+                        error = `Adjunte la ${label} en PDF, JPG o PNG de hasta 10 MB.`;
+                        break;
+                    }
+                }
+            }
+            const description = String(document.getElementById('extendDescription')?.value || '').trim();
+            if (!error && (description === '' || description.length > 100)) {
+                error = 'El detalle es obligatorio y no puede superar 100 caracteres.';
+            }
+
+            if (error) {
+                event.preventDefault();
+                await notify(error);
+                return;
+            }
+
+            const submitBtn = document.getElementById('extendSubmitBtn');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Procesando...';
             }
         });
 

@@ -330,6 +330,91 @@ final class VacationRequestController extends Controller
         $this->redirect('/rrhh/solicitud-incapacidad/crear');
     }
 
+    public function extendMedicalLeave(Request $request): void
+    {
+        $backUrl = '/rrhh/solicitudes-vacaciones';
+        if (!$this->hasRole(['ADMIN', 'SUPER'])) {
+            flash('danger', 'No tiene permisos');
+            $this->redirect($backUrl);
+            return;
+        }
+        if (!validate_csrf_token((string) $request->input('_csrf_token', ''))) {
+            flash('danger', 'Token CSRF invalido.');
+            $this->redirect($backUrl);
+            return;
+        }
+
+        $requestId = filter_var($request->input('requestId', 0), FILTER_VALIDATE_INT);
+        if ($requestId === false || $requestId <= 0) {
+            flash('danger', 'ID de solicitud invalido.');
+            $this->redirect($backUrl);
+            return;
+        }
+
+        $assignedUser = trim((string) $request->input('assigned_user', ''));
+        $description = sanitize_text((string) $request->input('description', ''));
+        $startRaw = (string) $request->input('start_date', '');
+        $endRaw = (string) $request->input('end_date', '');
+        $startDate = \DateTimeImmutable::createFromFormat('!Y-m-d', $startRaw);
+        $endDate = \DateTimeImmutable::createFromFormat('!Y-m-d', $endRaw);
+
+        if (!preg_match('/^[A-Za-z0-9_-]{1,50}$/', $assignedUser) || $description === '' || mb_strlen($description, 'UTF-8') > 100) {
+            flash('danger', 'Usuario invalido o detalle vacio (maximo 100 caracteres).');
+            $this->redirect($backUrl);
+            return;
+        }
+        if (!$startDate || !$endDate || $startDate->format('Y-m-d') !== $startRaw || $endDate->format('Y-m-d') !== $endRaw || $endDate < $startDate) {
+            flash('danger', 'Fechas invalidas. La fecha de extension no puede ser anterior a la fecha de inicio.');
+            $this->redirect($backUrl);
+            return;
+        }
+
+        $quantity = 0;
+        for ($currentDate = $startDate; $currentDate <= $endDate; $currentDate = $currentDate->modify('+1 day')) {
+            if ($currentDate->format('w') !== '0' && !in_array($currentDate->format('m-d'), HOLIDAYS, true)) {
+                $quantity++;
+            }
+        }
+        if ($quantity < 1) {
+            flash('danger', 'El periodo debe incluir al menos un dia que no sea domingo ni feriado.');
+            $this->redirect($backUrl);
+            return;
+        }
+
+        $files = $this->resolveUploadedFiles('file');
+        $softlandFiles = $this->resolveUploadedFiles('file_softland');
+        if ($files === null || count($files) !== 1 || $softlandFiles === null || count($softlandFiles) !== 1) {
+            flash('danger', 'Adjunte la boleta de incapacidad y la boleta Softland en PDF, JPG o PNG de hasta 10 MB cada una.');
+            $this->redirect($backUrl);
+            return;
+        }
+
+        $response = ServiceFactory::vacationRequestService()->extendMedicalLeaveRequest(
+            $requestId,
+            $assignedUser,
+            $startDate->format('Y-m-d') . 'T00:00:00',
+            $endDate->format('Y-m-d') . 'T00:00:00',
+            $quantity,
+            $description,
+            $files[0],
+            $softlandFiles[0]
+        );
+        $httpCode = (int) ($response['http_code'] ?? 0);
+        if ($httpCode === 401 || $httpCode === 406) {
+            ServiceFactory::authService()->logout();
+            flash('danger', (string) ($response['message'] ?? 'Sesion expirada.'));
+            $this->redirect('/login');
+            return;
+        }
+        if ((string) ($response['code'] ?? '') === '200') {
+            flash('success', (string) ($response['message'] ?? 'Solicitud extendida exitosamente.'));
+            $this->redirect($backUrl);
+            return;
+        }
+        flash('danger', (string) ($response['message'] ?? 'No fue posible extender la solicitud de incapacidad.'));
+        $this->redirect($backUrl);
+    }
+
     public function store(Request $request): void
     {
         $csrfToken = (string) $request->input('_csrf_token', '');
