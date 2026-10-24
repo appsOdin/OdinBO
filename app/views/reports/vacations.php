@@ -53,6 +53,8 @@ $signers = $signers ?? [];
                     <th>Tipo</th>
                     <th>Cantidad</th>
                     <th>Descripción</th>
+                    <th>Estado</th>
+                    <th>Motivo de rechazo</th>
                 </tr>
                 </thead>
                 <tbody id="vacationReportBody">
@@ -66,6 +68,8 @@ $signers = $signers ?? [];
                         <td><?= htmlspecialchars((string) ($row['request_type'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
                         <td><?= htmlspecialchars((string) ($row['quantity'] ?? 0), ENT_QUOTES, 'UTF-8') ?></td>
                         <td><?= htmlspecialchars((string) ($row['description'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
+                        <td><?= htmlspecialchars((string) ($row['state'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
+                        <td><?= htmlspecialchars((string) ($row['Rejected_description'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>
@@ -135,7 +139,7 @@ $signers = $signers ?? [];
         }
 
         if (!Array.isArray(rows) || rows.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No hay registros para mostrar.</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">No hay registros para mostrar.</td></tr>';
             return;
         }
 
@@ -150,6 +154,8 @@ $signers = $signers ?? [];
                     <td>${escapeHtml(row.request_type || '')}</td>
                     <td>${Number(row.quantity || 0)}</td>
                     <td>${escapeHtml(row.description || '')}</td>
+                    <td>${escapeHtml(row.state ?? '')}</td>
+                    <td>${escapeHtml(row.Rejected_description ?? '')}</td>
                 </tr>
             `;
         }).join('');
@@ -216,11 +222,12 @@ $signers = $signers ?? [];
             <head>
                 <title>Reporte de vacaciones</title>
                 <style>
+                    @page { size: landscape; }
                     body { font-family: Arial, sans-serif; margin: 24px; }
                     h2 { margin: 0 0 4px; }
                     p { margin: 0 0 16px; color: #6c757d; }
                     table { width: 100%; border-collapse: collapse; }
-                    th, td { border: 1px solid #ced4da; padding: 6px; font-size: 12px; text-align: left; }
+                    th, td { border: 1px solid #ced4da; padding: 6px; font-size: 12px; text-align: left; overflow-wrap: anywhere; }
                     th { background: #f1f3f5; }
                 </style>
             </head>
