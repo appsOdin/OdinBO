@@ -494,7 +494,7 @@ $users = $users ?? [];
                 if (stateKey !== 'PENDING') {
                     actions.push(`<button type="button" class="btn btn-sm btn-outline-secondary btn-view-files" data-request-id="${id}">Archivos</button>`);
                 }
-                if (!['REJECTED', 'ANNULLED', 'ANNULLED_APPROVED', 'SIGN', 'ADJUSTMENT_ACCEPTED','EXTENDED'].includes(stateKey) && !startDatePast) {
+                if (!['REJECTED', 'ANNULLED', 'ANNULLED_APPROVED', 'ADJUSTMENT_ACCEPTED','EXTENDED'].includes(stateKey)) {
                     actions.push(`<button type="button" class="btn btn-sm btn-danger btn-reject-vacation" data-request-id="${id}">Rechazar</button>`);
                 }
                 if (stateKey === 'ANNULLED') {
