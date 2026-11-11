@@ -58,8 +58,8 @@ $currentUserRole = strtoupper((string) ($authUser['rolename'] ?? ''));
                             default => '',
                         };
                         
-                        $startDateTs = strtotime((string) ($req['startDate'] ?? 'now'));
-                        $startDatePast = $startDateTs !== false && $startDateTs < strtotime(date('Y-m-d'));
+                        $startDateTs = strtotime((string) ($req['startDate'] ?? ''));
+                        $startDateIsFuture = $startDateTs !== false && date('Y-m-d', $startDateTs) > date('Y-m-d');
                         ?>
                         <tr>
                             <td><?= $id ?></td>
@@ -98,7 +98,7 @@ $currentUserRole = strtoupper((string) ($authUser['rolename'] ?? ''));
                                     <?php if ($stateKey === 'ADJUSTED' && $requestTypeKey === 'PERMISSION'): ?>
                                         <button type="button" class="btn btn-sm btn-warning btn-approve-adjustment" data-request-id="<?= $id ?>">Aprobar Ajuste</button>
                                     <?php endif; ?>
-                                    <?php if (!in_array($stateKey, ['ANNULLED', 'ANNULLED_APPROVED', 'REJECTED','ADJUSTMENT_ACCEPTED'], true)&&  !$startDatePast &&!in_array( $requestTypeKey, [REQUESTY_TYPE['MEDICAL_LEAVE'], REQUESTY_TYPE['LICENSE'] ], true)): ?>
+                                    <?php if (!in_array($stateKey, ['ANNULLED', 'ANNULLED_APPROVED', 'REJECTED','ADJUSTMENT_ACCEPTED'], true) && $startDateIsFuture && !in_array($requestTypeKey, [REQUESTY_TYPE['MEDICAL_LEAVE'], REQUESTY_TYPE['LICENSE']], true)): ?>
                                         <button type="button" class="btn btn-sm btn-outline-danger btn-annul-vacation" data-request-id="<?= $id ?>">Anular</button>
                                     <?php endif; ?>
                                 </div>
