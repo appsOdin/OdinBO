@@ -81,6 +81,15 @@ final class VacationRequestService
         return $this->apiService->get('/api/VacationRequest/GetAllSigners');
     }
 
+    public function editSigner(int $requestId, int $rowId, string $signerId): array
+    {
+        return $this->apiService->post('/api/VacationRequest/UpdateSigner', [
+            'request_id' => $requestId,
+            'row_id' => $rowId,
+            'signer_id' => $signerId,
+        ]);
+    }
+
     public function getAllLicenseTypes(): array
     {
         return $this->apiService->get('/api/VacationRequest/GetAllLicenseType');

@@ -47,6 +47,8 @@ return [
     ['method' => 'GET', 'path' => '/rrhh/solicitudes-vacaciones', 'handler' => [VacationRequestController::class, 'all'], 'middleware' => [AuthMiddleware::class]],
     ['method' => 'POST', 'path' => '/rrhh/solicitudes-vacaciones/list', 'handler' => [VacationRequestController::class, 'listAll'], 'middleware' => [AuthMiddleware::class]],
     ['method' => 'POST', 'path' => '/rrhh/solicitudes-vacaciones/signers', 'handler' => [VacationRequestController::class, 'signers'], 'middleware' => [AuthMiddleware::class]],
+    ['method' => 'GET', 'path' => '/rrhh/solicitudes-vacaciones/all-signers', 'handler' => [VacationRequestController::class, 'allSigners'], 'middleware' => [AuthMiddleware::class]],
+    ['method' => 'POST', 'path' => '/rrhh/solicitudes-vacaciones/edit-signer', 'handler' => [VacationRequestController::class, 'editSigner'], 'middleware' => [AuthMiddleware::class]],
     ['method' => 'POST', 'path' => '/rrhh/solicitudes-vacaciones/files', 'handler' => [VacationRequestController::class, 'files'], 'middleware' => [AuthMiddleware::class]],
     ['method' => 'POST', 'path' => '/rrhh/solicitudes-vacaciones/add-signers', 'handler' => [VacationRequestController::class, 'addSigners'], 'middleware' => [AuthMiddleware::class]],
     ['method' => 'POST', 'path' => '/rrhh/solicitudes-vacaciones/upload-file-to-sign', 'handler' => [VacationRequestController::class, 'uploadFileToSign'], 'middleware' => [AuthMiddleware::class]],

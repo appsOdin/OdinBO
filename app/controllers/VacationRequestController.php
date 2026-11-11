@@ -566,6 +566,63 @@ final class VacationRequestController extends Controller
         $this->json($response, (int) ($response['http_code'] ?? 200));
     }
 
+    public function allSigners(Request $request): void
+    {
+        if (!$this->hasRole(['ADMIN', 'SUPER'])) {
+            $this->json(['code' => '403', 'message' => 'No tiene permisos', 'data' => null], 403);
+            return;
+        }
+
+        $response = ServiceFactory::vacationRequestService()->getAllSigners();
+        $this->json($response, (int) ($response['http_code'] ?? 200));
+    }
+
+    public function editSigner(Request $request): void
+    {
+        if (!$this->hasRole(['ADMIN', 'SUPER'])) {
+            $this->json(['code' => '403', 'message' => 'No tiene permisos', 'data' => null], 403);
+            return;
+        }
+
+        if (!validate_csrf_token((string) $request->input('_csrf_token', ''))) {
+            $this->json(['code' => '403', 'message' => 'Token CSRF invalido', 'data' => null], 403);
+            return;
+        }
+
+        $requestId = filter_var($request->input('request_id', 0), FILTER_VALIDATE_INT);
+        $rowId = filter_var($request->input('row_id', 0), FILTER_VALIDATE_INT);
+        $signerId = trim((string) $request->input('signer_id', ''));
+        if ($requestId === false || $requestId <= 0 || $rowId === false || $rowId <= 0 || $signerId === '') {
+            $this->json(['code' => '422', 'message' => 'Solicitud, fila o firmante invalido', 'data' => null], 422);
+            return;
+        }
+
+        $service = ServiceFactory::vacationRequestService();
+        $signersResponse = $service->getSigners($requestId);
+        if ((string) ($signersResponse['code'] ?? '') !== '200' || (int) ($signersResponse['http_code'] ?? 200) >= 400) {
+            $this->json($signersResponse, (int) ($signersResponse['http_code'] ?? 200));
+            return;
+        }
+
+        $editable = false;
+        foreach (($signersResponse['data'] ?? []) as $signer) {
+            if ((int) ($signer['id'] ?? 0) === $rowId
+                && (int) ($signer['requestId'] ?? 0) === $requestId
+                && ($signer['hasSigned'] ?? null) === false
+                && (string) ($signer['sing_type'] ?? '') === '1') {
+                $editable = true;
+                break;
+            }
+        }
+        if (!$editable) {
+            $this->json(['code' => '422', 'message' => 'Este firmante no se puede editar', 'data' => null], 422);
+            return;
+        }
+
+        $response = $service->editSigner($requestId, $rowId, $signerId);
+        $this->json($response, (int) ($response['http_code'] ?? 200));
+    }
+
     public function files(Request $request): void
     {
         if (!validate_csrf_token((string) $request->input('_csrf_token', ''))) {

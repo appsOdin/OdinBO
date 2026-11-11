@@ -114,6 +114,29 @@ $users = $users ?? [];
     </div>
 </div>
 
+<div class="modal fade" id="vacationEditSignerModal" tabindex="-1" aria-labelledby="vacationEditSignerTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-sm">
+            <div class="modal-header">
+                <h5 class="modal-title" id="vacationEditSignerTitle">Editar firmante</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <form id="vacationEditSignerForm">
+                <div class="modal-body">
+                    <label class="form-label" for="vacationEditSignerSelect">Firmantes</label>
+                    <input type="search" class="form-control mb-2" id="vacationEditSignerSearch" aria-label="Buscar firmante" placeholder="Buscar firmante" autocomplete="off" disabled>
+                    <select class="form-select" id="vacationEditSignerSelect" aria-label="Firmantes" size="6" required disabled></select>
+                    <div class="small mt-2" id="vacationEditSignerStatus" role="status" aria-live="polite"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="vacationEditSignerSubmit" disabled>Editar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="vacationFilesModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content border-0 shadow-sm">
@@ -354,6 +377,18 @@ $users = $users ?? [];
         const adjustModalEl = document.getElementById('adjustVacationModal');
 
         const signersBody = document.getElementById('vacationSignersBody');
+        const editSignerModalEl = document.getElementById('vacationEditSignerModal');
+        const editSignerForm = document.getElementById('vacationEditSignerForm');
+        const editSignerSearch = document.getElementById('vacationEditSignerSearch');
+        const editSignerSelect = document.getElementById('vacationEditSignerSelect');
+        const editSignerStatus = document.getElementById('vacationEditSignerStatus');
+        const editSignerSubmit = document.getElementById('vacationEditSignerSubmit');
+        let signersRequestId = 0;
+        let editSignerRequestId = 0;
+        let editSignerRowId = 0;
+        let availableSigners = [];
+        let signerCatalogVersion = 0;
+        let savingSigner = false;
         const filesBody = document.getElementById('vacationFilesBody');
         const addSignersForm = document.getElementById('vacationAddSignersForm');
         const requestIdInput = document.getElementById('vacationRequestIdInput');
@@ -645,12 +680,16 @@ $users = $users ?? [];
             const status = item.hasSigned
                 ? '<span class="badge text-bg-success">Firmado</span>'
                 : '<span class="badge text-bg-warning">Pendiente</span>';
+            const editButton = item.hasSigned === false && Number(item.sing_type) === 1
+                ? `<button type="button" class="btn btn-sm btn-outline-primary btn-edit-signer" data-request-id="${Number(item.requestId || 0)}" data-row-id="${Number(item.id || 0)}">Editar</button>`
+                : '';
 
             return `
                 <tr>
                     <td>${escapeHtml(`${item.userName || ''} ${item.userLastname || ''}`)}</td>
                     <td>${escapeHtml(item.userEmail || '')}</td>
                     <td>${status}</td>
+                    <td>${editButton}</td>
                 </tr>
             `;
         }).join('');
@@ -663,6 +702,7 @@ $users = $users ?? [];
                             <th>Nombre</th>
                             <th>Email</th>
                             <th>Estado</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>${htmlRows}</tbody>
@@ -715,6 +755,101 @@ $users = $users ?? [];
             </div>
         `;
     };
+
+        const filterSignerOptions = () => {
+            const selectedId = editSignerSelect.value;
+            const query = editSignerSearch.value.trim().toLocaleLowerCase();
+            const matches = availableSigners.filter((signer) => String(signer.fullname || '').toLocaleLowerCase().includes(query));
+            editSignerSelect.replaceChildren(...matches.map((signer) => new Option(String(signer.fullname || signer.id), String(signer.id))));
+            editSignerSelect.value = selectedId;
+            editSignerStatus.textContent = matches.length ? '' : 'No hay firmantes para mostrar.';
+        };
+
+        editSignerSearch?.addEventListener('input', filterSignerOptions);
+
+        editSignerModalEl?.addEventListener('shown.bs.modal', async () => {
+            const catalogVersion = ++signerCatalogVersion;
+            try {
+                const response = await fetch(window.APP.vacationAllSignersUrl, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                const result = await response.json();
+                if (catalogVersion !== signerCatalogVersion) return;
+                if (!response.ok || String(result.code) !== '200' || !Array.isArray(result.data)) {
+                    throw new Error(result.message || 'No fue posible cargar los firmantes.');
+                }
+                availableSigners = result.data.filter((signer) => signer && String(signer.id ?? '') !== '');
+                filterSignerOptions();
+                editSignerSearch.disabled = false;
+                editSignerSelect.disabled = availableSigners.length === 0;
+                editSignerSubmit.disabled = availableSigners.length === 0;
+                editSignerSearch.focus();
+            } catch (error) {
+                if (catalogVersion !== signerCatalogVersion) return;
+                editSignerStatus.textContent = error instanceof Error ? error.message : 'No fue posible cargar los firmantes.';
+            }
+        });
+
+        editSignerModalEl?.addEventListener('hide.bs.modal', (event) => {
+            if (savingSigner) {
+                event.preventDefault();
+                return;
+            }
+            signerCatalogVersion++;
+        });
+
+        signersBody?.addEventListener('click', (event) => {
+            const button = event.target instanceof Element ? event.target.closest('.btn-edit-signer') : null;
+            if (!button || Number(button.dataset.requestId || 0) <= 0 || Number(button.dataset.rowId || 0) <= 0) return;
+            editSignerRequestId = Number(button.dataset.requestId);
+            editSignerRowId = Number(button.dataset.rowId);
+            availableSigners = [];
+            editSignerForm.reset();
+            editSignerSelect.replaceChildren();
+            editSignerSearch.disabled = true;
+            editSignerSelect.disabled = true;
+            editSignerSubmit.disabled = true;
+            editSignerStatus.textContent = 'Cargando firmantes...';
+            signersModalEl.addEventListener('hidden.bs.modal', () => getModalInstance(editSignerModalEl)?.show(), { once: true });
+            getModalInstance(signersModalEl)?.hide();
+        });
+
+        editSignerForm?.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const signerId = editSignerSelect.value;
+            if (savingSigner || !signerId || !availableSigners.some((signer) => String(signer.id) === signerId)) return;
+            savingSigner = true;
+            editSignerSubmit.disabled = true;
+            editSignerSubmit.textContent = 'Procesando...';
+            editSignerSelect.disabled = true;
+            editSignerSearch.disabled = true;
+            try {
+                const result = await fetchJson(window.APP.vacationEditSignerUrl, {
+                    request_id: editSignerRequestId,
+                    row_id: editSignerRowId,
+                    signer_id: signerId,
+                    _csrf_token: csrfToken
+                });
+                if (String(result.code) !== '200' || Number(result.http_code || 200) >= 400) {
+                    throw new Error(result.message || 'No fue posible editar el firmante.');
+                }
+                savingSigner = false;
+                await new Promise((resolve) => {
+                    editSignerModalEl.addEventListener('hidden.bs.modal', resolve, { once: true });
+                    getModalInstance(editSignerModalEl)?.hide();
+                });
+                getModalInstance(signersModalEl)?.hide();
+                await notify(result.message || 'Firmante editado exitosamente.', 'success');
+            } catch (error) {
+                await notify(error instanceof Error ? error.message : 'No fue posible editar el firmante.', 'error');
+            } finally {
+                savingSigner = false;
+                editSignerSubmit.disabled = false;
+                editSignerSubmit.textContent = 'Editar';
+                editSignerSelect.disabled = false;
+                editSignerSearch.disabled = false;
+            }
+        });
 
         const searchRequests = () => {
             paginationState.search = String(search?.value || '').trim() || null;
@@ -781,6 +916,7 @@ $users = $users ?? [];
                     return;
                 }
 
+                signersRequestId = requestId;
                 signersBody.innerHTML = '<div class="text-muted">Cargando firmantes...</div>';
                 signersModal.show();
 
