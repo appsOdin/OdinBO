@@ -1137,11 +1137,8 @@ final class VacationRequestController extends Controller
         $startDateRaw = (string) ($detail['startDate'] ?? '');
         $startDateTs = $startDateRaw !== '' ? strtotime($startDateRaw) : false;
 
-        if (in_array($state, ['REJECTED', 'ANNULLED'], true) && $startDateTs !== false && $startDateTs < strtotime(date('Y-m-d'))) {
-            $message = $state === 'ANNULLED'
-                ? 'No se puede anular una solicitud cuya fecha de inicio ya paso'
-                : 'No se puede rechazar una solicitud cuya fecha de inicio ya paso';
-            $this->json(['code' => '422', 'message' => $message, 'data' => null], 422);
+        if ($state === 'ANNULLED' && $startDateTs !== false && $startDateTs < strtotime(date('Y-m-d'))) {
+            $this->json(['code' => '422', 'message' => 'No se puede anular una solicitud cuya fecha de inicio ya paso', 'data' => null], 422);
             return;
         }
 
